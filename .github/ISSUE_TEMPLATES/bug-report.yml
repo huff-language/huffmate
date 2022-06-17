@@ -1,0 +1,35 @@
+name: Bug Report
+description: Report a bug in the repository
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  # SAVE UNTIL VULN REPORT CONTACT INFO IS AVAILABLE
+  # - type: markdown
+  #   attributes:
+  #     value: |
+  #     **WAIT**. Is this bug a vulnerability? If so, please use this email instead
+  #     placeholder@placeholder.placeholder
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com, @discord_handle#0000
+    validation:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What Happened?
+      description: What happened versus what you expected to happen?
+      placeholder: Kaboom
+    validation:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system are you using? If MacOS, please specify Intel or M1 chip.
+      placeholder: Mac OS (M1)
+    validation:
+      required: true
