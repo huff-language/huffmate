@@ -1,7 +1,16 @@
-name: test
+name: Huff Tests
 
-on: workflow_dispatch
+on:
+  # manual trigger
+  workflow_dispatch
 
+  # on push
+  push:
+    paths:
+      - test/**
+      - src/**
+
+# Foundry env
 env:
   FOUNDRY_PROFILE: ci
 
