@@ -1,0 +1,14 @@
+#define constant OWNER_SLOT = FREE_STORAGE_POINTER()
+
+// Gets the current owner
+#define macro OWNER() = takes (0) returns (1) {
+    [OWNER_SLOT]    // [owner_slot]
+    sload           // [owner]
+}
+
+// Setes a new owner
+#define macro SET_OWNER() = takes (1) returns (0) {
+    // takes: [new_owner]
+    [OWNER_SLOT]    // [owner_slot, new_owner]
+    sstore          // []
+}
