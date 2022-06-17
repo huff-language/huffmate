@@ -2,7 +2,7 @@ name: Huff Tests
 
 on:
   # manual trigger
-  workflow_dispatch
+  workflow_dispatch:
 
   # on push
   push:
