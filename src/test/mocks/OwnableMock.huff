@@ -1,0 +1,31 @@
+#include "../Ownable.huff"
+
+#define function setOwner() nonpayable returns ()
+#define function getOwner() view returns (address)
+
+// NOT COMPLETE, DEMO ONLY
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xe0 shr
+    dup1 0x40caae06 eq set_owner jumpi
+    dup1 0x893d20e8 eq get_owner jumpi
+
+    set_owner:
+        caller
+        SET_OWNER()
+        0x00    // [size]
+        0x00    // [offset, size]
+        finish  // [finish_jumpdest, offset, size]
+        jump
+
+    get_owner:
+        OWNER() // [owner]
+        0x00    // [offset, owner]
+        mstore  // []
+        0x20    // [size]
+        0x00    // [offset, size]
+        finish  // [finish_jumpdest, offset, size]
+        jump
+
+    finish:
+        return
+}
