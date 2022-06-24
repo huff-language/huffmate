@@ -1,0 +1,13 @@
+
+// Event Signatures
+#define event OwnerUpdated(address indexed user, address indexed newOwner)
+#define event AuthorityUpdated(address indexed user, Authority indexed newAuthority)
+
+// Storage Slots
+#define constant OWNER = FREE_STORAGE_POINTER()
+#define constant AUTHORITY = FREE_STORAGE_POINTER()
+
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+  caller [OWNER] sstore
+}
+
