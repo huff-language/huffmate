@@ -59,7 +59,6 @@
     0x00 0x00 revert
 }
 
-
 ///
 /// function isAuthorized(address user, bytes4 functionSig) internal view virtual returns (bool)
 ///
@@ -105,4 +104,66 @@
     [OWNER] sload               // [owner, msg.sender]
     eq                          // [authed]
     iszero <not_authed> jumpi   // []
+}
+
+
+///
+/// function setAuthority(Authority newAuthority) public virtual
+///
+#define macro SET_AUTHORITY() = takes(1) returns(0) {
+  // -------------            --------------------------
+  // | OPERATION |            | STACK (POST-OPERATION) |
+  // -------------            --------------------------
+
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Set the new authority
+  0x04 calldataload           // [newAuthority]
+  dup1                        // [newAuthority, newAuthority]
+  [AUTHORITY] sstore          // []
+
+  // Emit the authority updated event
+  caller                      // [from, newAuthority]
+  [AUTHORITY_UPDATED_SIG]     // [sig, from, newAuthority]
+  0x20 0x00                   // [0, 32, sig, from, newAuthority]
+  log3                        // []
+}
+
+///
+/// function setOwner(address newOwner) public virtual
+///
+#define macro SET_OWNER() = takes(1) returns(0) {
+  // -------------            --------------------------
+  // | OPERATION |            | STACK (POST-OPERATION) |
+  // -------------            --------------------------
+
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Set the new owner
+  0x04 calldataload           // [newOwner]
+  dup1                        // [newOwner, newOwner]
+  [OWNER] sstore              // []
+
+  // Emit the owner updated event
+  caller                      // [from, newOwner]
+  [OWNER_UPDATED_SIG]         // [sig, from, newOwner]
+  0x20 0x00                   // [0, 32, sig, from, newOwner]
+  log3                        // []
+}
+
+///
+/// Main Macro - The contract entrypoint
+///
+#define macro MAIN() = takes(0) returns (0) {
+    // Identify which function is being called using the 4 byte function signature
+    0x00 calldataload 0xE0 shr
+    dup1 0x13af4035 eq set_owner jumpi
+    dup1 0x7a9e5e4b eq set_authority jumpi
+
+    set_owner:
+        SET_OWNER()
+    set_authority:
+        SET_AUTHORITY()
 }
