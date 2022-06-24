@@ -4,3 +4,6 @@
 # Foundry
 cache/
 out/
+
+# huffc output
+artifacts/
