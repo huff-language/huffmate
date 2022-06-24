@@ -1,0 +1,146 @@
+// Interface
+#define function safeAdd(uint256,uint256) pure returns (uint256)
+#define function safeSub(uint256,uint256) pure returns (uint256)
+#define function safeMul(uint256,uint256) pure returns (uint256)
+#define function safeDiv(uint256,uint256) pure returns (uint256)
+#define function safeMod(uint256,uint256) pure returns (uint256)
+
+// Methods - Use these macros directly
+#define macro SAFE_ADD() = takes (2) returns (1) {
+    // input stack          // [num1, num2]
+    dup2                    // [num2, num1, num2]
+    add                     // [result, num2]
+    dup1                    // [result, result, num2]
+    swap2                   // [num2, result, result]
+    gt                      // [is_overflow, result]
+    iszero                  // [is_not_overflow, result]
+    is_not_overflow jumpi   // [result]
+        0x00 0x00 revert
+    is_not_overflow:        // [result] 
+}
+
+#define macro SAFE_SUB() = takes (2) returns (1) {
+    // input stack          // [num1, num2]
+    dup1                    // [num1, num1, num2]
+    dup3                    // [num2, num1, num1, num2]
+    gt                      // [is_underflow, num1, num2]
+    iszero                  // [is_not_underflow, num1, num2]
+    is_not_underflow jumpi  // [num1, num2]
+        0x00 0x00 revert
+    is_not_underflow:       // [num1, num2]
+    sub                     // [result]
+}
+
+#define macro SAFE_MUL() = takes (2) returns (1) {
+    // input stack              // [num1, num2]
+    dup1                        // [num1, num1, num2]
+    iszero                      // [is_zero, num1, num2]
+    iszero                      // [is_not_zero, num1, num2]
+    is_not_zero jumpi           // [num1, num2]
+        mul                     // [result]
+        0x01 is_not_overflow jumpi
+    is_not_zero:                // [num1, num2]
+    dup2                        // [num2, num1, num2]
+    dup2                        // [num1, num2, num1, num2]
+    mul                         // [result, num1, num2]
+    swap1                       // [num1, result, num2]
+    dup2                        // [result, num1, result, num2]
+    div                         // [div_check, result, num2]
+    swap1                       // [result, div_check, num2]
+    swap2                       // [num2, div_check, result]
+    eq                          // [is_not_overflow, result]
+    is_not_overflow jumpi       // [result]
+        0x00 0x00 revert
+    is_not_overflow:
+}
+
+#define macro SAFE_DIV() = takes (2) returns (1) {
+    // input stack          // [num1, num2]
+    dup2                    // [num2, num1, num2]
+    0x00 swap1              // [num2, 0, num1, num2]
+    gt                      // [not_div_zero, num1, num2]
+    not_div_zero jumpi
+        0x00 0x00 revert
+    not_div_zero:
+    div                     // [result]
+}
+
+#define macro SAFE_MOD() = takes (2) returns (1) {
+    // input stack          // [num1, num2]
+    dup2                    // [num2, num1, num2]
+    0x00 swap1              // [num2, 0, num1, num2]
+    gt                      // [not_mod_zero, num1, num2]
+    not_mod_zero jumpi
+        0x00 0x00 revert
+    not_mod_zero:
+    mod                     // [result]
+}
+
+// Wrapper methods (for testing)
+#define macro SAFE_ADD_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    SAFE_ADD()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_SUB_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_SUB()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_MUL_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    SAFE_MUL()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_DIV_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_DIV()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_MOD_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_MOD()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+// Main
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xE0 shr
+    dup1 0xe6cb9013 eq safeAdd jumpi
+    dup1 0xa293d1e8 eq safeSub jumpi
+    dup1 0xd05c78da eq safeMul jumpi
+    dup1 0xb5931f7c eq safeDiv jumpi
+    dup1 0x62a144d9 eq safeMod jumpi
+
+    safeAdd: 
+        SAFE_ADD_WRAPPER()
+
+    safeSub: 
+        SAFE_SUB_WRAPPER()
+        
+    safeMul: 
+        SAFE_MUL_WRAPPER()
+
+    safeDiv:
+        SAFE_DIV_WRAPPER()
+
+    safeMod:
+        SAFE_MOD_WRAPPER()
+}
