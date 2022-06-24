@@ -1,8 +1,5 @@
 #define function sqrt(uint256) pure returns(uint256)
 
-//i could multiply everything by 1000 and divide by 1000 later
-//so we have space for decimals while the function is running
-
 //gets the square root of an input
 #define macro SQRT() = takes (1) returns (1) {
     // takes: [number]
