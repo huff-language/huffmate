@@ -1,7 +1,7 @@
 
 // Events
 #define event OwnerUpdated(address indexed user, address indexed newOwner)
-#define event AuthorityUpdated(address indexed user, Authority indexed newAuthority)
+#define event AuthorityUpdated(address indexed user, address indexed newAuthority)
 
 // Event Signatures
 #define constant AUTHORITY_UPDATED_SIG = 0xa3396fd7f6e0a21b50e5089d2da70d5ac0a3bbbd1f617a93f134b76389980198
@@ -54,8 +54,8 @@
 
   0x00 calldataload           // [msg.sig]
   caller                      // [msg.sender, msg.sig]
-  IS_AUTHORIZED(not_authed)   // []
-	not_authed:
+  IS_AUTHORIZED(nauthed)   // []
+	nauthed:
     0x00 0x00 revert
 }
 
@@ -63,9 +63,9 @@
 /// function isAuthorized(address user, bytes4 functionSig) internal view virtual returns (bool)
 ///
 /// - IS_AUTHORIZED macro tries to call `canCall` on the authority if the address(authority) is not 0.
-/// - If both canCall returns false and the msg.sender isn't the owner, the not_authed argument will be invoked
+/// - If both canCall returns false and the msg.sender isn't the owner, the nauthed argument will be invoked
 ///
-#define macro IS_AUTHORIZED(not_authed) = takes(2) returns(0) {
+#define macro IS_AUTHORIZED(nauthed) = takes(2) returns(0) {
   // -------------            --------------------------
   // | OPERATION |            | STACK (POST-OPERATION) |
   // -------------            --------------------------
@@ -98,12 +98,12 @@
   call                       // [authed]
   iszero owner_check jumpi   // []
 
-  // Jump to not_authed if msg.sender != owner
+  // Jump to nauthed if msg.sender != owner
   owner_check:
     caller                      // [msg.sender]
     [OWNER] sload               // [owner, msg.sender]
     eq                          // [authed]
-    iszero <not_authed> jumpi   // []
+    iszero <nauthed> jumpi   // []
 }
 
 
