@@ -9,17 +9,19 @@ import "foundry-huff/HuffDeployer.sol";
 interface Auth {
   function setOwner(address) external;
   function setAuthority(address) external;
+  function owner() external returns (address);
 }
 
 contract HuffDeployerTest is Test {
-    ///@notice create a new instance of HuffDeployer
-    HuffDeployer huffDeployer = new HuffDeployer();
-
     Auth auth;
 
     function setUp() public {
-      auth = Auth(huffDeployer.deploy("auth/Auth"));
+      auth = Auth(HuffDeployer.deploy("auth/Auth"));
+    }
 
+    function testGetOwner() public {
+      address owner = auth.owner();
+      // assertEq(address(this), auth.owner());
     }
 
     function testSetOwner(address owner) public {

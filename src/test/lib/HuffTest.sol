@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.13;
 
-import {Test} from "forge-std/Test.sol";
-import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
+import "forge-std/Test.sol";
+import "foundry-huff/HuffDeployer.sol";
 
 contract HuffTest is Test {
     /// @dev The name of the contract.
@@ -15,6 +15,6 @@ contract HuffTest is Test {
 
     /// @dev Deploy a new contract.
     function deploy() internal returns (address) {
-        return new HuffDeployer().deploy(name);
+        return HuffDeployer.deploy(name);
     }
 }
