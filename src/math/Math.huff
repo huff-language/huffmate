@@ -1,0 +1,125 @@
+#define function sqrt(uint256) pure returns(uint256)
+#define function max(uint256, uint256) pure returns(uint256)
+#define function min(uint256, uint256) pure returns(uint256)
+#define function average(uint256, uint256) pure returns(uint256)
+
+#define macro SQRT() = takes (1) returns (1) {
+    // takes: [number]
+    0x01    // [y, number]
+    dup2    // [guess, y, number]
+    estimate    // [estimate_dest, guess, y, number]
+    jump    // [guess, y, number]
+
+    estimate:
+    add     // [guess + y, number]
+    0x02    // [2, guess + y, number]
+    swap1   // [guess + y, 2, number]
+    div     // [new_guess, number]
+    dup1    // [guess, guess, number]
+    dup3    // [number, guess, guess, number]
+    div     // [number / guess, guess, number]
+
+    // [new_y, guess, number]
+
+    swap1   // [guess, y, number]
+    dup2    // [y, guess, y, number]
+    dup2    // [guess, y, guess, y, number]
+    eq      // [is_equal, guess, y, number]
+    iszero  // [is_not_equal, guess, y, number]
+
+    estimate    // [estimate_jumpdest, is_not_equal, guess, y, number]
+    jumpi   // [guess, y, number]
+
+    swap1   // [y, sqrt_number, number]
+    pop     // [sqrt_number, number]
+    swap1   // [number, sqrt_number]
+    pop     // [sqrt_number]
+}
+
+#define macro MAX() = takes (2) returns (1) {
+    dup2    // [num2, num1, num2]
+    dup2    // [num1, num2, num1, num2]
+    gt      // [is_greater_than, num1, num2]
+
+    greater_than jumpi
+    pop     // [num1]
+
+    greater_than:
+    swap1   // [num1, num2]
+    pop     // [num2]
+}
+
+#define macro MIN() = takes (2) returns (1) {
+    dup2    // [num2, num1, num2]
+    dup2    // [num1, num2, num1, num2]
+    lt      // [is_less_than, num1, num2]
+
+    less_than jumpi
+    pop     // [num1]
+
+    less_than:
+    swap1   // [num1, num2]
+    pop     // [num2]
+}
+
+#define macro AVG() = takes (2) returns (1) {
+    // [num1, num2]
+    dup2    // [num2, num1, num2]
+    dup2    // [num1, num2, num1, num2]
+    and     // [num1 & num2, num1, num2]
+    swap2   // [num1, num2, num1 & num2]
+    xor     // [num1 ^ num2, num1 & num2]
+    add     // [sum]
+    0x02    // [2, sum]
+    swap1   // [sum, 2]
+    div     // [avg]
+}
+
+#define macro SQRT_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload
+    SQRT()
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MAX_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload
+    0x24 calldataload
+    MAX()
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MIN_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload
+    0x24 calldataload
+    MIN()
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro AVG_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload
+    0x24 calldataload
+    AVG()
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xE0 shr
+    dup1 0x677342ce eq sqrt jumpi
+    dup1 0x6d5433e6 eq max jumpi
+    dup1 0x7ae2b5c7 eq min jumpi
+    dup1 0x2b7423ab eq average jumpi
+
+    sqrt:
+        SQRT_WRAPPER()
+    max:
+        MAX_WRAPPER()
+    min:
+        MIN_WRAPPER()
+    average:
+        AVG_WRAPPER()
+}
+
