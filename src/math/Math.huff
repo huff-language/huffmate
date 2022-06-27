@@ -2,6 +2,7 @@
 #define function max(uint256, uint256) pure returns(uint256)
 #define function min(uint256, uint256) pure returns(uint256)
 #define function average(uint256, uint256) pure returns(uint256)
+#define function ceilDiv(uint256, uint256) pure returns(uint256)
 
 #define macro SQRT() = takes (1) returns (1) {
     // takes: [number]
@@ -49,6 +50,27 @@
     pop     // [num2]
 }
 
+#define macro CEIL_DIV() = takes (2) returns (1) {
+    dup1 iszero
+    if_zero jumpi
+
+    0x01    // [1, num1, num2]
+    swap1   // [num1, 1, num1]
+    sub     // [num1 - 1, num2]
+    div
+    0x01
+    add
+    jump_dest jump
+
+    if_zero:
+    pop
+    pop
+    0x00
+
+    jump_dest:
+
+}
+
 #define macro MIN() = takes (2) returns (1) {
     dup2    // [num2, num1, num2]
     dup2    // [num1, num2, num1, num2]
@@ -63,6 +85,7 @@
 }
 
 #define macro AVG() = takes (2) returns (1) {
+    // i just stole this of OZ, i have no idea how it works
     // [num1, num2]
     dup2    // [num2, num1, num2]
     dup2    // [num1, num2, num1, num2]
@@ -106,12 +129,21 @@
     0x20 0x00 return
 }
 
+#define macro CEIL_DIV_WRAPPER() = takes (0) returns (0) {
+    0x24 calldataload
+    0x04 calldataload
+    CEIL_DIV()
+    0x00 mstore
+    0x20 0x00 return
+}
+
 #define macro MAIN() = takes (0) returns (0) {
     0x00 calldataload 0xE0 shr
     dup1 0x677342ce eq sqrt jumpi
     dup1 0x6d5433e6 eq max jumpi
     dup1 0x7ae2b5c7 eq min jumpi
     dup1 0x2b7423ab eq average jumpi
+    dup1 0x9cb35327 eq ceilDiv jumpi
 
     sqrt:
         SQRT_WRAPPER()
@@ -121,5 +153,6 @@
         MIN_WRAPPER()
     average:
         AVG_WRAPPER()
+    ceilDiv:
+        CEIL_DIV_WRAPPER()
 }
-
