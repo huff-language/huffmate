@@ -66,9 +66,9 @@
 
   0x00 calldataload           // [msg.sig]
   caller                      // [msg.sender, msg.sig]
-  IS_AUTHORIZED(nauthed)      // []
-	nauthed:
-    0x00 0x00 revert
+  IS_AUTHORIZED(authed)      // []
+	0x00 0x00 revert
+  authed:
 }
 
 ///
@@ -77,18 +77,22 @@
 /// - IS_AUTHORIZED macro tries to call `canCall` on the authority if the address(authority) is not 0.
 /// - If both canCall returns false and the msg.sender isn't the owner, the nauthed argument will be invoked
 ///
-#define macro IS_AUTHORIZED(nauthed) = takes(2) returns(0) {
+#define macro IS_AUTHORIZED(authed) = takes(2) returns(0) {
   // -------------            --------------------------
   // | OPERATION |            | STACK (POST-OPERATION) |
   // -------------            --------------------------
 
   /* Input */                 // [user, sig]
 
-  // Continue if address(authority) != address(0), otherwise go to owner check
+  // If msg.sender == owner, jump to authed
+  caller                      // [msg.sender]
+  [OWNER] sload               // [owner, msg.sender]
+  eq <authed> jumpi           // [authed]
+
+  // Continue if address(authority) != address(0)
   [AUTHORITY] sload          // [authority, user, sig]
   dup1                       // [authority, authority, user, sig]
-  0x00 eq                    // [authed, authority, user, sig]
-  owner_check jumpi          // [authority, user, sig]
+  0x00 eq post jumpi         // [authority, user, sig]
 
   // Store the auth.canCall arguments in memory at offset 0
   // function canCall(address user, address target, bytes4 functionSig) external view returns (bool)
@@ -108,16 +112,11 @@
   swap5                      // [authority, value, argOffset, argSize, retOffset, retSize] - authority is the target
   0x00                       // [gas, authority, value, argOffset, argSize, retOffset, retSize]
   call                       // [authed]
-  iszero owner_check jumpi   // []
+  <authed> jumpi             // []
 
-  // Jump to nauthed if msg.sender != owner
-  owner_check:
-    caller                      // [msg.sender]
-    [OWNER] sload               // [owner, msg.sender]
-    eq                          // [authed]
-    iszero <nauthed> jumpi   // []
+  // Jump dest for address(0) check
+  post:
 }
-
 
 ///
 /// function setAuthority(Authority newAuthority) public virtual
@@ -140,6 +139,8 @@
   [AUTHORITY_UPDATED_SIG]     // [sig, from, newAuthority]
   0x00 0x00                   // [0, 32, sig, from, newAuthority]
   log3                        // []
+
+  stop
 }
 
 ///
@@ -163,6 +164,8 @@
   [OWNER_UPDATED_SIG]         // [sig, from, newOwner]
   0x00 0x00                   // [0, 32, sig, from, newOwner]
   log3                        // []
+
+  stop
 }
 
 ///
@@ -171,7 +174,16 @@
 #define macro OWNER() = takes (0) returns (0) {
     [OWNER] sload             // [owner]
     0x00 mstore               // []
-    0x14 0x00 return          // []
+    0x20 0x00 return          // []
+}
+
+///
+/// function authority() public returns (address)
+///
+#define macro AUTHORITY() = takes (0) returns (0) {
+    [AUTHORITY] sload         // [authority]
+    0x00 mstore               // []
+    0x20 0x00 return          // []
 }
 
 ///
@@ -183,6 +195,7 @@
     dup1 0x13af4035 eq set_owner jumpi
     dup1 0x7a9e5e4b eq set_authority jumpi
     dup1 0x8da5cb5b eq owner jumpi
+    dup1 0xbf7e214f eq authority jumpi
 
     set_owner:
         SET_OWNER()
@@ -190,4 +203,6 @@
         SET_AUTHORITY()
     owner:
         OWNER()
+    authority:
+        AUTHORITY()
 }
