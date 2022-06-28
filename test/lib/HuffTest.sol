@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
+<<<<<<< HEAD:src/test/lib/HuffTest.sol
 pragma solidity 0.8.13;
+=======
+pragma solidity ^0.8.15;
+>>>>>>> main:test/lib/HuffTest.sol
 
 import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
