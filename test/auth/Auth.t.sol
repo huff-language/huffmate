@@ -54,6 +54,8 @@ contract HuffDeployerTest is Test {
     function testOwnerCanSetOwner() public {
       address new_owner = address(0x50ca1);
       vm.startPrank(OWNER);
+      vm.expectEmit(true, true, true, true);
+      emit OwnerUpdated(OWNER, new_owner);
       auth.setOwner(new_owner);
       vm.stopPrank();
       assertEq(new_owner, auth.owner());
@@ -78,8 +80,27 @@ contract HuffDeployerTest is Test {
     function testOwnerCanSetAuthority() public {
       address new_authority = address(0x50ca1);
       vm.startPrank(OWNER);
+      vm.expectEmit(true, true, true, true);
+      emit AuthorityUpdated(OWNER, new_authority);
       auth.setAuthority(new_authority);
       vm.stopPrank();
       assertEq(new_authority, auth.authority());
+    }
+
+    /// TEST AUTHORITY
+
+    function testAuthoritiesCanSetAuthority() public {
+      // TODO: create roles authority
+
+      // Set the roles authority
+      address new_authority = address(0x50ca1);
+      vm.prank(OWNER);
+      auth.setAuthority(new_authority);
+      assertEq(new_authority, auth.authority());
+
+      // Try to set the owner from the authority
+      // vm.prank(new_authority);
+      // auth.setOwner(new_authority);
+      // assertEq(new_authority, auth.owner());
     }
 }
