@@ -1,5 +1,6 @@
 #define function mulDivDown(uint256,uint256,uint256) pure returns(uint256)
 #define function mulDivUp(uint256,uint256,uint256) pure returns(uint256)
+#define function rpow(uint256,uint256,uint256) pure returns(uint256)
 
 #define constant MEM_PTR = FREE_STORAGE_POINTER()
 
@@ -89,13 +90,139 @@
         0x00 0x00 revert
 }
 
+#define macro RPOW() = takes (0) returns (0) {
+    0x04 calldataload           // [x]
+
+    iszero zero jumpi           // Jump to "zero" if x == 0
+    0x01 default jumpi          // Jump to "default" if x != 0
+
+    zero:
+        0x24 calldataload       // [n]
+
+        iszero zero_inner jumpi // If n == 0 && x == 0, return the scalar (0 ** 0 = 1).
+        zero_default jumpi      // If n != 0 && x == 0, return 0.
+
+        // 0 ** 0 = 1
+        zero_inner:
+            0x44 calldataload   // [scalar, n]
+            0x00 mstore         // Set result = scalar
+            0x20 0x00 return
+        // 0 ** n = 0
+        zero_default:
+            // 0x00 is blank, no need to set it.
+            0x20 0x00 return
+    default:
+        0x02                    // [2]
+        0x24 calldataload       // [n, 2]
+        mod                     // [n % 2]
+        
+        iszero even jumpi       // Set result to scalar for now if n % 2 is even
+        0x01 odd jumpi          // Set result to x for now if n % 2 is odd
+
+        // n % 2 is even
+        even:
+            0x44 calldataload   // [scalar]
+            0x60 mstore        // []
+            0x01 pre_loop jumpi // Continue through default case
+        // n % 2 is odd
+        odd:
+            0x04 calldataload   // [x]
+            0x60 mstore        // []
+            0x01 pre_loop jumpi // Continue through default case
+        pre_loop:
+            0x44 calldataload   // [scalar]
+            0x01 shr            // [scalar >> 1]
+            0x00 mstore         // []
+
+            0x04 calldataload   // [x]
+            0x20 mstore         // []
+
+            0x24 calldataload   // [n]
+            0x40 mstore         // []
+
+            0x01 loop jumpi     // Start loop
+        loop:
+            0x40 mload          // [n]
+            dup1                // [n, n]
+
+            iszero finish jumpi // If n = 0, the loop is finished.
+
+            // Divide n by 2
+            0x01 shr            // [n >> 1]
+            0x40 mstore         // []
+
+            // Revert if x ** 2 will overflow.
+            0x20 mload          // [x]
+            0x80 shr            // [x >> 128]
+            fail jumpi
+
+            // Square x and duplicate it on the stack for use later.
+            0x20 mload          // [x]
+            dup1 mul            // [x * x]
+            dup1                // [x * x, x * x]
+
+            // Add x ** 2 to scalar >> 1
+            0x00 mload          // [scalar >> 1, x * x, x * x]
+            add                 // [(scalar >> 1) + (x * x), x * x]
+
+            // Revert if x ** 2 + scalar >> 1 overflowed
+            swap1               // [x * x, (scalar >> 1) + (x * x)]
+            dup2                // [(scalar >> 1) + (x * x), x * x, (scalar >> 1) + (x * x)]
+            lt fail jumpi       // [(scalar >> 1) + (x * x)]
+
+            // Set x to ((scalar >> 1) + (x * x)) / scalar
+            0x44 calldataload   // [scalar, (scalar >> 1) + (x * x)]
+            swap1               // [(scalar >> 1) + (x * x), scalar]
+            div                 // [((scalar >> 1) + (x * x)) / scalar]
+            0x20 mstore         // []
+
+            0x02                // [2]
+            0x40 mload          // [n, 2]
+            mod                 // [n % 2]
+
+            // If n is odd, continue logic
+            odd_inner jumpi
+            // If n is even, continue loop
+            0x01 loop jumpi
+        odd_inner:
+            // Multiply x * result
+            0x60 mload          // [result]
+            0x20 mload          // [x, result]
+            mul                 // [x * result]
+            
+            // TODO: z * x overflow check
+            
+            // Round to the nearest number
+            0x00 mload          // [scalar >> 1, x * result]
+            add                 // [(scalar >> 1) + (x * result)]
+
+            // TODO: z * x + half overflow check
+
+            // Scale rounded result
+            0x44 calldataload   // [scalar, (scalar >> 1) + (x * result)]
+            swap1               // [(scalar >> 1) + (x * result), scalar]
+            div                 // [((scalar >> 1) + (x * result)) / scalar]
+            0x60 mstore         // []
+
+            0x01 loop jumpi     // Continue loop
+        // Return result
+        finish:
+            0x20 0x60 return
+        // Revert
+        fail:
+            0x00 0x00 revert
+}
+
 #define macro MAIN() = takes (0) returns (0) {
     0x00 calldataload 0xE0 shr
     dup1 0xb67bee04 eq mulDivDown jumpi
     dup1 0x12bd6ac0 eq mulDivUp   jumpi
+    dup1 0x67b870af eq rpow       jumpi
 
     mulDivDown:
         MUL_DIV_DOWN()
     mulDivUp:
         MUL_DIV_UP()
+    rpow:
+        RPOW()
 }
