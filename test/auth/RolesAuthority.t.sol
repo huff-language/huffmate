@@ -5,8 +5,9 @@ import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
 
 interface RolesAuthority {
-  function hasRole(address, uint8) external returns (bool);
-  function doesRoleHaveCapability(uint8, address, bytes4) external returns (bool);
+  function hasRole(address user, uint8 role) external returns (bool);
+  function doesRoleHaveCapability(uint8 role, address target, bytes4 functionSig) external returns (bool);
+  function canCall(address user, address target, bytes4 functionSig) external returns (bool);
 }
 
 contract RolesAuthorityTest is Test {
@@ -41,5 +42,10 @@ contract RolesAuthorityTest is Test {
     /// @notice Test checking if a role has a capability.
     function testRoleHasCapability(uint8 role, address user, bytes4 sig) public {
       assertEq(false, roleAuth.doesRoleHaveCapability(role, user, sig));
+    }
+
+    /// @notice Test checking if a user can call a target.
+    function testCanCall(address user, address target, bytes4 sig) public {
+      assertEq(false, roleAuth.canCall(user, target, sig));
     }
 }

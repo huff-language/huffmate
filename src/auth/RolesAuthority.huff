@@ -5,6 +5,7 @@
 /* Interface */
 #define function hasRole(address, uint8) view returns (bool)
 #define function doesRoleHaveCapability(uint8, address, bytes4) nonpayable returns (bool)
+#define function canCall(address, address, bytes4) nonpayable returns (bool)
 
 /* Events */
 #define event UserRoleUpdated(address indexed user, uint8 indexed role, bool enabled)
@@ -47,12 +48,45 @@
 /* Checks if a Role has a Capability */
 #define macro ROLE_CAPABILITY() = takes (0) returns (0) {
   0x44 calldataload                  // [sig]
-  0x24 calldataload                  // [user, sig]
+  0x24 calldataload                  // [target, sig]
   GET_ROLE_FOR_CAPABILITY()          // [role]
   0x04 calldataload                  // [input, role]
   shr 0x01 and                       // [authed]
   0x00 mstore                        // []
   0x20 0x00 return                   // []
+}
+
+/* Helper to get if a capability is public */
+#define macro IS_CAPABILITY_PUBLIC() = takes (2) returns (1) {
+  LOAD_ELEMENT_FROM_KEYS(0x00)       // [public]
+}
+
+/* Checks if a user can call a function on a given address */
+/* ie, does the user have a role with the respective capability */
+#define macro CAN_CALL() = takes (0) returns (0) {
+  // Is the capability public
+  // return isCapabilityPublic[target][functionSig]
+  0x44 calldataload                  // [sig]
+  0x24 calldataload                  // [target, sig]
+  IS_CAPABILITY_PUBLIC()             // [public]
+  approved jumpi                     // []
+
+  // Check if the user has the role for the capability
+  // return bytes32(0) != getUserRoles[user] & getRolesWithCapability[target][functionSig]
+  0x04 calldataload                  // [account]
+  GET_ROLES_FOR_ACCOUNT()            // [roles]
+  0x44 calldataload                  // [sig, roles]
+  0x24 calldataload                  // [target, sig, roles]
+  GET_ROLE_FOR_CAPABILITY()          // [capabilities, roles]
+  and approved jumpi                 // []
+
+  // Return false otherwise
+  false 0x00 mstore
+  0x20 0x00 return
+
+  approved:
+    true 0x00 mstore
+    0x20 0x00 return
 }
 
 
@@ -62,11 +96,14 @@
     0x00 calldataload 0xe0 shr
     dup1 0xea7ca276 eq has_role jumpi
     dup1 0xb4bad06a eq role_capability jumpi
+    dup1 0xb7009613 eq can_call jumpi
 
     has_role:
       HAS_ROLE()
     role_capability:
       ROLE_CAPABILITY()
+    can_call:
+      CAN_CALL()
 }
 
 
