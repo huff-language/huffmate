@@ -190,9 +190,18 @@
             0x20 mload          // [x, result]
             mul                 // [x * result]
             dup1                // [x * result, x * result]
-            
-            // TODO: z * x overflow check
-            
+            dup1                // [x * result, x * result, x * result]
+
+            // Check if x * result overflowed
+            0x20 mload          // [x, x * result, x * result, x * result]
+            swap1               // [x * result, x, x * result, x * result]
+            div                 // [x * result / x, x * result, x * result]
+            0x60 mload          // [result, x * result / x, x * result, x * result]
+            eq iszero           // [result != (x * result / x), x * result, x * result]
+            0x20 mload          // [x, result != (x * result / x), x * result, x * result]
+            iszero iszero       // [x != 0, result != (x * result / x), x * result, x * result]
+            and fail jumpi      // Revert if x * result overflowed
+
             // Round to the nearest number
             0x00 mload          // [scalar >> 1, x * result, x * result]
             add                 // [(scalar >> 1) + (x * result), x * result]
