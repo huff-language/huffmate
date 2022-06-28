@@ -1,5 +1,11 @@
+/* Interface */
+#define function isAuthorized(address,bytes4) view returns (bool)
+#define function setAuthority(address) nonpayable returns ()
+#define function setOwner(address) nonpayable returns ()
+#define function owner() view returns (address)
+#define function authority() view returns (address)
 
-// Events
+/* Events */
 #define event OwnerUpdated(address indexed user, address indexed newOwner)
 #define event AuthorityUpdated(address indexed user, address indexed newAuthority)
 
@@ -11,9 +17,7 @@
 #define constant OWNER = FREE_STORAGE_POINTER()
 #define constant AUTHORITY = FREE_STORAGE_POINTER()
 
-///
-/// constructor(address _owner, Authority _authority)
-///
+/* CONSTRUCTOR */
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
   // -------------            --------------------------
   // | OPERATION |            | STACK (POST-OPERATION) |
@@ -56,14 +60,8 @@
   log3                        // []
 }
 
-///
-/// modifier requiresAuth() virtual
-///
+/* modifier requiresAuth() virtual */
 #define macro REQUIRES_AUTH() = takes(0) returns(0) {
-  // -------------            --------------------------
-  // | OPERATION |            | STACK (POST-OPERATION) |
-  // -------------            --------------------------
-
   0x00 calldataload           // [msg.sig]
   caller                      // [msg.sender, msg.sig]
   IS_AUTHORIZED(authed)      // []
@@ -71,19 +69,9 @@
   authed:
 }
 
-///
-/// function isAuthorized(address user, bytes4 functionSig) internal view virtual returns (bool)
-///
-/// - IS_AUTHORIZED macro tries to call `canCall` on the authority if the address(authority) is not 0.
-/// - If both canCall returns false and the msg.sender isn't the owner, the nauthed argument will be invoked
-///
+/* Is the caller authorized? */
+/* tries to call `canCall` on the authority if the address(authority) is not 0 */
 #define macro IS_AUTHORIZED(authed) = takes(2) returns(0) {
-  // -------------            --------------------------
-  // | OPERATION |            | STACK (POST-OPERATION) |
-  // -------------            --------------------------
-
-  /* Input */                 // [user, sig]
-
   // If msg.sender == owner, jump to authed
   caller                      // [msg.sender]
   [OWNER] sload               // [owner, msg.sender]
@@ -118,14 +106,8 @@
   post:
 }
 
-///
-/// function setAuthority(Authority newAuthority) public virtual
-///
+/* Set the Authority */
 #define macro SET_AUTHORITY() = takes(0) returns(0) {
-  // -------------            --------------------------
-  // | OPERATION |            | STACK (POST-OPERATION) |
-  // -------------            --------------------------
-
   // Check that the caller is authorized
   REQUIRES_AUTH()
 
@@ -143,14 +125,8 @@
   stop
 }
 
-///
-/// function setOwner(address newOwner) public virtual
-///
+/* Set the Owner */
 #define macro SET_OWNER() = takes(0) returns(0) {
-  // -------------            --------------------------
-  // | OPERATION |            | STACK (POST-OPERATION) |
-  // -------------            --------------------------
-
   // Check that the caller is authorized
   REQUIRES_AUTH()
 
@@ -168,27 +144,21 @@
   stop
 }
 
-///
-/// function owner() public returns (address)
-///
+/* Get the contract Owner */
 #define macro OWNER() = takes (0) returns (0) {
     [OWNER] sload             // [owner]
     0x00 mstore               // []
     0x20 0x00 return          // []
 }
 
-///
-/// function authority() public returns (address)
-///
+/* Get the contract Authority */
 #define macro AUTHORITY() = takes (0) returns (0) {
     [AUTHORITY] sload         // [authority]
     0x00 mstore               // []
     0x20 0x00 return          // []
 }
 
-///
-/// Main Macro - The contract entrypoint
-///
+/* Main Macro - The contract entrypoint */
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
     0x00 calldataload 0xE0 shr

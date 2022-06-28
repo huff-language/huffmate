@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-// import "forge-std/console.sol";
-
 import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
 
@@ -13,7 +11,7 @@ interface Auth {
   function authority() external returns (address);
 }
 
-contract HuffDeployerTest is Test {
+contract AuthTest is Test {
     Auth auth;
 
     address constant OWNER = address(0x420);
