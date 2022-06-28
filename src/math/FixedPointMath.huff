@@ -122,12 +122,12 @@
         // n % 2 is even
         even:
             0x44 calldataload   // [scalar]
-            0x60 mstore        // []
+            0x60 mstore         // []
             0x01 pre_loop jumpi // Continue through default case
         // n % 2 is odd
         odd:
             0x04 calldataload   // [x]
-            0x60 mstore        // []
+            0x60 mstore         // []
             0x01 pre_loop jumpi // Continue through default case
         pre_loop:
             0x44 calldataload   // [scalar]
@@ -189,14 +189,19 @@
             0x60 mload          // [result]
             0x20 mload          // [x, result]
             mul                 // [x * result]
+            dup1                // [x * result, x * result]
             
             // TODO: z * x overflow check
             
             // Round to the nearest number
-            0x00 mload          // [scalar >> 1, x * result]
-            add                 // [(scalar >> 1) + (x * result)]
+            0x00 mload          // [scalar >> 1, x * result, x * result]
+            add                 // [(scalar >> 1) + (x * result), x * result]
 
-            // TODO: z * x + half overflow check
+            // Check if x ** 2 + scalar >> 1 overflowed
+            dup1                // [(scalar >> 1) + (x * result), (scalar >> 1) + (x * result), x * result]
+            swap2               // [x * result, (scalar >> 1) + (x * result), (scalar >> 1) + (x * result)]
+            swap1               // [(scalar >> 1) + (x * result), x * result, (scalar >> 1) + (x * result)]
+            lt fail jumpi       // Revert if ((scalar >> 1) + (x * result)) < x * result
 
             // Scale rounded result
             0x44 calldataload   // [scalar, (scalar >> 1) + (x * result)]
