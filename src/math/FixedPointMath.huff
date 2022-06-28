@@ -1,0 +1,101 @@
+#define function mulDivDown(uint256,uint256,uint256) pure returns(uint256)
+#define function mulDivUp(uint256,uint256,uint256) pure returns(uint256)
+
+#define constant MEM_PTR = FREE_STORAGE_POINTER()
+
+// https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L34
+#define macro MUL_DIV_DOWN() = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    0x24 calldataload // [y, x]
+    mul               // [x * y]
+    [MEM_PTR]
+    mstore            // []
+
+    0x44 calldataload // [denominator]
+    iszero
+    iszero            // [denominator != 0]
+
+    0x04 calldataload // [x, denominator != 0]
+    iszero            // [x == 0, denominator != 0]
+
+    0x04 calldataload // [x, x == 0, denominator != 0]
+    [MEM_PTR] mload   // [x * y, x, x == 0, denominator != 0]
+    div               // [(x * y) / x, x == 0, denominator != 0]
+
+    0x24 calldataload // [y, (x * y) / x, x == 0, denominator != 0]
+    eq                // [y == (x * y) / x, x == 0, denominator != 0]
+    or                // [y == (x * y) / x | x == 0, denominator != 0]
+    and               
+
+    iszero err jumpi  // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
+
+    0x44 calldataload // [denominator]
+    [MEM_PTR] mload   // [x * y, denominator]
+    div               // [(x * y) / denominator]
+
+    [MEM_PTR] mstore  // []
+
+    // Return 32 byte result stored at [MEM_PTR]
+    0x20 [MEM_PTR] return
+
+    err:
+        0x00 0x00 revert
+}
+
+// https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L53
+#define macro MUL_DIV_UP() = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    0x24 calldataload // [y, x]
+    mul               // [x * y]
+    [MEM_PTR] mstore  // []
+
+    0x44 calldataload // [denominator]
+    iszero
+    iszero            // [denominator != 0]
+
+    0x04 calldataload // [x, denominator != 0]
+    iszero            // [x == 0, denominator != 0]
+
+    0x04 calldataload // [x, x == 0, denominator != 0]
+    [MEM_PTR] mload   // [x * y, x, x == 0, denominator != 0]
+    div               // [(x * y) / x, x == 0, denominator != 0]
+
+    0x24 calldataload // [y, (x * y) / x, x == 0, denominator != 0]
+    eq                // [y == (x * y) / x, x == 0, denominator != 0]
+    or                // [y == (x * y) / x | x == 0, denominator != 0]
+    and               // [y == (x * y) / x | x == 0 & denominator != 0]
+
+    iszero err jumpi  // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
+
+    [MEM_PTR] mload   // [x * y]
+    iszero            // [x * y == 0]
+    iszero            // [x * y != 0]
+
+    0x44 calldataload // [denominator, x * y != 0]
+    0x01              // [1, denominator, x * y != 0]
+    [MEM_PTR] mload   // [x * y, 1, denominator, x * y != 0]
+    sub               // [x * y - 1, denominator, x * y != 0]
+    div               // [x * y - 1 / denominator, x * y != 0]
+    0x01              // [1, x * y - 1 / denominator, x * y != 0]
+    add               // [(x * y - 1 / denominator) + 1, x * y != 0]
+
+    mul               // [((x * y - 1 / denominator) + 1) * (x * y != 0)]
+    [MEM_PTR] mstore  // []
+
+    // Return 32 byte result stored at [MEM_PTR]
+    0x20 [MEM_PTR] return
+
+    err:
+        0x00 0x00 revert
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xE0 shr
+    dup1 0xb67bee04 eq mulDivDown jumpi
+    dup1 0x12bd6ac0 eq mulDivUp   jumpi
+
+    mulDivDown:
+        MUL_DIV_DOWN()
+    mulDivUp:
+        MUL_DIV_UP()
+}
