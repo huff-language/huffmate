@@ -8,8 +8,6 @@
     // takes: [number]
     0x01    // [y, number]
     dup2    // [guess, y, number]
-    estimate    // [estimate_dest, guess, y, number]
-    jump    // [guess, y, number]
 
     estimate:
     add     // [guess + y, number]
