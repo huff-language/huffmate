@@ -9,6 +9,7 @@ interface RolesAuthority {
   function doesRoleHaveCapability(uint8 role, address target, bytes4 functionSig) external returns (bool);
   function canCall(address user, address target, bytes4 functionSig) external returns (bool);
   function setPublicCapability(address target, bytes4 functionSig, bool enabled) external;
+  function setRoleCapability(uint8 role, address target, bytes4 functionSig, bool enabled) external;
 }
 
 contract RolesAuthorityTest is Test {
@@ -53,7 +54,7 @@ contract RolesAuthorityTest is Test {
 
   /// @notice Test setting a public capability.
   function testSetPublicCapability(address caller, address target, bytes4 sig) public {
-    if (caller == OWNER) caller = address(0x50ca111b35);
+    if (caller == OWNER) return;
     vm.startPrank(caller);
     vm.expectRevert();
     roleAuth.setPublicCapability(target, sig, true);
@@ -61,5 +62,17 @@ contract RolesAuthorityTest is Test {
 
     vm.prank(OWNER);
     roleAuth.setPublicCapability(target, sig, true);
+  }
+
+  /// @notice Test setting a capability.
+  function testSetPublicCapability(address caller, uint8 role, address target, bytes4 sig) public {
+    if (caller == OWNER) return;
+    vm.startPrank(caller);
+    vm.expectRevert();
+    roleAuth.setRoleCapability(role, target, sig, true);
+    vm.stopPrank();
+
+    vm.prank(OWNER);
+    roleAuth.setRoleCapability(role, target, sig, true);
   }
 }

@@ -7,6 +7,7 @@
 #define function doesRoleHaveCapability(uint8, address, bytes4) nonpayable returns (bool)
 #define function canCall(address, address, bytes4) nonpayable returns (bool)
 #define function setPublicCapability(address, bytes4, bool) nonpayable returns ()
+#define function setRoleCapability(uint8, address, bytes4, bool) nonpayable returns ()
 
 /* Events */
 #define event UserRoleUpdated(address indexed user, uint8 indexed role, bool enabled)
@@ -91,6 +92,7 @@
 }
 
 /* Set a Public Capability */
+/* NOTE: Requires Auth */
 #define macro SET_PUBLIC_CAPABILITY() = takes (0) returns (0) {
   // Check that the caller is authorized
   REQUIRES_AUTH()
@@ -105,12 +107,72 @@
   0x44 calldataload                  // [value]
   0x24 calldataload                  // [func, value]
   0x04 calldataload                  // [target, func, value]
-  [ROLE_CAPABILITY_UPDATED_SIG]      // [sig, target, func, value]
+  [PUBLIC_CAPABILITY_UPDATED_SIG]    // [sig, target, func, value]
   0x00 0x00                          // [0, 0, sig, target, func, value]
-  log4                               // []
+  log3                               // []
 
   // End Execution
   stop
+}
+
+/* Sets the capability for a role */
+/* NOTE: Requires Auth */
+#define macro SET_ROLE_CAPABILITY() = takes (0) returns (0) {
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Check if enabled
+  0x64 calldataload                    // [value]
+  enable jumpi                         // []
+
+  // Disable the capability
+  disable:
+    // Get the current roles with the capability
+    0x44 calldataload                  // [sig]
+    0x24 calldataload                  // [target, sig]
+    GET_ROLE_FOR_CAPABILITY()          // [roles]
+
+    // Shift 1 left the role
+    0x01 0x04 calldataload shl         // [role, roles]
+    not                                // [others, roles]
+    and                                // [updated]
+
+    // Store the new capability
+    0x44 calldataload                  // [sig, updated]
+    0x24 calldataload                  // [target, sig, updated]
+    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+    // Jump to the emit log label
+    emit_log jump
+
+  // Enable the capability
+  enable:
+    // Get the current roles with the capability
+    0x44 calldataload                  // [sig]
+    0x24 calldataload                  // [target, sig]
+    GET_ROLE_FOR_CAPABILITY()          // [roles]
+
+    // Shift 1 left the role
+    0x01 0x04 calldataload shl         // [role, roles]
+    or                                 // [capabilies]
+
+    // Store the new capability
+    0x44 calldataload                  // [sig, capabilies]
+    0x24 calldataload                  // [target, sig, capabilies]
+    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+  // Emit the capability updated event
+  emit_log:
+    0x64 calldataload                  // [enabled]
+    0x44 calldataload                  // [func, enabled]
+    0x24 calldataload                  // [target, func, enabled]
+    0x04 calldataload                  // [role, target, func, enabled]
+    [ROLE_CAPABILITY_UPDATED_SIG]      // [sig, role, target, func, enabled]
+    0x00 0x00                          // [0, 0, sig, role, target, func, enabled]
+    log4                               // []
+
+    // End Execution
+    stop
 }
 
 /* Main Macro - The contract entrypoint */
@@ -121,6 +183,7 @@
     dup1 0xb4bad06a eq role_capability jumpi
     dup1 0xb7009613 eq can_call jumpi
     dup1 0xc6b0263e eq set_public_capability jumpi
+    dup1 0x7d40583d eq set_role_capability jumpi
 
     has_role:
       HAS_ROLE()
@@ -130,6 +193,8 @@
       CAN_CALL()
     set_public_capability:
       SET_PUBLIC_CAPABILITY()
+    set_role_capability:
+      SET_ROLE_CAPABILITY()
 }
 
 
