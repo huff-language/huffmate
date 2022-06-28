@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.10;
+pragma solidity ^0.8.15;
 
 import {Test} from "forge-std/Test.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
@@ -15,6 +15,6 @@ contract HuffTest is Test {
 
     /// @dev Deploy a new contract.
     function deploy() internal returns (address) {
-        return new HuffDeployer().deploy(name);
+        return HuffDeployer.deploy(name);
     }
 }
