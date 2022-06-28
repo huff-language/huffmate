@@ -8,6 +8,7 @@
 #define function canCall(address, address, bytes4) nonpayable returns (bool)
 #define function setPublicCapability(address, bytes4, bool) nonpayable returns ()
 #define function setRoleCapability(uint8, address, bytes4, bool) nonpayable returns ()
+#define function setUserRole(address, uint8, bool) nonpayable returns ()
 
 /* Events */
 #define event UserRoleUpdated(address indexed user, uint8 indexed role, bool enabled)
@@ -175,6 +176,63 @@
     stop
 }
 
+/* Sets an accounts role */
+#define macro SET_ACCOUNT_ROLE() = takes (0) returns (0) {
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Check if enabled
+  0x44 calldataload                    // [enabled]
+  enable jumpi                         // []
+
+  // Disable the role
+  disable:
+    // Get the account roles
+    0x04 calldataload                  // [account]
+    GET_ROLES_FOR_ACCOUNT()            // [roles]
+
+    // Shift 1 left the role
+    0x01 0x24 calldataload shl         // [new_role, roles]
+    not                                // [others, roles]
+    and                                // [updated]
+
+    // Store the new roles
+    0x04 calldataload                  // [account, updated]
+    [USER_ROLES_LOCATION]              // [key, account, updated]
+    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+    // Jump to the emit log label
+    emit_log jump
+
+  // Enable the role
+  enable:
+    // Get the account roles
+    0x04 calldataload                  // [account]
+    GET_ROLES_FOR_ACCOUNT()            // [roles]
+
+    // Shift 1 left the role
+    0x01 0x24 calldataload shl         // [new_role, roles]
+    or                                 // [updated]
+
+    // Store the new roles
+    0x04 calldataload                  // [account, updated]
+    [USER_ROLES_LOCATION]              // [key, account, updated]
+    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+
+  // Emit the user role updated event
+  emit_log:
+    0x44 calldataload                  // [enabled]
+    0x24 calldataload                  // [role, enabled]
+    0x04 calldataload                  // [account, role, enabled]
+    [USER_ROLE_UPDATED_SIG]            // [sig, account, role, enabled]
+    0x00 0x00                          // [0, 0, sig, account, role, enabled]
+    log3                               // []
+
+    // End Execution
+    stop
+}
+
 /* Main Macro - The contract entrypoint */
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
@@ -184,6 +242,7 @@
     dup1 0xb7009613 eq can_call jumpi
     dup1 0xc6b0263e eq set_public_capability jumpi
     dup1 0x7d40583d eq set_role_capability jumpi
+    dup1 0x67aff484 eq set_account_role jumpi
 
     has_role:
       HAS_ROLE()
@@ -195,6 +254,8 @@
       SET_PUBLIC_CAPABILITY()
     set_role_capability:
       SET_ROLE_CAPABILITY()
+    set_account_role:
+      SET_ACCOUNT_ROLE()
 }
 
 
