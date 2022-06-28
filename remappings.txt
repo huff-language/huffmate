@@ -1,3 +1,3 @@
 forge-std/=lib/forge-std/src/
 foundry-huff/=lib/foundry-huff/src/
-solmate/=lib/solmate/src
+solmate/=lib/solmate/src/
