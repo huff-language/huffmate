@@ -45,7 +45,7 @@
     sstore                      // []
 }
 
-#define macro STORE_ELEMENT_FROM_KEYS(mem_ptr) = takes(2) returns (0) {
+#define macro STORE_ELEMENT_FROM_KEYS(mem_ptr) = takes(3) returns (0) {
     // Input stack: [key1, key2, value]
     GET_SLOT_FROM_KEYS(<mem_ptr>) // [slot, value]
     sstore                      // []

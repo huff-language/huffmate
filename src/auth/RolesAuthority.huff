@@ -6,6 +6,7 @@
 #define function hasRole(address, uint8) view returns (bool)
 #define function doesRoleHaveCapability(uint8, address, bytes4) nonpayable returns (bool)
 #define function canCall(address, address, bytes4) nonpayable returns (bool)
+#define function setPublicCapability(address, bytes4, bool) nonpayable returns ()
 
 /* Events */
 #define event UserRoleUpdated(address indexed user, uint8 indexed role, bool enabled)
@@ -89,6 +90,28 @@
     0x20 0x00 return
 }
 
+/* Set a Public Capability */
+#define macro SET_PUBLIC_CAPABILITY() = takes (0) returns (0) {
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Set the capability to the passed in value
+  0x44 calldataload                  // [value]
+  0x24 calldataload                  // [sig, value]
+  0x04 calldataload                  // [target, sig, value]
+  STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+  // Emit the capability updated event
+  0x44 calldataload                  // [value]
+  0x24 calldataload                  // [func, value]
+  0x04 calldataload                  // [target, func, value]
+  [ROLE_CAPABILITY_UPDATED_SIG]      // [sig, target, func, value]
+  0x00 0x00                          // [0, 0, sig, target, func, value]
+  log4                               // []
+
+  // End Execution
+  stop
+}
 
 /* Main Macro - The contract entrypoint */
 #define macro MAIN() = takes(0) returns (0) {
@@ -97,6 +120,7 @@
     dup1 0xea7ca276 eq has_role jumpi
     dup1 0xb4bad06a eq role_capability jumpi
     dup1 0xb7009613 eq can_call jumpi
+    dup1 0xc6b0263e eq set_public_capability jumpi
 
     has_role:
       HAS_ROLE()
@@ -104,6 +128,8 @@
       ROLE_CAPABILITY()
     can_call:
       CAN_CALL()
+    set_public_capability:
+      SET_PUBLIC_CAPABILITY()
 }
 
 
