@@ -13,8 +13,8 @@
 #define function storeElement(bytes32 key, bytes32 value) view returns ()
 
 // Stores the value for the given keys
-// sig: 0x2da69afb
-#define function storeElement(bytes32 key1, bytes32 key2, bytes32 value) view returns ()
+// sig: 0x2fdb44d8
+#define function storeElementFromKeys(bytes32 key1, bytes32 key2, bytes32 value) view returns ()
 
 #define constant LOCATION = FREE_STORAGE_POINTER()
 
@@ -59,7 +59,7 @@
     dup1 0x437b8ad6 eq load_element jumpi
     dup1 0xf268de10 eq load_element_from_keys jumpi
     dup1 0x376caf9f eq store_element jumpi
-    dup1 0x2da69afb eq store_element_from_keys jumpi
+    dup1 0x2fdb44d8 eq store_element_from_keys jumpi
 
     load_element:
         GET()
