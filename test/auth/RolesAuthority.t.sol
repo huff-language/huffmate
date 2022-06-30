@@ -66,15 +66,21 @@ contract RolesAuthorityTest is Test {
   }
 
   /// @notice Test setting a capability.
-  function testSetPublicCapability(address caller, uint8 role, address target, bytes4 sig) public {
+  function testSetRoleCapability(address caller, uint8 role, address target, bytes4 sig) public {
     if (caller == OWNER) return;
     vm.startPrank(caller);
     vm.expectRevert();
     roleAuth.setRoleCapability(role, target, sig, true);
     vm.stopPrank();
 
+    // The role shouldn't have the capability
+    assertEq(false, roleAuth.doesRoleHaveCapability(role, target, sig));
+
     vm.prank(OWNER);
     roleAuth.setRoleCapability(role, target, sig, true);
+
+    // Verify that the role has the given capability
+    assertEq(true, roleAuth.doesRoleHaveCapability(role, target, sig));
   }
 
   /// @notice Test setting a user's role.
@@ -85,7 +91,11 @@ contract RolesAuthorityTest is Test {
     roleAuth.setUserRole(user, role, true);
     vm.stopPrank();
 
+    assertEq(roleAuth.hasRole(user, role), false);
+
     vm.prank(OWNER);
     roleAuth.setUserRole(user, role, true);
+
+    assertEq(roleAuth.hasRole(user, role), true);
   }
 }
