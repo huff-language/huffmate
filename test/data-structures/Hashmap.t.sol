@@ -16,7 +16,7 @@ contract HashmapTest is Test {
 
   function setUp() public {
     // Create an Instantiable Hashmap
-    hmap = Hashmap(HuffDeployer.deploy("data-structures/mocks/InstantiableHashmap"));
+    hmap = Hashmap(HuffDeployer.deploy("data-structures/mocks/InstantiatedHashmap"));
   }
 
     // bytes memory owner = abi.encode(OWNER);
