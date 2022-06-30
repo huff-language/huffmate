@@ -19,10 +19,6 @@ contract HashmapTest is Test {
     hmap = Hashmap(HuffDeployer.deploy("data-structures/mocks/InstantiatedHashmap"));
   }
 
-    // bytes memory owner = abi.encode(OWNER);
-    // bytes memory authority = abi.encode(INIT_AUTHORITY);
-    // bytes.concat(owner, authority);
-
   /// @notice Test getting a vlue for a key
   function testGetKey(bytes32 key) public {
     bytes32 element = hmap.loadElement(key);

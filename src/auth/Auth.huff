@@ -80,16 +80,22 @@
   // Continue if address(authority) != address(0)
   [AUTHORITY] sload          // [authority, user, sig]
   dup1                       // [authority, authority, user, sig]
-  0x00 eq post jumpi         // [authority, user, sig]
+  iszero post jumpi          // [authority, user, sig]
+
+  // WARN: If an account has no code, the call will unintendedly return successfully
+  dup1 extcodesize      // [code, authority, user, sig]
+  iszero post jumpi     // [authority, user, sig]
 
   // Store the auth.canCall arguments in memory at offset 0
   // function canCall(address user, address target, bytes4 functionSig) external view returns (bool)
+  0xb7009613 0xe0 shl        // [bytes4(canCall), authority, user, sig]
+  0x00 mstore                // [authority, user, sig]
   swap1                      // [user, authority, sig]
-  0x00 mstore                // [authority, sig]
+  0x04 mstore                // [authority, sig]
   address                    // [address(this), authority, sig]
-  0x20 mstore                // [authority, sig]
+  0x24 mstore                // [authority, sig]
   swap1                      // [sig, authority]
-  0x40 mstore                // [authority]
+  0x44 mstore                // [authority]
 
   // Call auth.canCall
   0x00                       // [retOffset, authority] - store the return data at memory offset 0
@@ -98,8 +104,14 @@
   0x00                       // [value, argOffset, argSize, retOffset, authority]
   0x20                       // [retSize, value, argOffset, argSize, retOffset, authority] - returns a bool in one slot
   swap5                      // [authority, value, argOffset, argSize, retOffset, retSize] - authority is the target
-  0x00                       // [gas, authority, value, argOffset, argSize, retOffset, retSize]
-  call                       // [authed]
+  gas                        // [gas, authority, value, argOffset, argSize, retOffset, retSize]
+  call                       // [call_reverted?]
+  iszero post jumpi          // []
+
+  // Get the return data
+  0x20 0x00 0x00 0x00        // [destOffset, offset, size] - memory offset and size to get the return data from
+  returndatacopy             // []
+  0x00 mload                 // [retData]
   <authed> jumpi             // []
 
   // Jump dest for address(0) check
