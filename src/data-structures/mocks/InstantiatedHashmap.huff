@@ -61,6 +61,9 @@
     dup1 0x376caf9f eq store_element jumpi
     dup1 0x2fdb44d8 eq store_element_from_keys jumpi
 
+    // Revert if otherwise
+    0x00 0x00 revert
+
     load_element:
         GET()
     load_element_from_keys:

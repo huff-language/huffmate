@@ -237,12 +237,21 @@
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
     0x00 calldataload 0xe0 shr
-    dup1 0xea7ca276 eq has_role jumpi
+    dup1 0x95a8c58d eq has_role jumpi
     dup1 0xb4bad06a eq role_capability jumpi
     dup1 0xb7009613 eq can_call jumpi
     dup1 0xc6b0263e eq set_public_capability jumpi
     dup1 0x7d40583d eq set_role_capability jumpi
     dup1 0x67aff484 eq set_account_role jumpi
+
+    // Auth Sigs
+    dup1 0x13af4035 eq set_owner jumpi
+    dup1 0x7a9e5e4b eq set_authority jumpi
+    dup1 0x8da5cb5b eq owner jumpi
+    dup1 0xbf7e214f eq authority jumpi
+
+    // Revert if no signatures match
+    0x00 0x00 revert
 
     has_role:
       HAS_ROLE()
@@ -256,6 +265,15 @@
       SET_ROLE_CAPABILITY()
     set_account_role:
       SET_ACCOUNT_ROLE()
+
+    set_owner:
+        SET_OWNER()
+    set_authority:
+        SET_AUTHORITY()
+    owner:
+        OWNER()
+    authority:
+        AUTHORITY()
 }
 
 
