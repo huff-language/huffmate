@@ -7,6 +7,7 @@ import "../lib/HuffTest.sol";
 interface IFixedPointMath {
     function mulDivDown(uint256,uint256,uint256) external pure returns(uint256);
     function mulDivUp(uint256,uint256,uint256) external pure returns(uint256);
+    function rpow(uint256,uint256,uint256) external pure returns(uint256);
 }
 
 contract FixedPointMathTest is HuffTest {
@@ -128,5 +129,12 @@ contract FixedPointMathTest is HuffTest {
 
     function testFailMulDivUpZeroDenominator(uint256 x, uint256 y) public view {
         math.mulDivUp(x, y, 0);
+    }
+
+    function testRpow() public {
+        assertEq(math.rpow(2e27, 2, 1e27), 4e27);
+        assertEq(math.rpow(2e18, 2, 1e18), 4e18);
+        assertEq(math.rpow(2e8, 2, 1e8), 4e8);
+        assertEq(math.rpow(8, 3, 1), 512);
     }
 }
