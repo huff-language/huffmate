@@ -1,3 +1,8 @@
+/// @title Auth
+/// @author Andreas Bigger
+/// @notice An Authority module based off <https://github.com/Rari-Capital/solmate/blob/main/src/auth/Auth.sol>
+/// @license Apache License, Version 2.0
+
 /* Interface */
 #define function isAuthorized(address,bytes4) view returns (bool)
 #define function setAuthority(address) nonpayable returns ()
