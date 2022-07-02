@@ -2,7 +2,7 @@
 
 # huff-lib • [![ci](https://github.com/pentagonxyz/huff-lib/actions/workflows/ci.yaml/badge.svg)](https://github.com/pentagonxyz/huff-lib/actions/workflows/ci.yaml) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) ![Discord](https://img.shields.io/discord/980519274600882306)
 
-> `huff-lib` is a set of **modern** & **opinionated** [Huff](https://github.com/huff-language) contracts.
+A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
 ## Contracts
 
