@@ -34,8 +34,6 @@
 #define macro SAFE_MUL() = takes (2) returns (1) {
     // input stack              // [num1, num2]
     dup1                        // [num1, num1, num2]
-    iszero                      // [is_zero, num1, num2]
-    iszero                      // [is_not_zero, num1, num2]
     is_not_zero jumpi           // [num1, num2]
         mul                     // [result]
         0x01 is_not_overflow jumpi
