@@ -16,14 +16,12 @@ interface SafeMath {
 
 contract MathTest is DSTest {
     Vm vm = Vm(HEVM_ADDRESS);
-    ///@notice create a new instance of HuffDeployer
-    HuffDeployer huffDeployer = new HuffDeployer();
 
     SafeMath safeMath;
 
     function setUp() public {
         ///@notice deploy a new instance of ISimplestore by passing in the address of the deployed Huff contract
-        safeMath = SafeMath(huffDeployer.deploy("math/SafeMath"));
+        safeMath = SafeMath(HuffDeployer.deploy("math/SafeMath"));
     }
 
     function testSafeAdd() public {
