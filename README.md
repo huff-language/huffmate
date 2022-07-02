@@ -59,6 +59,7 @@ npm install @pentagonxyz/huff-lib
 These contracts were inspired by or directly modified from many sources, primarily:
 
 - [solmate](https://github.com/Rari-Capital/solmate)
+- [huff-examples](https://github.com/huff-language/huff-examples)
 - [Gnosis](https://github.com/gnosis/gp-v2-contracts)
 - [Uniswap](https://github.com/Uniswap/uniswap-lib)
 - [Dappsys](https://github.com/dapphub/dappsys)
