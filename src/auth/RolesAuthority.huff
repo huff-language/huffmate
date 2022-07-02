@@ -1,3 +1,8 @@
+/// @title Roles Authority
+/// @author Andreas Bigger
+/// @notice A Roles Authority module based off <https://github.com/Rari-Capital/solmate/blob/main/src/auth/authorities/RolesAuthority.sol>
+/// @license Apache License, Version 2.0
+
 /* Imports */
 #include "./Auth.huff"
 #include "../data-structures/Hashmap.huff"
