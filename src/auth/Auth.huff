@@ -1,0 +1,193 @@
+/* Interface */
+#define function isAuthorized(address,bytes4) view returns (bool)
+#define function setAuthority(address) nonpayable returns ()
+#define function setOwner(address) nonpayable returns ()
+#define function owner() view returns (address)
+#define function authority() view returns (address)
+
+/* Events */
+#define event OwnerUpdated(address indexed user, address indexed newOwner)
+#define event AuthorityUpdated(address indexed user, address indexed newAuthority)
+
+// Event Signatures
+#define constant AUTHORITY_UPDATED_SIG = 0xa3396fd7f6e0a21b50e5089d2da70d5ac0a3bbbd1f617a93f134b76389980198
+#define constant OWNER_UPDATED_SIG = 0x8292fce18fa69edf4db7b94ea2e58241df0ae57f97e0a6c9b29067028bf92d76
+
+// Storage Slots
+#define constant OWNER = FREE_STORAGE_POINTER()
+#define constant AUTHORITY = FREE_STORAGE_POINTER()
+
+/* CONSTRUCTOR */
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+  // -------------            --------------------------
+  // | OPERATION |            | STACK (POST-OPERATION) |
+  // -------------            --------------------------
+
+  // Copy the owner into memory
+  0x20                        // [size] - byte size to copy
+  0x40 codesize sub           // [offset, size] - offset in the code to copy from
+  0x00                        // [mem, offset, size] - offset in memory to copy to
+  codecopy                    // []
+
+  // Copy the authority into memory
+  0x20                        // [size] - byte size to copy
+  0x20 codesize sub           // [offset, size] - offset in the code to copy from
+  0x20                        // [mem, offset, size] - offset in memory to copy to
+  codecopy                    // []
+
+  // Set the new owner
+  0x00 mload                  // [owner]
+  dup1                        // [owner, owner]
+  [OWNER]                     // [OWNER, owner, owner]
+  sstore                      // [owner]
+
+  // Set the new Authority
+  0x20 mload                  // [authority, owner]
+  dup1                        // [authority, authority, owner]
+  [AUTHORITY]                 // [AUTHORITY, authority, authority, owner]
+  sstore                      // [authority, owner]
+
+  // Emit the authority updated event
+  caller                      // [from, authority, owner]
+  [AUTHORITY_UPDATED_SIG]     // [sig, from, authority, owner]
+  0x00 0x00                   // [0, 0, sig, from, authority, owner]
+  log3                        // [owner]
+
+  // Emit the owner updated event
+  caller                      // [from, owner]
+  [OWNER_UPDATED_SIG]         // [sig, from, owner]
+  0x00 0x00                   // [0, 0, sig, from, owner]
+  log3                        // []
+}
+
+/* modifier requiresAuth() virtual */
+#define macro REQUIRES_AUTH() = takes(0) returns(0) {
+  0x00 calldataload           // [msg.sig]
+  caller                      // [msg.sender, msg.sig]
+  IS_AUTHORIZED(authed)      // []
+	0x00 0x00 revert
+  authed:
+}
+
+/* Is the caller authorized? */
+/* tries to call `canCall` on the authority if the address(authority) is not 0 */
+#define macro IS_AUTHORIZED(authed) = takes(2) returns(0) {
+  // If msg.sender == owner, jump to authed
+  caller                      // [msg.sender]
+  [OWNER] sload               // [owner, msg.sender]
+  eq <authed> jumpi           // [authed]
+
+  // Continue if address(authority) != address(0)
+  [AUTHORITY] sload          // [authority, user, sig]
+  dup1                       // [authority, authority, user, sig]
+  iszero post jumpi          // [authority, user, sig]
+
+  // WARN: If an account has no code, the call will unintendedly return successfully
+  dup1 extcodesize      // [code, authority, user, sig]
+  iszero post jumpi     // [authority, user, sig]
+
+  // Store the auth.canCall arguments in memory at offset 0
+  // function canCall(address user, address target, bytes4 functionSig) external view returns (bool)
+  0xb7009613 0xe0 shl        // [bytes4(canCall), authority, user, sig]
+  0x00 mstore                // [authority, user, sig]
+  swap1                      // [user, authority, sig]
+  0x04 mstore                // [authority, sig]
+  address                    // [address(this), authority, sig]
+  0x24 mstore                // [authority, sig]
+  swap1                      // [sig, authority]
+  0x44 mstore                // [authority]
+
+  // Call auth.canCall
+  0x00                       // [retOffset, authority] - store the return data at memory offset 0
+  0x60                       // [argSize, retOffset, authority] - three argument slots
+  0x00                       // [argOffset, argSize, retOffset, authority] - arguments stored in memory at offset 0
+  0x00                       // [value, argOffset, argSize, retOffset, authority]
+  0x20                       // [retSize, value, argOffset, argSize, retOffset, authority] - returns a bool in one slot
+  swap5                      // [authority, value, argOffset, argSize, retOffset, retSize] - authority is the target
+  gas                        // [gas, authority, value, argOffset, argSize, retOffset, retSize]
+  call                       // [call_reverted?]
+  iszero post jumpi          // []
+
+  // Get the return data
+  0x20 0x00 0x00 0x00        // [destOffset, offset, size] - memory offset and size to get the return data from
+  returndatacopy             // []
+  0x00 mload                 // [retData]
+  <authed> jumpi             // []
+
+  // Jump dest for address(0) check
+  post:
+}
+
+/* Set the Authority */
+#define macro SET_AUTHORITY() = takes(0) returns(0) {
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Set the new authority
+  0x04 calldataload           // [newAuthority]
+  dup1                        // [newAuthority, newAuthority]
+  [AUTHORITY] sstore          // [newAuthority]
+
+  // Emit the authority updated event
+  caller                      // [from, newAuthority]
+  [AUTHORITY_UPDATED_SIG]     // [sig, from, newAuthority]
+  0x00 0x00                   // [0, 32, sig, from, newAuthority]
+  log3                        // []
+
+  stop
+}
+
+/* Set the Owner */
+#define macro SET_OWNER() = takes(0) returns(0) {
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Set the new owner
+  0x04 calldataload           // [newOwner]
+  dup1                        // [newOwner, newOwner]
+  [OWNER] sstore              // [newOwner]
+
+  // Emit the owner updated event
+  caller                      // [from, newOwner]
+  [OWNER_UPDATED_SIG]         // [sig, from, newOwner]
+  0x00 0x00                   // [0, 32, sig, from, newOwner]
+  log3                        // []
+
+  stop
+}
+
+/* Get the contract Owner */
+#define macro OWNER() = takes (0) returns (0) {
+    [OWNER] sload             // [owner]
+    0x00 mstore               // []
+    0x20 0x00 return          // []
+}
+
+/* Get the contract Authority */
+#define macro AUTHORITY() = takes (0) returns (0) {
+    [AUTHORITY] sload         // [authority]
+    0x00 mstore               // []
+    0x20 0x00 return          // []
+}
+
+/* Main Macro - The contract entrypoint */
+#define macro MAIN() = takes(0) returns (0) {
+    // Identify which function is being called using the 4 byte function signature
+    0x00 calldataload 0xE0 shr
+    dup1 0x13af4035 eq set_owner jumpi
+    dup1 0x7a9e5e4b eq set_authority jumpi
+    dup1 0x8da5cb5b eq owner jumpi
+    dup1 0xbf7e214f eq authority jumpi
+
+    // Revert if no signatures match
+    0x00 0x00 revert
+
+    set_owner:
+        SET_OWNER()
+    set_authority:
+        SET_AUTHORITY()
+    owner:
+        OWNER()
+    authority:
+        AUTHORITY()
+}
