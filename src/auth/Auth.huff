@@ -179,6 +179,9 @@
     dup1 0x8da5cb5b eq owner jumpi
     dup1 0xbf7e214f eq authority jumpi
 
+    // Revert if no signatures match
+    0x00 0x00 revert
+
     set_owner:
         SET_OWNER()
     set_authority:

@@ -139,9 +139,8 @@ contract AuthTest is Test {
     if (user == OWNER) return;
 
     // Clean Roles Authority
-    rolesAuth.setOwner(OWNER);
-    rolesAuth.setAuthority(OWNER);
     vm.startPrank(OWNER);
+    rolesAuth.setAuthority(OWNER);
     rolesAuth.setPublicCapability(address(auth), bytes4(0x13af4035), false); // setOwner
     rolesAuth.setPublicCapability(address(auth), bytes4(0x7a9e5e4b), false); // setAuthority
     vm.stopPrank();
