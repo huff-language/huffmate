@@ -52,6 +52,37 @@ contract AuthTest is Test {
     ));
   }
 
+  /// @notice Test that a non-matching signature reverts
+  function testNonMatchingSelector(bytes32 callData) public {
+    bytes8[] memory func_selectors = new bytes8[](6);
+    func_selectors[0] = bytes8(hex"13af4035");
+    func_selectors[1] = bytes8(hex"7a9e5e4b");
+    func_selectors[2] = bytes8(hex"8da5cb5b");
+    func_selectors[3] = bytes8(hex"bf7e214f");
+
+    bytes8 func_selector = bytes8(callData >> 0xe0);
+    for (uint256 i = 0; i < 6; i++) {
+      if (func_selector != func_selectors[i]) {
+        return;
+      }
+    }
+
+    address target = address(auth);
+    uint256 OneWord = 0x20;
+    bool success = false;
+    assembly {
+      success := staticcall(
+          gas(),
+          target,
+          add(callData, OneWord),
+          mload(callData),
+          0,
+          0
+      )
+    }
+    assert(!success);
+  }
+
   /// OWNER TESTS
 
   function testGetOwner() public {

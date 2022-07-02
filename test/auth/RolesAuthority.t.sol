@@ -39,7 +39,7 @@ contract RolesAuthorityTest is Test {
   }
 
   /// @notice Test that a non-matching signature reverts
-  function testNonMatchingSignature(bytes32 callData) public {
+  function testNonMatchingSelector(bytes32 callData) public {
     bytes8[] memory func_selectors = new bytes8[](6);
     func_selectors[0] = bytes8(hex"95a8c58d");
     func_selectors[1] = bytes8(hex"b4bad06a");
