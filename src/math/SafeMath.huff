@@ -131,6 +131,8 @@
     dup1 0xb5931f7c eq safe_div jumpi
     dup1 0x62a144d9 eq safe_mod jumpi
 
+    0x00 0x00 revert
+
     safe_add: 
         SAFE_ADD_WRAPPER()
     safe_sub: 
