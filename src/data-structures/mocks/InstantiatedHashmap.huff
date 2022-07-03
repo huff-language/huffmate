@@ -1,0 +1,75 @@
+#include "../Hashmap.huff"
+
+// Returns the slot for the given key.
+// sig: 0x437b8ad6
+#define function loadElement(bytes32) view returns (bytes32)
+
+// Returns the slot by hashing the given keys.
+// sig: 0xf268de10
+#define function loadElementFromKeys(bytes32, bytes32) view returns (bytes32)
+
+// Stores the value for the given key.
+// sig: 0x376caf9f
+#define function storeElement(bytes32 key, bytes32 value) view returns ()
+
+// Stores the value for the given keys
+// sig: 0x2fdb44d8
+#define function storeElementFromKeys(bytes32 key1, bytes32 key2, bytes32 value) view returns ()
+
+#define constant LOCATION = FREE_STORAGE_POINTER()
+
+// Get the value for the given key.
+#define macro GET() = takes(0) returns(0) {
+    0x04 calldataload
+    LOAD_ELEMENT(0x00)
+    0x00 mstore
+    0x20 0x00 return
+}
+
+// Get the value for the given keys.
+#define macro GET_FROM_KEYS() = takes(0) returns(0) {
+    0x24 calldataload
+    0x04 calldataload
+    LOAD_ELEMENT_FROM_KEYS(0x00)
+    0x00 mstore
+    0x20 0x00 return
+}
+
+// Store the value for the given key.
+#define macro STORE() = takes(0) returns(0) {
+    0x24 calldataload
+    0x04 calldataload
+    STORE_ELEMENT(0x00)
+    stop
+}
+
+// Store the value for the given key.
+#define macro STORE_FROM_KEYS() = takes(0) returns(0) {
+    0x44 calldataload
+    0x24 calldataload
+    0x04 calldataload
+    STORE_ELEMENT_FROM_KEYS(0x00)
+    stop
+}
+
+/* Main Macro - The contract entrypoint */
+#define macro MAIN() = takes(0) returns (0) {
+    // Identify which function is being called using the 4 byte function signature
+    0x00 calldataload 0xE0 shr
+    dup1 0x437b8ad6 eq load_element jumpi
+    dup1 0xf268de10 eq load_element_from_keys jumpi
+    dup1 0x376caf9f eq store_element jumpi
+    dup1 0x2fdb44d8 eq store_element_from_keys jumpi
+
+    // Revert if otherwise
+    0x00 0x00 revert
+
+    load_element:
+        GET()
+    load_element_from_keys:
+        GET_FROM_KEYS()
+    store_element:
+        STORE()
+    store_element_from_keys:
+        STORE_FROM_KEYS()
+}
