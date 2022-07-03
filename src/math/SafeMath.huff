@@ -56,10 +56,10 @@
     // input stack          // [num1, num2]
     dup2                    // [num2, num1, num2]
     0x00 swap1              // [num2, 0, num1, num2]
-    gt                      // [not_div_zero, num1, num2]
-    not_div_zero jumpi
+    gt                      // [is_not_div_zero, num1, num2]
+    is_not_div_zero jumpi
         0x00 0x00 revert
-    not_div_zero:
+    is_not_div_zero:
     div                     // [result]
 }
 
@@ -67,10 +67,10 @@
     // input stack          // [num1, num2]
     dup2                    // [num2, num1, num2]
     0x00 swap1              // [num2, 0, num1, num2]
-    gt                      // [not_mod_zero, num1, num2]
-    not_mod_zero jumpi
+    gt                      // [is_not_mod_zero, num1, num2]
+    is_not_mod_zero jumpi
         0x00 0x00 revert
-    not_mod_zero:
+    is_not_mod_zero:
     mod                     // [result]
 }
 
@@ -121,24 +121,20 @@
 // Main
 #define macro MAIN() = takes (0) returns (0) {
     0x00 calldataload 0xE0 shr
-    dup1 0xe6cb9013 eq safeAdd jumpi
-    dup1 0xa293d1e8 eq safeSub jumpi
-    dup1 0xd05c78da eq safeMul jumpi
-    dup1 0xb5931f7c eq safeDiv jumpi
-    dup1 0x62a144d9 eq safeMod jumpi
+    dup1 0xe6cb9013 eq safe_add jumpi
+    dup1 0xa293d1e8 eq safe_sub jumpi
+    dup1 0xd05c78da eq safe_mul jumpi
+    dup1 0xb5931f7c eq safe_div jumpi
+    dup1 0x62a144d9 eq safe_mod jumpi
 
-    safeAdd: 
+    safe_add: 
         SAFE_ADD_WRAPPER()
-
-    safeSub: 
+    safe_sub: 
         SAFE_SUB_WRAPPER()
-        
-    safeMul: 
+    safe_mul: 
         SAFE_MUL_WRAPPER()
-
-    safeDiv:
+    safe_div:
         SAFE_DIV_WRAPPER()
-
-    safeMod:
+    safe_mod:
         SAFE_MOD_WRAPPER()
 }
