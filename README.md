@@ -1,6 +1,6 @@
 <img align="right" width="150" height="150" top="100" src="./assets/huff.jpg">
 
-# huff-lib • [![ci](https://github.com/pentagonxyz/huff-lib/actions/workflows/ci.yaml/badge.svg)](https://github.com/pentagonxyz/huff-lib/actions/workflows/ci.yaml) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) ![Discord](https://img.shields.io/discord/980519274600882306)
+# huffmate • [![ci](https://github.com/pentagonxyz/huffmate/actions/workflows/ci.yaml/badge.svg)](https://github.com/pentagonxyz/huffmate/actions/workflows/ci.yaml) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) ![Discord](https://img.shields.io/discord/980519274600882306)
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
@@ -45,13 +45,13 @@ We **do not give any warranties** and **will not be liable for any loss** incurr
 To install with [**Foundry**](https://github.com/foundry-rs/foundry):
 
 ```sh
-forge install pentagonxyz/huff-lib
+forge install pentagonxyz/huffmate
 ```
 
 To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffle**](https://github.com/trufflesuite/truffle):
 
 ```sh
-npm install @pentagonxyz/huff-lib
+npm install @pentagonxyz/huffmate
 ```
 
 ## Acknowledgements
