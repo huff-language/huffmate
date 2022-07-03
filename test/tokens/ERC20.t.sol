@@ -6,8 +6,8 @@ import "foundry-huff/HuffDeployer.sol";
 
 interface ERC20 {
   /* Metadata */
-  function name() external returns (string);
-  function symbol() external returns (string);
+  function name() external returns (string memory);
+  function symbol() external returns (string memory);
   function decimals() external returns (uint8);
 
   /* Accessors */
@@ -26,20 +26,35 @@ interface ERC20 {
 }
 
 contract ERC20Test is Test {
-  ERC20 buttcoin;
+  ERC20 coin;
 
   // ERC20 Events
   event Transfer(address indexed from, address indexed to, uint256 amount);
   event Approve(address indexed owner, address indexed spender, uint256 amount);
 
+  /// @notice Set up the testing suite
   function setUp() public {
-    erc20 = Hashmap(HuffDeployer.deploy("data-structures/mocks/InstantiatedHashmap"));
+    coin = ERC20(
+      HuffDeployer.deploy_with_args(
+        "tokens/ERC20",
+        bytes.concat(bytes("coin"), bytes("COIN"), abi.encode(8))
+      )
+    );
   }
 
-  /// @notice Test getting a vlue for a key
-  function testGetKey(bytes32 key) public {
-    bytes32 element = hmap.loadElement(key);
-    assertEq(element, bytes32(0));
+  /// @notice Test name metadata
+  function testName() public {
+    assertEq("coin", coin.name());
+  }
+
+  /// @notice Test symbol metadata
+  function testSymbol() public {
+    assertEq("COIN", coin.symbol());
+  }
+
+  /// @notice Test decimals metadata
+  function testDecimals() public {
+    assertEq(20, coin.decimals());
   }
 
 }
