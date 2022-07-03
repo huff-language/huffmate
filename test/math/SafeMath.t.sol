@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "ds-test/test.sol";
-import "forge-std/console.sol";
-import "forge-std/Vm.sol";
+import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
 
 interface SafeMath {
@@ -14,13 +12,10 @@ interface SafeMath {
     function safeMod(uint256,uint256) external pure returns (uint256);
 }
 
-contract MathTest is DSTest {
-    Vm vm = Vm(HEVM_ADDRESS);
-
+contract MathTest is Test {
     SafeMath safeMath;
 
     function setUp() public {
-        ///@notice deploy a new instance of ISimplestore by passing in the address of the deployed Huff contract
         safeMath = SafeMath(HuffDeployer.deploy("math/SafeMath"));
     }
 
