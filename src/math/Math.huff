@@ -81,17 +81,17 @@
 }
 
 #define macro AVG() = takes (2) returns (1) {
-    // i just stole this of OZ, i have no idea how it works
     // [num1, num2]
     dup2    // [num2, num1, num2]
     dup2    // [num1, num2, num1, num2]
     and     // [num1 & num2, num1, num2]
-    swap2   // [num1, num2, num1 & num2]
+    swap2   // [num2, num1, num1 & num2]
+    swap1   // [num1, num2, num1 & num2]
     xor     // [num1 ^ num2, num1 & num2]
+    0x02    // [2, num1 ^ num2, num1 & num2]
+    swap1   // [num1 ^ num2, 2, num1 & num2]
+    div     // [num1 ^ num2 / 2, num1 & num2]
     add     // [sum]
-    0x02    // [2, sum]
-    swap1   // [sum, 2]
-    div     // [avg]
 }
 
 #define macro SQRT_WRAPPER() = takes (0) returns (0) {

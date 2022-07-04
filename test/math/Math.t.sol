@@ -8,6 +8,7 @@ interface Math {
     function sqrt(uint256) external pure returns (uint256);
     function max(uint256,uint256) external pure returns (uint256);
     function min(uint256,uint256) external pure returns (uint256);
+    function average(uint256,uint256) external pure returns (uint256);
 }
 
 contract MathTest is Test {
@@ -67,4 +68,19 @@ contract MathTest is Test {
             assertEq(result, b);
         }
     } 
+
+    // Source: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/e7397844f8dd9b54fb4227b91b20f3bd2e82dab2/contracts/utils/math/Math.sol#L34
+    function average(uint256 a, uint256 b) internal pure returns (uint256) {
+        return (a & b) + (a ^ b) / 2;
+    }
+
+    function testAverage() public {
+        uint256 result = math.average(10, 30);
+        assertEq(result, 20);
+    }
+
+    function testAverage(uint256 a, uint256 b) public {
+        uint256 result = math.average(a, b);
+        assertEq(result, average(a, b));
+    }
 }
