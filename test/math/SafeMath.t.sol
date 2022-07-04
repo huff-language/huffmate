@@ -12,7 +12,7 @@ interface SafeMath {
     function safeMod(uint256,uint256) external pure returns (uint256);
 }
 
-contract MathTest is Test {
+contract SafeMathTest is Test {
     SafeMath safeMath;
 
     function setUp() public {
