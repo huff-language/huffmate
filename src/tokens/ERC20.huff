@@ -1,9 +1,9 @@
 /// @title ERC20.huff
 /// @author Andreas Bigger
-/// @notice 
+/// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
+/// @notice Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol)
 
 /* Imports */
-#include "../auth/Ownable.huff"
 #include "../data-structures/HashMap.huff"
 
 /* Events */
@@ -16,6 +16,7 @@
 #define function name() view returns (string)
 #define function symbol() view returns (string)
 #define function decimals() view returns (uint8)
+#define function DOMAIN_SEPARATOR() view returns (bytes32)
 
 /* Accessors */
 #define function totalSupply() view returns (uint256)
@@ -35,15 +36,55 @@
 #define function constructor(string, string, uint8) nonpayable returns ()
 
 /* Storage Slots */
+#define constant NAME_LOCATION = FREE_STORAGE_POINTER()
+#define constant SYMBOL_LOCATION = FREE_STORAGE_POINTER()
+#define constant DECIMALS_LOCATION = FREE_STORAGE_POINTER()
 #define constant BALANCE_LOCATION = FREE_STORAGE_POINTER()
 #define constant ALLOWANCE_LOCATION = FREE_STORAGE_POINTER()
 #define constant TOTAL_SUPPLY_LOCATION = FREE_STORAGE_POINTER()
 
-/* Constructor */
+/* Immutables */
+#define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
+#define constant INITIAL_DOMAIN_SEPARATOR = FREE_STORAGE_POINTER()
 
+/* Constructor */
 #define macro CONSTRUCTOR() = takes(0) returns (0) {
-    // Set msg.sender as the owner of the contract.
-    OWNABLE_CONSTRUCTOR()
+    // Load the calldata args
+    0x44 calldataload                               // [decimals]
+    0x24 calldataload                               // [symbol, decimals]
+    0x04 calldataload                               // [name, symbol, decimals]
+
+    [NAME_LOCATION] sstore                          // [symbol, decimals]
+    [SYMBOL_LOCATION] sstore                        // [decimals]
+    [DECIMALS_LOCATION] sstore                      // []
+
+    // Store the chain id
+    chainid [INITIAL_CHAIN_ID] sstore               // []
+
+    // Compute the domain separator
+    COMPUTE_DOMAIN_SEPARATOR()                      // [domainSeparator]
+    [INITIAL_DOMAIN_SEPARATOR] sstore               // []
+}
+
+/* Compute the domain separator */
+#define macro COMPUTE_DOMAIN_SEPARATOR() = takes (0) returns (1) {
+    0x40        // [64]
+    <mem_ptr>   // [<mem_ptr>, 64]
+    sha3        // [key]
+}
+
+/* Domain Separator */
+#define macro GET_DOMAIN_SEPARATOR() = takes (0) returns (0) {
+    chainid [INITIAL_CHAIN_ID] sload                // [chainid, INITIAL_CHAIN_ID]
+    eq ret jumpi                                    // []
+    COMPUTE_DOMAIN_SEPARATOR()                      // [domainSeparator]
+    0x00 mstore                                     // []
+    0x20 0x00 return                                // []
+
+    ret:
+        [INITIAL_DOMAIN_SEPARATOR] sload            // [INITIAL_DOMAIN_SEPARATOR]
+        0x00 mstore                                 // []
+        0x20 0x00 return                            // []
 }
 
 /* Accounting Functions */
