@@ -7,6 +7,7 @@ import "foundry-huff/HuffDeployer.sol";
 interface Math {
     function sqrt(uint256) external pure returns (uint256);
     function max(uint256,uint256) external pure returns (uint256);
+    function min(uint256,uint256) external pure returns (uint256);
 }
 
 contract MathTest is Test {
@@ -47,6 +48,22 @@ contract MathTest is Test {
             assertEq(result, a);
         }
         if (b > a) {
+            assertEq(result, b);
+        }
+    } 
+
+    function testMin() public {
+        uint256 result = math.min(420, 69);
+        assertEq(result, 69);
+    }
+
+    function testMin(uint256 a, uint256 b) public {
+        uint256 result = math.min(a, b);
+
+        if (a < b) {
+            assertEq(result, a);
+        }
+        if (b < a) {
             assertEq(result, b);
         }
     } 

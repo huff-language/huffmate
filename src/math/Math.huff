@@ -71,14 +71,13 @@
 #define macro MIN() = takes (2) returns (1) {
     dup2    // [num2, num1, num2]
     dup2    // [num1, num2, num1, num2]
-    lt      // [is_less_than, num1, num2]
+    gt      // [is_greater_than, num1, num2]
 
-    less_than jumpi
-    pop     // [num1]
-
-    less_than:
+    greater_than jumpi
     swap1   // [num1, num2]
-    pop     // [num2]
+
+    greater_than:
+    pop     // [max(num1, num2)]
 }
 
 #define macro AVG() = takes (2) returns (1) {
