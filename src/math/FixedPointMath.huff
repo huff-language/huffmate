@@ -27,11 +27,18 @@
     or                // [y == (x * y) / x | x == 0, denominator != 0, y, denominator]
     and               // [(y == (x * y) / x | x == 0) & denominator != 0, y, denominator]
 
-    iszero err jumpi  // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
+    iszero fail jumpi // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
 
     pop               // [denominator]
     0x00 mload        // [x * y, denominator]
     div               // [(x * y) / denominator]
+
+    0x01 finish jumpi
+
+    fail:
+        0x00 0x00 revert
+    finish:
+    // Return stack:     [(x * y) / denominator]
 }
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L53
@@ -58,7 +65,7 @@
     or                // [y == (x * y) / x | x == 0, denominator != 0, x, y, denominator]
     and               // [y == (x * y) / x | x == 0 & denominator != 0, x, y, denominator]
 
-    iszero err jumpi  // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
+    iszero fail jumpi // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
 
     0x00 mload        // [x * y, x, y, denominator]
     iszero iszero     // [x * y != 0, x, y, denominator]
@@ -76,99 +83,103 @@
     // Clear extra stack items before continuing
     swap3             // [denominator, x, y, ((x * y - 1 / denominator) + 1) * (x * y != 0)]
     pop pop pop       // [((x * y - 1 / denominator) + 1) * (x * y != 0)]
+
+    0x01 finish jumpi
+
+    fail:
+        0x00 0x00 revert
+    finish:
+    // Return stack:     [((x * y - 1 / denominator) + 1) * (x * y != 0)]
 }
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L74
-// TODO: Create wrapper macro to accept calldata inputs; accept stack inputs in this one
-#define macro RPOW() = takes (0) returns (0) {
-    0x04 calldataload           // [x]
+// TODO: Optimize, works but not great
+#define macro RPOW() = takes (3) returns (1) {
+    // Input stack:                [x, n, scalar]
+    dup1                        // [x, x, n, scalar]
 
     iszero zero jumpi           // Jump to "zero" if x == 0
     0x01 default jumpi          // Jump to "default" if x != 0
 
     zero:
-        0x24 calldataload       // [n]
+        dup2                    // [n, x, n, scalar]
 
         iszero zero_inner jumpi // If n == 0 && x == 0, return the scalar (0 ** 0 = 1).
         zero_default jumpi      // If n != 0 && x == 0, return 0.
 
         // 0 ** 0 = 1
         zero_inner:
-            0x44 calldataload   // [scalar, n]
-            0x00 mstore         // Set result = scalar
-            0x20 0x00 return
+            swap2               // [scalar, n, x]
+            0x60 mstore         // [n, x]
+            0x01 finish jumpi   // Finish execution
         // 0 ** n = 0
         zero_default:
-            // 0x00 is blank, no need to set it.
-            0x20 0x00 return
+            // 0x60 is blank, no need to set it.
+            pop                 // [n, scalar] - Others will be popped in `finish`
+            0x01 finish jumpi   // Finish execution
     default:
-        0x02                    // [2]
-        0x24 calldataload       // [n, 2]
-        mod                     // [n % 2]
-        
+        0x20 mstore             // [n, scalar]
+        0x40 mstore             // [scalar]
+            
+        dup1                    // [scalar, scalar]
+        0x01 shr                // [scalar >> 1, scalar]
+        0x00 mstore             // [scalar]
+
+        0x02                    // [2, scalar]
+        0x40 mload              // [n, 2, scalar]
+        mod                     // [n % 2, scalar]
+
         iszero even jumpi       // Set result to scalar for now if n % 2 is even
         0x01 odd jumpi          // Set result to x for now if n % 2 is odd
 
         // n % 2 is even
         even:
-            0x44 calldataload   // [scalar]
-            0x60 mstore         // []
-            0x01 pre_loop jumpi // Continue through default case
+            dup1                // [scalar, scalar]
+            0x60 mstore         // [scalar]
+            0x01 loop jumpi     // Start loop
         // n % 2 is odd
         odd:
-            0x04 calldataload   // [x]
-            0x60 mstore         // []
-            0x01 pre_loop jumpi // Continue through default case
-        pre_loop:
-            0x44 calldataload   // [scalar]
-            0x01 shr            // [scalar >> 1]
-            0x00 mstore         // []
-
-            0x04 calldataload   // [x]
-            0x20 mstore         // []
-
-            0x24 calldataload   // [n]
-            0x40 mstore         // []
-
+            0x20 mload          // [x, scalar]
+            0x60 mstore         // [scalar]
             0x01 loop jumpi     // Start loop
         loop:
-            0x40 mload          // [n]
-            dup1                // [n, n]
+            0x40 mload          // [n, scalar]
+            dup1                // [n, n, scalar]
 
             iszero finish jumpi // If n = 0, the loop is finished.
 
             // Divide n by 2
-            0x01 shr            // [n >> 1]
-            0x40 mstore         // []
+            0x01 shr            // [n >> 1, scalar]
+            0x40 mstore         // [scalar]
 
             // Revert if x ** 2 will overflow.
-            0x20 mload          // [x]
-            0x80 shr            // [x >> 128]
-            fail jumpi
+            0x20 mload          // [x, scalar]
+            0x80 shr            // [x >> 128, scalar]
+            fail jumpi          // [scalar]
 
             // Square x and duplicate it on the stack for use later.
-            0x20 mload          // [x]
-            dup1 mul            // [x * x]
-            dup1                // [x * x, x * x]
+            0x20 mload          // [x, scalar]
+            dup1 mul            // [x * x, scalar]
+            dup1                // [x * x, x * x, scalar]
 
             // Add x ** 2 to scalar >> 1
-            0x00 mload          // [scalar >> 1, x * x, x * x]
-            add                 // [(scalar >> 1) + (x * x), x * x]
+            0x00 mload          // [scalar >> 1, x * x, x * x, scalar]
+            add                 // [(scalar >> 1) + (x * x), x * x, scalar]
 
             // Revert if x ** 2 + scalar >> 1 overflowed
-            swap1               // [x * x, (scalar >> 1) + (x * x)]
-            dup2                // [(scalar >> 1) + (x * x), x * x, (scalar >> 1) + (x * x)]
-            lt fail jumpi       // [(scalar >> 1) + (x * x)]
+            swap1               // [x * x, (scalar >> 1) + (x * x), scalar]
+            dup2                // [(scalar >> 1) + (x * x), x * x, (scalar >> 1) + (x * x), scalar]
+            lt fail jumpi       // [(scalar >> 1) + (x * x), scalar]
 
             // Set x to ((scalar >> 1) + (x * x)) / scalar
-            0x44 calldataload   // [scalar, (scalar >> 1) + (x * x)]
-            swap1               // [(scalar >> 1) + (x * x), scalar]
-            div                 // [((scalar >> 1) + (x * x)) / scalar]
-            0x20 mstore         // []
+            dup2                // [scalar, (scalar >> 1) + (x * x), scalar]
+            swap1               // [(scalar >> 1) + (x * x), scalar, scalar]
+            div                 // [((scalar >> 1) + (x * x)) / scalar, scalar]
+            0x20 mstore         // [scalar]
 
-            0x02                // [2]
-            0x40 mload          // [n, 2]
-            mod                 // [n % 2]
+            0x02                // [2, scalar]
+            0x40 mload          // [n, 2, scalar]
+            mod                 // [n % 2, scalar]
 
             // If n is odd, continue logic
             odd_inner jumpi
@@ -197,24 +208,24 @@
             add                 // [(scalar >> 1) + (x * result), x * result]
 
             // Check if x ** 2 + scalar >> 1 overflowed
-            dup1                // [(scalar >> 1) + (x * result), (scalar >> 1) + (x * result), x * result]
-            swap2               // [x * result, (scalar >> 1) + (x * result), (scalar >> 1) + (x * result)]
-            swap1               // [(scalar >> 1) + (x * result), x * result, (scalar >> 1) + (x * result)]
+            swap1               // [x * result, (scalar >> 1) + (x * result)]
+            dup2                // [(scalar >> 1) + (x * result), x * result, (scalar >> 1) + (x * result)]
             lt fail jumpi       // Revert if ((scalar >> 1) + (x * result)) < x * result
 
             // Scale rounded result
-            0x44 calldataload   // [scalar, (scalar >> 1) + (x * result)]
-            swap1               // [(scalar >> 1) + (x * result), scalar]
-            div                 // [((scalar >> 1) + (x * result)) / scalar]
-            0x60 mstore         // []
+            dup2                // [scalar, ((scalar >> 1) + (x * result), scalar]
+            swap1               // [((scalar >> 1) + (x * result), scalar, scalar]
+            div                 // [((scalar >> 1) + (x * result)) / scalar, scalar]
+            0x60 mstore         // [scalar]
 
             0x01 loop jumpi     // Continue loop
-        // Return result
-        finish:
-            0x20 0x60 return
         // Revert
         fail:
             0x00 0x00 revert
+        // Return result
+        finish:
+            pop pop             // [] - Clear stack
+            0x60 mload          // [result]
 }
 
 #define macro MUL_DIV_DOWN_WRAPPER() = takes (0) returns (0) {
@@ -235,6 +246,16 @@
     0x20 0x00 return
 }
 
+#define macro RPOW_WRAPPER() = takes (0) returns (0) {
+    0x44 calldataload // [scalar]
+    0x24 calldataload // [n, scalar]
+    0x04 calldataload // [x, n, scalar]
+    RPOW()            // [result]
+    0x00 mstore       // []
+    0x20 0x00 return
+}
+
+
 #define macro MAIN() = takes (0) returns (0) {
     0x00 calldataload 0xE0 shr
     dup1 0xb67bee04 eq mulDivDown jumpi
@@ -246,7 +267,5 @@
     mulDivUp:
         MUL_DIV_UP_WRAPPER()
     rpow:
-        RPOW()
-    err:
-        0x00 0x00 revert
+        RPOW_WRAPPER()
 }
