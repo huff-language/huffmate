@@ -58,15 +58,14 @@
     div
     0x01
     add
-    jump_dest jump
+    dest jump
 
     if_zero:
     pop
     pop
     0x00
 
-    jump_dest:
-
+    dest:
 }
 
 #define macro MIN() = takes (2) returns (1) {
