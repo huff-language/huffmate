@@ -39,14 +39,13 @@
 #define macro MAX() = takes (2) returns (1) {
     dup2    // [num2, num1, num2]
     dup2    // [num1, num2, num1, num2]
-    gt      // [is_greater_than, num1, num2]
+    lt      // [is_less_than, num1, num2]
 
-    greater_than jumpi
-    pop     // [num1]
-
-    greater_than:
+    less_than jumpi
     swap1   // [num1, num2]
-    pop     // [num2]
+
+    less_than:
+    pop     // [min(num2, num1)]
 }
 
 #define macro CEIL_DIV() = takes (2) returns (1) {
