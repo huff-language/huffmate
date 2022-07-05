@@ -2,7 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "foundry-huff/HuffDeployer.sol";
+import {HuffConfig} from "foundry-huff/HuffConfig.sol";
+import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 
 interface Hashmap {
   function loadElement(bytes32) external view returns (bytes32);
@@ -15,8 +16,12 @@ contract HashmapTest is Test {
   Hashmap hmap;
 
   function setUp() public {
+    // Read instantiable hashmap from file
+    string memory instantiable_code = vm.readFile("test/data-structures/mocks/InstantiatedHashmap.huff");
+
     // Create an Instantiable Hashmap
-    hmap = Hashmap(HuffDeployer.deploy("data-structures/mocks/InstantiatedHashmap"));
+    HuffConfig config = HuffDeployer.config().with_code(instantiable_code);
+    hmap = Hashmap(config.deploy("data-structures/Hashmap"));
   }
 
   /// @notice Test getting a vlue for a key
