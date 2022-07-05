@@ -17,14 +17,11 @@ contract OwnedTest is Test {
   event OwnerUpdated(address indexed user, address indexed newOwner);
 
   function setUp() public {
-    bytes memory bytes_owner = abi.encode(OWNER);
-    vm.record();
-
     // Create Owner
-    HuffConfig config = HuffDeployer.config().with_args(bytes_owner).churn("auth/Owned");
+    HuffConfig config = HuffDeployer.config().with_args(abi.encode(OWNER));
     vm.expectEmit(true, true, true, true);
-    emit OwnerUpdated(address(this), OWNER);
-    owner = Owned(config.deploy());
+    emit OwnerUpdated(address(config), OWNER);
+    owner = Owned(config.deploy("auth/Owned"));
   }
 
   /// @notice Test that a non-matching selector reverts

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "foundry-huff/HuffDeployer.sol";
+import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
+import {HuffConfig} from "foundry-huff/HuffConfig.sol";
 
 interface RolesAuthority {
   function hasRole(address user, uint8 role) external returns (bool);
@@ -28,14 +29,11 @@ contract RolesAuthorityTest is Test {
     bytes memory authority = abi.encode(INIT_AUTHORITY);
 
     // Deploy RolesAuthority
+    HuffConfig config = HuffDeployer.config().with_args(bytes.concat(owner, authority));
     vm.expectEmit(true, true, true, true);
-    emit AuthorityUpdated(address(this), INIT_AUTHORITY);
-    emit OwnerUpdated(address(this), OWNER);
-    roleAuth = RolesAuthority(
-      HuffDeployer.deploy_with_args(
-        "auth/RolesAuthority",
-        bytes.concat(owner, authority)
-    ));
+    emit AuthorityUpdated(address(config), INIT_AUTHORITY);
+    emit OwnerUpdated(address(config), OWNER);
+    roleAuth = RolesAuthority(config.deploy("auth/RolesAuthority"));
   }
 
   /// @notice Test that a non-matching signature reverts
