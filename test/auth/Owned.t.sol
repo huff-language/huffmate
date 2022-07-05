@@ -2,7 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "foundry-huff/HuffDeployer.sol";
+import {HuffConfig} from "foundry-huff/HuffConfig.sol";
+import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 
 interface Owned {
   function setOwner(address) external;
@@ -16,16 +17,11 @@ contract OwnedTest is Test {
   event OwnerUpdated(address indexed user, address indexed newOwner);
 
   function setUp() public {
-    bytes memory bytes_owner = abi.encode(OWNER);
-
     // Create Owner
+    HuffConfig config = HuffDeployer.config().with_args(abi.encode(OWNER));
     vm.expectEmit(true, true, true, true);
-    emit OwnerUpdated(address(this), OWNER);
-    owner = Owned(
-      HuffDeployer.deploy_with_args(
-        "auth/Owned",
-        bytes_owner
-    ));
+    emit OwnerUpdated(address(config), OWNER);
+    owner = Owned(config.deploy("auth/Owned"));
   }
 
   /// @notice Test that a non-matching selector reverts

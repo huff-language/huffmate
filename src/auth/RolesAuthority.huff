@@ -21,9 +21,9 @@
 #define event RoleCapabilityUpdated(uint8 indexed role, address indexed target, bytes4 indexed functionSig, bool enabled)
 
 /* Event Signatures */
-#define constant USER_ROLE_UPDATED_SIG = 0x0
-#define constant PUBLIC_CAPABILITY_UPDATED_SIG = 0x0
-#define constant ROLE_CAPABILITY_UPDATED_SIG = 0x0
+#define constant USER_ROLE_UPDATED_SIG = 0x4c9bdd0c8e073eb5eda2250b18d8e5121ff27b62064fbeeeed4869bb99bc5bf2
+#define constant PUBLIC_CAPABILITY_UPDATED_SIG = 0x950a343f5d10445e82a71036d3f4fb3016180a25805141932543b83e2078a93e
+#define constant ROLE_CAPABILITY_UPDATED_SIG = 0xa52ea92e6e955aa8ac66420b86350f7139959adfcc7e6a14eee1bd116d09860e
 
 /* MAPPINGS */
 #define constant USER_ROLES_LOCATION = FREE_STORAGE_POINTER()

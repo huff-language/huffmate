@@ -24,10 +24,6 @@
 
 /* CONSTRUCTOR */
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
-  // -------------            --------------------------
-  // | OPERATION |            | STACK (POST-OPERATION) |
-  // -------------            --------------------------
-
   // Copy the owner into memory
   0x20                        // [size] - byte size to copy
   0x40 codesize sub           // [offset, size] - offset in the code to copy from
