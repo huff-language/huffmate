@@ -270,6 +270,8 @@
     dup1 0x2b7423ab eq average jumpi
     dup1 0x9cb35327 eq ceilDiv jumpi
 
+    0x00 0x00 revert
+
     sqrt:
         SQRT_WRAPPER()
     max:
