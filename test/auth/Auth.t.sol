@@ -42,14 +42,11 @@ contract AuthTest is Test {
     ));
 
     // Create Auth
+    HuffConfig config = HuffDeployer.config().with_args(bytes.concat(owner, authority));
     vm.expectEmit(true, true, true, true);
-    emit AuthorityUpdated(address(this), INIT_AUTHORITY);
-    emit OwnerUpdated(address(this), OWNER);
-    auth = Auth(
-      HuffDeployer.deploy_with_args(
-        "auth/Auth",
-        bytes.concat(owner, authority)
-    ));
+    emit AuthorityUpdated(address(config), INIT_AUTHORITY);
+    emit OwnerUpdated(address(config), OWNER);
+    auth = Auth(config.deploy("auth/Auth"));
   }
 
   /// @notice Test that a non-matching signature reverts
