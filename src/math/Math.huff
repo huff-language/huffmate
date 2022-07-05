@@ -173,61 +173,54 @@
 }
 
 #define macro MAX() = takes (2) returns (1) {
-    dup2    // [num2, num1, num2]
-    dup2    // [num1, num2, num1, num2]
-    lt      // [is_less_than, num1, num2]
+    // input stack:     // [num1, num2]
+    dup2                // [num2, num1, num2]
+    dup2                // [num1, num2, num1, num2]
+    lt                  // [is_less_than, num1, num2]
 
     less_than jumpi
-    swap1   // [num1, num2]
+    swap1               // [num1, num2]
 
     less_than:
-    pop     // [min(num2, num1)]
+    pop                 // [min(num2, num1)]
 }
 
 #define macro CEIL_DIV() = takes (2) returns (1) {
-    dup1 iszero
+    // input stack:     // [num1, num2]
+    dup1 iszero         // [is_zero, num1, num2]
     if_zero jumpi
 
-    0x01    // [1, num1, num2]
-    swap1   // [num1, 1, num1]
-    sub     // [num1 - 1, num2]
-    div
-    0x01
-    add
+    0x01                // [1, num1, num2]
+    swap1               // [num1, 1, num1]
+    sub                 // [num1 - 1, num2]
+    div 0x01 add        // [((num1 - 1) / num2) + 1]
     dest jump
 
     if_zero:
-    pop
-    pop
-    0x00
+    swap1               // [num2, num1]
+    pop                 // [num1]
 
     dest:
 }
 
 #define macro MIN() = takes (2) returns (1) {
-    dup2    // [num2, num1, num2]
-    dup2    // [num1, num2, num1, num2]
-    gt      // [is_greater_than, num1, num2]
+    // input stack:     // [num1, num2]
+    dup2 dup2 gt        // [is_greater_than, num1, num2]
 
     greater_than jumpi
-    swap1   // [num1, num2]
+    swap1               // [num2, num1]
 
     greater_than:
-    pop     // [max(num1, num2)]
+    pop                 // [max(num1, num2)]
 }
 
 #define macro AVG() = takes (2) returns (1) {
-    // [num1, num2]
-    dup2    // [num2, num1, num2]
-    dup2    // [num1, num2, num1, num2]
-    and     // [num1 & num2, num1, num2]
-    swap2   // [num2, num1, num1 & num2]
-    swap1   // [num1, num2, num1 & num2]
-    xor     // [num1 ^ num2, num1 & num2]
-    0x02    // [2, num1 ^ num2, num1 & num2]
-    swap1   // [num1 ^ num2, 2, num1 & num2]
-    div     // [num1 ^ num2 / 2, num1 & num2]
-    add     // [sum]
+    // input stack:     // [num1, num2]
+    dup2 dup2 and       // [num1 & num2, num1, num2]
+    swap2               // [num2, num1, num1 & num2]
+    xor                 // [num2 ^ num1, num1 & num2]
+    0x02 swap1 div      // [num2 ^ num1 / 2, num1 & num2]
+    add                 // [sum]
 }
 
 #define macro SQRT_WRAPPER() = takes (0) returns (0) {
