@@ -9,6 +9,7 @@ interface Math {
     function max(uint256,uint256) external pure returns (uint256);
     function min(uint256,uint256) external pure returns (uint256);
     function average(uint256,uint256) external pure returns (uint256);
+    function ceilDiv(uint256,uint256) external pure returns (uint256);
 }
 
 contract MathTest is Test {
@@ -82,5 +83,21 @@ contract MathTest is Test {
     function testAverage(uint256 a, uint256 b) public {
         uint256 result = math.average(a, b);
         assertEq(result, average(a, b));
+    }
+
+    // Source: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/e7397844f8dd9b54fb4227b91b20f3bd2e82dab2/contracts/utils/math/Math.sol#L45
+    function ceilDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a == 0 ? 0 : (a - 1) / b + 1;
+    }
+
+    function testCeilDiv() public {
+        uint256 result = math.ceilDiv(420, 69);
+        assertEq(result, 7);
+    }
+
+    function testCeilDiv(uint256 a, uint256 b) public {
+        if (b == 0) return;
+        uint256 result = math.ceilDiv(a, b);
+        assertEq(result, ceilDiv(a, b));
     }
 }
