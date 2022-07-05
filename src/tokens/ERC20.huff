@@ -119,7 +119,7 @@
     [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)  // [balance, value, from, to]
     dup1                // [balance, balance, value, from, to]
     dup3                // [value, balance, balance, value, from, to]
-    gt                  // [value>balance, balance, value, from, to]              
+    gt                  // [value>balance, balance, value, from, to]
     <error> jumpi       // [balance, value, from, to]
 
     // Update the sender's balance.
@@ -169,14 +169,18 @@
 
     // Return "1" to represent a succesful transfer.
     0x01 0x00 mstore
-    0x20 0x00 return 
+    0x20 0x00 return
 
     // Error destination.
     error:
         0x00 0x00 revert
 }
 
-/* Mint Functions */
+/**********************************/
+/* INTERNAL MINT & BURN FUNCTIONS */
+/**********************************/
+
+/* [INTERNAL] Mint */
 #define macro MINT() = takes(0) returns (0) {
     // Ensure that the sender is the owner of the contract.
     ONLY_OWNER()
@@ -203,7 +207,36 @@
     log3                        // []
 }
 
-/* Main Macro */
+/* [INTERNAL] Burn */
+/* - Jumps to <error> if the from has an insufficient balance */
+#define macro BURN(error) = takes(0) returns (0) {
+    // Setup the stack for the mint function.
+    0x00                               // [(0x00)]
+    0x04 calldataload                  // [from, (0x00)]
+    0x24 calldataload                  // [amount, from, (0x00)]
+
+    // Transfer the tokens to the 0 address
+    TRANSFER_TAKE_FROM(<error>)          // [amount, from, (0x00)]
+    TRANSFER_GIVE_TO()                 // [amount, from, (0x00)]
+
+    // Less the totalSupply
+    dup1                               // [amount, amount, from, (0x00)]
+    [TOTAL_SUPPLY_LOCATION] sload      // [supply, amount, amount, from, (0x00)]
+    add                                // [supply - amount, amount, from, (0x00)]
+    [TOTAL_SUPPLY_LOCATION] sstore     // [amount, from, (0x00)]
+
+    // Emit the transfer event.
+    0x00 mstore                        // [from, (0x00)]
+    [TRANSFER_EVENT_SIGNATURE]         // [sig, from, (0x00)]
+    0x20 0x00                          // [0, 32, sig, from, (0x00)]
+    log3                               // []
+}
+
+/**************/
+/* MAIN MACRO */
+/**************/
+
+/* Main */
 #define macro MAIN() = takes(0) returns (0) {
     0x00 calldataload 0xE0 shr
     dup1 0xa9059cbb eq transfer jumpi
@@ -213,12 +246,11 @@
     dup1 0x095ea7b3 eq approve jumpi
     dup1 0xdd62ed3e eq allowance jumpi
 
+    // Revert if no selector matches
     0x00 0x00 revert
 
     transfer:
         TRANSFER()
-    mints:
-        MINT()
     balanceOf:
         BALANCE_OF()
     totalSupply:

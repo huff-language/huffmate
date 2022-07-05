@@ -4,6 +4,7 @@
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
+
 ## Contracts
 
 ```ml
@@ -14,19 +15,19 @@ auth
 data-structures
 ├─ Arrays - TODO
 ├─ Bytes — TODO
-├─ Hashmap - TODO
+├─ Hashmap - "A hashmap that supports up to 256 keys"
 factories
 ├─ Factory - TODO
 ├─ ProxyFactory — TODO
 math
-├─ FixedPointMath - TODO
-├─ Math — TODO
-├─ SafeMath — TODO
+├─ FixedPointMath - "Arithmetic library with operations for fixed-point numbers"
+├─ Math — "Macros for Huff arithmetic operations"
+├─ SafeMath — "Safe Wrappers over Huff arithmetic operations"
 tokens
 ├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
-├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
-├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
-├─ ERC4626 — "Minimal ERC4626 tokenized Vault implementation"
+├─ ERC721 — TODO - "Modern, minimalist, and gas efficient ERC721 implementation"
+├─ ERC1155 — TODO -"Minimalist and gas efficient standard ERC1155 implementation"
+├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
 utils
 ├─ Calls - TODO
 ├─ Data — TODO
@@ -34,11 +35,13 @@ utils
 ├─ SSTORE2 — TODO
 ```
 
+
 ## Safety
 
 This is **experimental software** and is provided on an "as is" and "as available" basis.
 
 We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
+
 
 ## Installation
 
@@ -53,6 +56,7 @@ To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffl
 ```sh
 npm install @pentagonxyz/huffmate
 ```
+
 
 ## Acknowledgements
 
