@@ -2,6 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
+import "forge-std/console.sol";
 import "foundry-huff/HuffDeployer.sol";
 
 interface Auth {
@@ -35,11 +36,11 @@ contract AuthTest is Test {
     bytes memory authority = abi.encode(INIT_AUTHORITY);
 
     // Deploy a roles authority for later use
-    rolesAuth = RolesAuthority(
-      HuffDeployer.deploy_with_args(
-        "auth/RolesAuthority",
-        bytes.concat(abi.encode(OWNER), abi.encode(OWNER))
-    ));
+    HuffConfig roleConfig = HuffDeployer.config().with_args(bytes.concat(owner, authority));
+    vm.expectEmit(true, true, true, true);
+    emit AuthorityUpdated(address(roleConfig), INIT_AUTHORITY);
+    emit OwnerUpdated(address(roleConfig), OWNER);
+    rolesAuth = RolesAuthority(roleConfig.deploy("auth/RolesAuthority"));
 
     // Create Auth
     HuffConfig config = HuffDeployer.config().with_args(bytes.concat(owner, authority));
@@ -103,6 +104,8 @@ contract AuthTest is Test {
     auth.setOwner(new_owner);
     vm.stopPrank();
     assertEq(new_owner, auth.owner());
+    vm.prank(new_owner);
+    auth.setOwner(OWNER);
   }
 
   /// AUTHORITY TESTS
@@ -113,7 +116,7 @@ contract AuthTest is Test {
 
   function testSetAuthority(address owner) public {
     address new_authority = address(0x50ca1);
-    if (owner == OWNER) return;
+    vm.assume(owner != OWNER);
     vm.startPrank(owner);
     vm.expectRevert();
     auth.setAuthority(new_authority);
@@ -129,6 +132,8 @@ contract AuthTest is Test {
     auth.setAuthority(new_authority);
     vm.stopPrank();
     assertEq(new_authority, auth.authority());
+    vm.prank(OWNER);
+    auth.setAuthority(INIT_AUTHORITY);
   }
 
   /// TEST AUTHORITY
@@ -164,11 +169,14 @@ contract AuthTest is Test {
   }
 
   function testAuthoritiesCannotSetAuthority(address user) public {
-    if (user == OWNER) return;
+    vm.assume(user != OWNER);
+
+    address roles_auth_owner = rolesAuth.owner();
+    console.logAddress(roles_auth_owner);
 
     // Clean Roles Authority
     vm.startPrank(OWNER);
-    rolesAuth.setAuthority(OWNER);
+    // rolesAuth.setAuthority(OWNER);
     rolesAuth.setPublicCapability(address(auth), bytes4(0x13af4035), false); // setOwner
     rolesAuth.setPublicCapability(address(auth), bytes4(0x7a9e5e4b), false); // setAuthority
     vm.stopPrank();
