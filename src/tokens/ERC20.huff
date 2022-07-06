@@ -7,8 +7,8 @@
 #include "../data-structures/HashMap.huff"
 
 /* Events */
-#define event Transfer(address,address,uint256)
-#define event Approve(address,address,uint256)
+#define event Transfer(address indexed, address indexed, uint256)
+#define event Approve(address indexed, address indexed, uint256)
 #define constant TRANSFER_EVENT_SIGNATURE = 0xDDF252AD1BE2C89B69C2B068FC378DAA952BA7F163C4A11628F55A4DF523B3EF
 #define constant APPROVAL_EVENT_SIGNATURE = 0x8C5BE1E5EBEC7D5BD14F71427D1E84F3DD0314C0F7B2291E5B200AC8C7C3B925
 
@@ -30,7 +30,7 @@
 #define function transfer(address, uint256) nonpayable returns ()
 #define function transferFrom(address, address, uint256) nonpayable returns ()
 #define function approve(address, uint256) nonpayable returns ()
-#define function permit(address, address, uint256, uint256, uint8, bytes32, bytes32)
+#define function permit(address, address, uint256, uint256, uint8, bytes32, bytes32) nonpayable returns ()
 
 /* Constructor */
 #define function constructor(string, string, uint8) nonpayable returns ()
@@ -47,12 +47,34 @@
 #define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
 #define constant INITIAL_DOMAIN_SEPARATOR = FREE_STORAGE_POINTER()
 
+/* Domain Separater Byte String */
+/* total - 86 bytes = 0x54 */
+#define constant DOMAIN_ONE_SEPARATOR_STR = 0x454950373132446f6d61696e28737472696e67206e616d652c737472696e6720 // 32 bytes
+#define constant DOMAIN_TWO_SEPARATOR_STR = 0x76657273696f6e2c75696e7432353620636861696e49642c6164647265737320 // 32 bytes
+#define constant DOMAIN_THREE_SEPARATOR_STR = 0x766572696679696e67436f6e747261637429 // 18 bytes
+
 /* Constructor */
 #define macro CONSTRUCTOR() = takes(0) returns (0) {
-    // Load the calldata args
-    0x44 calldataload                               // [decimals]
-    0x24 calldataload                               // [symbol, decimals]
-    0x04 calldataload                               // [name, symbol, decimals]
+    // Copy the decimals into memory
+    0x20                        // [size] - byte size to copy
+    0x20 codesize sub           // [offset, size] - offset in the code to copy from
+    0x00                        // [mem, offset, size] - offset in memory to copy to
+    codecopy                    // []
+    0x00 mload                  // [decimals]
+
+    // Copy the symbol into memory
+    0x20                        // [size, decimals] - byte size to copy
+    0x40 codesize sub           // [offset, size, decimals] - offset in the code to copy from
+    0x00                        // [mem, offset, size, decimals] - offset in memory to copy to
+    codecopy                    // [decimals]
+    0x00 mload                  // [symbol, decimals]
+
+    // Copy the name into memory
+    0x20                        // [size, symbol, decimals] - byte size to copy
+    0x60 codesize sub           // [offset, size, symbol, decimals] - offset in the code to copy from
+    0x00                        // [mem, offset, size, symbol, decimals] - offset in memory to copy to
+    codecopy                    // [symbol, decimals]
+    0x00 mload                  // [name, symbol, decimals]
 
     [NAME_LOCATION] sstore                          // [symbol, decimals]
     [SYMBOL_LOCATION] sstore                        // [decimals]
@@ -68,9 +90,34 @@
 
 /* Compute the domain separator */
 #define macro COMPUTE_DOMAIN_SEPARATOR() = takes (0) returns (1) {
-    0x40        // [64]
-    <mem_ptr>   // [<mem_ptr>, 64]
-    sha3        // [key]
+    // First hash the eip 712 identifier
+    // store in mem slot 0
+    [DOMAIN_ONE_SEPARATOR_STR] 0x00 mstore          // []
+    [DOMAIN_TWO_SEPARATOR_STR] 0x20 mstore          // []
+    [DOMAIN_THREE_SEPARATOR_STR] 0x40 mstore        // []
+    0x54 0x00 sha3                                  // [hash]
+    0x00 mstore                                     // []
+
+    // Name hash + store in mem slot 1
+    [NAME_LOCATION] sload 0x20 mstore               // []
+    0x20 0x20 sha3                                  // [hash]
+    0x20 mstore                                     // []
+
+    // Hash "1" + store in mem slot 2
+    0x31 0x40 mstore                                // []
+    0x02 0x40 sha3                                  // [hash]
+    0x20 0x40 mstore                                // []
+
+    // Store chain id in mem slot 3
+    chainid 0x60 mstore                             // []
+
+    // Store address(this) in slot 4
+    address 0x80 mstore                             // []
+
+    // keccak256 compute out separator
+    0xA0                                            // [size]
+    0x00                                            // [offset, size]
+    sha3                                            // [hash]
 }
 
 /* Domain Separator */
@@ -145,9 +192,18 @@
 
 #define macro APPROVE() = takes (0) returns (0) {
     0x24 calldataload       // [value]
+    dup1 0x00 mstore        // [value]
     0x04 calldataload       // [to, value]
     caller                  // [from, to, value]
 
+    // Emit the approval event.
+    dup2 dup2                                   // [from, to, from, to, value]
+    [APPROVAL_EVENT_SIGNATURE]
+   // __EVENT_HASH(APPROVAL_EVENT_SIGNATURE)      // [sig, from, to, from, to, value]
+    0x20 0x00                                   // [0, 32, sig, from, to, from, to, value]
+    log3                                        // [from, to, value]
+
+    // Store the value at slot = keccak256(from . to)
     STORE_ELEMENT_FROM_KEYS(0x00)
 }
 
@@ -232,6 +288,24 @@
     log3                               // []
 }
 
+#define macro NAME() = takes(0) returns(0) {
+    [NAME_LOCATION] sload              // [name]
+    0x00 mstore                        // []
+    0x20 0x00 return                   // []
+}
+
+#define macro SYMBOL() = takes(0) returns(0) {
+    [SYMBOL_LOCATION] sload            // [symbol]
+    0x00 mstore                        // []
+    0x20 0x00 return                   // []
+}
+
+#define macro DECIMALS() = takes(0) returns(0) {
+    [DECIMALS_LOCATION] sload          // [decimals]
+    0x00 mstore                        // []
+    0x20 0x00 return                   // []
+}
+
 /**************/
 /* MAIN MACRO */
 /**************/
@@ -240,15 +314,28 @@
 #define macro MAIN() = takes(0) returns (0) {
     0x00 calldataload 0xE0 shr
     dup1 0xa9059cbb eq transfer jumpi
-    dup1 0x40c10f19 eq mints jumpi
+    // dup1 0x40c10f19 eq mints jumpi
     dup1 0x70a08231 eq balanceOf jumpi
     dup1 0x18160ddd eq totalSupply jumpi
-    dup1 0x095ea7b3 eq approve jumpi
+    dup1 __FUNC_SIG(approve) eq approve jumpi
     dup1 0xdd62ed3e eq allowance jumpi
+
+    dup1 __FUNC_SIG(name) eq name jumpi
+    dup1 __FUNC_SIG(symbol) eq symbol jumpi
+    dup1 __FUNC_SIG(decimals) eq decimals jumpi
+    dup1 __FUNC_SIG(DOMAIN_SEPARATOR) eq separator jumpi
 
     // Revert if no selector matches
     0x00 0x00 revert
 
+    name:
+        NAME()
+    symbol:
+        SYMBOL()
+    decimals:
+        DECIMALS()
+    separator:
+        GET_DOMAIN_SEPARATOR()
     transfer:
         TRANSFER()
     balanceOf:
@@ -259,5 +346,4 @@
         APPROVE()
     allowance:
         ALLOWANCE()
-
 }

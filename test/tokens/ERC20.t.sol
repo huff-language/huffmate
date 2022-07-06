@@ -1,22 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
+import "forge-std/console.sol";
 import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
 
 interface ERC20 {
   /* Metadata */
-  function name() external returns (string memory);
-  function symbol() external returns (string memory);
-  function decimals() external returns (uint8);
+  function name() external view returns (string memory);
+  function symbol() external view returns (string memory);
+  function decimals() external view returns (uint8);
+  function DOMAIN_SEPARATOR() external view returns (bytes32);
 
   /* Accessors */
-  function totalSupply() external returns (uint256);
-  function balanceOf(address) external returns (uint256);
-  function allowance(address, address) external returns (uint256);
+  function totalSupply() external view returns (uint256);
+  function balanceOf(address) external view returns (uint256);
+  function allowance(address, address) external view returns (uint256);
 
   /* EIP-2612 */
-  function nonces(address) external returns (uint256);
+  function nonces(address) external view returns (uint256);
 
   /* Mutators */
   function transfer(address, uint256) external;
@@ -34,17 +36,29 @@ contract ERC20Test is Test {
 
   /// @notice Set up the testing suite
   function setUp() public {
+    bytes memory name = bytes("coin");
+    bytes memory symbol = bytes("COIN");
+    console.logString(string.concat("Deploying ERC20 with name, symbol: \"", string(name), "\", \"", string(symbol), "\"..."));
+    console.logString(string(name));
+    console.logString(string(symbol));
+
+    bytes memory args = bytes.concat(bytes32(name), bytes32(symbol), abi.encode(8));
+    console.logBytes(args);
+
     coin = ERC20(
       HuffDeployer.deploy_with_args(
         "tokens/ERC20",
-        bytes.concat(bytes("coin"), bytes("COIN"), abi.encode(8))
+        args
       )
     );
   }
 
   /// @notice Test name metadata
   function testName() public {
-    assertEq("coin", coin.name());
+    console.logString("Getting Name...");
+    string memory name = coin.name();
+    console.logString(name);
+    assertEq("coin", name);
   }
 
   /// @notice Test symbol metadata
@@ -54,7 +68,40 @@ contract ERC20Test is Test {
 
   /// @notice Test decimals metadata
   function testDecimals() public {
-    assertEq(20, coin.decimals());
+    assertEq(8, coin.decimals());
   }
 
+  /// @notice Test computing the domain separator
+  function testDomainSeparator() public {
+    // console.logAddress(address(coin));
+    // console.logUint(block.chainid);
+    // console.logBytes(bytes("1"));
+    // console.logBytes32(keccak256("1"));
+    // console.logBytes32(keccak256(hex"31"));
+    // console.logBytes(bytes("coin"));
+    bytes memory encoded = abi.encode(
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+        keccak256(bytes("coin")),
+        keccak256("1"),
+        block.chainid,
+        address(coin)
+      );
+    console.logBytes(encoded);
+    bytes32 expected_separator = keccak256(encoded);
+    assertEq(expected_separator, coin.DOMAIN_SEPARATOR());
+  }
+
+  /// @notice Test approving
+  function testApprove(address from, address to, uint256 amount) public {
+    // Approve
+    vm.startPrank(from);
+    vm.expectEmit(true, true, true, true);
+    emit Approve(from, to, amount);
+    coin.approve(to, amount);
+    vm.stopPrank();
+
+    // Get Approval
+    uint256 allowance = coin.allowance(from, to);
+    assertEq(allowance, amount);
+  }
 }
