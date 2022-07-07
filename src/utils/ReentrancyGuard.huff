@@ -1,0 +1,20 @@
+/* Storage Slots */
+
+// lock_value
+#define constant LOCKED_SLOT = FREE_STORAGE_POINTER()
+
+/* Methods */
+// 0 if unlocked, 1 if locked
+#define macro LOCK() = takes(0) returns(0) {
+    [LOCKED_SLOT] sload     //[lock_value]
+    iszero                  //[lock_val==0]
+    lock jumpi             
+    0x00 0x00 revert
+    lock:
+        0x01 [LOCKED_SLOT] sstore
+    
+}
+
+#define macro UNLOCK() = takes(0) returns(0) {
+    0x00 [LOCKED_SLOT] sstore
+}
