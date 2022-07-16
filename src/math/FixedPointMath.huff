@@ -43,12 +43,12 @@
     sgt iszero              // [x <= 0xfff..., x]
     ret_zero jumpi          // [x]
 
-    0x0755bf798b4a1bf1e5    // [0x755bf798b4a1bf1e5, x]
-    dup2                    // [x, 0x755bf798b4a1bf1e5, x]
-    slt iszero              // [x >= 0x755bf798b4a1bf1e5, x]
+    0x0755bf798b4a1bf1e5    // [0x0755bf798b4a1bf1e5, x]
+    dup2                    // [x, 0x0755bf798b4a1bf1e5, x]
+    slt iszero              // [x >= 0x0755bf798b4a1bf1e5, x]
     fail jumpi              // [x]
 
-    0x12 0x05 exp           // [0x05 ** 0x12, x]
+    0x03782dace9d9          // [0x05 ** 0x12, x]
     swap1                   // [x, 0x05 ** 0x12]
     0x4e shl                // [x << 0x4e, 0x05 ** 0x12]
     sdiv                    // [x << 0x4e / 0x05 ** 0x12]
@@ -56,8 +56,8 @@
     0xb17217f7d1cf79abc9e3b398
     dup2                    // [x, 0xb17217f7d1cf79abc9e3b398, x]
     0x60 shl                // [x << 96, 0xb17217f7d1cf79abc9e3b398, x]
-    sdiv                     // [x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
-    0x5f 0x02 exp           // [2**95, x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    sdiv                    // [x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    0x7ffffff20f9306d2eea00000 // [2**95, x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
     add                     // [2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
     0x60 sar                // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
 
@@ -125,10 +125,13 @@
     swap1 sdiv              // [p / q (r), y, k, x]
     
     0x029d9dc38563c32e5c2f6dc192ee70ef65f9978af3
-    mul                     // [0x29d9... * r, y, k, x]
-    dup3                    // [k, 0x29d9... * r, y, k, x]
-    0xc3 sub                // [0xc3 - k, 0x29d9... * r, y, k, x]
-    shr                     // [(0x29d9... * r) >> 0xc3 - k, y, k, x]
+    mul                     // [0x029d9... * r, y, k, x]
+    dup3                    // [k, 0x029d9... * r, y, k, x]
+    0xc3 sub                // [0xc3 - k, 0x029d9... * r, y, k, x]
+    shr                     // [(0x029d9... * r) >> 0xc3 - k, y, k, x]
+
+    // Clean stack
+    swap3 pop pop pop       // [result]
 
     finish jump
 
