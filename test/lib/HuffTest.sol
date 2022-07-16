@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import {Test} from "forge-std/Test.sol";
-import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
+import "forge-std/Test.sol";
+import "foundry-huff/HuffDeployer.sol";
 
 contract HuffTest is Test {
     /// @dev The name of the contract.

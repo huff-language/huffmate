@@ -1,0 +1,91 @@
+/// @title Owned
+/// @author Andreas Bigger
+/// @notice An Owned module based off <https://github.com/Rari-Capital/solmate/blob/main/src/auth/Owned.sol>
+/// @license Apache License, Version 2.0
+
+/* Interface */
+#define function setOwner(address) nonpayable returns ()
+#define function owner() view returns (address)
+
+/* Events */
+#define event OwnerUpdated(address indexed user, address indexed newOwner)
+
+/* Event Signatures */
+#define constant OWNER_UPDATED_SIG = 0x8292fce18fa69edf4db7b94ea2e58241df0ae57f97e0a6c9b29067028bf92d76
+
+/* Storage Slots */
+#define constant OWNER = FREE_STORAGE_POINTER()
+
+/* CONSTRUCTOR */
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+  // Copy the owner into memory
+  0x20                        // [size] - byte size to copy
+  0x20 codesize sub           // [offset, size] - offset in the code to copy from
+  0x00                        // [mem, offset, size] - offset in memory to copy to
+  codecopy                    // []
+
+  // Set the new owner
+  0x00 mload                  // [owner]
+  dup1                        // [owner, owner]
+  [OWNER]                     // [OWNER, owner, owner]
+  sstore                      // [owner]
+
+  // Emit the owner updated event
+  caller                      // [from, owner]
+  [OWNER_UPDATED_SIG]         // [sig, from, owner]
+  0x00 0x00                   // [0, 0, sig, from, owner]
+  log3                        // []
+}
+
+/* Only Owner Modifier */
+#define macro IS_OWNER() = takes(0) returns(0) {
+  caller                      // [msg.sender]
+  [OWNER] sload               // [owner, msg.sender]
+  eq authed jumpi             // [authed]
+
+  // Revert otherwise
+  0x00 0x00 revert
+
+  authed:
+}
+
+/* Set the Owner */
+#define macro SET_OWNER() = takes(0) returns(0) {
+  // Check that the caller is authorized
+  IS_OWNER()
+
+  // Set the new owner
+  0x04 calldataload           // [newOwner]
+  dup1                        // [newOwner, newOwner]
+  [OWNER] sstore              // [newOwner]
+
+  // Emit the owner updated event
+  caller                      // [from, newOwner]
+  [OWNER_UPDATED_SIG]         // [sig, from, newOwner]
+  0x00 0x00                   // [0, 32, sig, from, newOwner]
+  log3                        // []
+
+  stop
+}
+
+/* Get the owner of the contract */
+#define macro OWNER() = takes(0) returns (0) {
+  [OWNER] sload                  // [owner]
+  0x00 mstore                    // []
+  0x20 0x00 return
+}
+
+/* Main Macro - Contract Entrypoint */
+#define macro MAIN() = takes(0) returns(0) {
+  0x00 calldataload 0xE0 shr
+  dup1 0x13af4035 eq set_owner jumpi
+  dup1 0x8da5cb5b eq owner jumpi
+
+  // Revert if no signatures match
+  0x00 0x00 revert
+
+  set_owner:
+      SET_OWNER()
+  owner:
+      OWNER()
+}

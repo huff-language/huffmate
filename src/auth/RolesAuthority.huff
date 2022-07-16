@@ -1,0 +1,284 @@
+/// @title Roles Authority
+/// @author Andreas Bigger
+/// @notice A Roles Authority module based off <https://github.com/Rari-Capital/solmate/blob/main/src/auth/authorities/RolesAuthority.sol>
+/// @license Apache License, Version 2.0
+
+/* Imports */
+#include "./Auth.huff"
+#include "../data-structures/Hashmap.huff"
+
+/* Interface */
+#define function hasRole(address, uint8) view returns (bool)
+#define function doesRoleHaveCapability(uint8, address, bytes4) nonpayable returns (bool)
+#define function canCall(address, address, bytes4) nonpayable returns (bool)
+#define function setPublicCapability(address, bytes4, bool) nonpayable returns ()
+#define function setRoleCapability(uint8, address, bytes4, bool) nonpayable returns ()
+#define function setUserRole(address, uint8, bool) nonpayable returns ()
+
+/* Events */
+#define event UserRoleUpdated(address indexed user, uint8 indexed role, bool enabled)
+#define event PublicCapabilityUpdated(address indexed target, bytes4 indexed functionSig, bool enabled)
+#define event RoleCapabilityUpdated(uint8 indexed role, address indexed target, bytes4 indexed functionSig, bool enabled)
+
+/* Event Signatures */
+#define constant USER_ROLE_UPDATED_SIG = 0x4c9bdd0c8e073eb5eda2250b18d8e5121ff27b62064fbeeeed4869bb99bc5bf2
+#define constant PUBLIC_CAPABILITY_UPDATED_SIG = 0x950a343f5d10445e82a71036d3f4fb3016180a25805141932543b83e2078a93e
+#define constant ROLE_CAPABILITY_UPDATED_SIG = 0xa52ea92e6e955aa8ac66420b86350f7139959adfcc7e6a14eee1bd116d09860e
+
+/* MAPPINGS */
+#define constant USER_ROLES_LOCATION = FREE_STORAGE_POINTER()
+#define constant IS_CAPABILITY_PUBLIC_LOCATION = FREE_STORAGE_POINTER()
+#define constant GET_ROLES_WITH_CAPABILITY_LOCATION = FREE_STORAGE_POINTER()
+
+/* LEAVE CONSTRUCTOR UNDEFINED TO JUST USE AUTH's CONSTRUCTOR */
+
+/* Helper to get the roles for a user */
+#define macro GET_ROLES_FOR_ACCOUNT() = takes (1) returns (1) {
+  [USER_ROLES_LOCATION]              // [location, account]
+  LOAD_ELEMENT_FROM_KEYS(0x00)       // [roles]
+}
+
+/* Does a user have a role? */
+#define macro HAS_ROLE() = takes (0) returns (0) {
+  0x04 calldataload                  // [account]
+  GET_ROLES_FOR_ACCOUNT()            // [roles]
+  0x24 calldataload                  // [role, roles]
+  shr 0x01 and                       // [authed]
+  0x00 mstore                        // []
+  0x20 0x00 return                   // []
+}
+
+/* Helper to get the role for a capability */
+#define macro GET_ROLE_FOR_CAPABILITY() = takes (2) returns (1) {
+  LOAD_ELEMENT_FROM_KEYS(0x00)       // [role]
+}
+
+/* Checks if a Role has a Capability */
+#define macro ROLE_CAPABILITY() = takes (0) returns (0) {
+  0x44 calldataload                  // [sig]
+  0x24 calldataload                  // [target, sig]
+  GET_ROLE_FOR_CAPABILITY()          // [role]
+  0x04 calldataload                  // [input, role]
+  shr 0x01 and                       // [authed]
+  0x00 mstore                        // []
+  0x20 0x00 return                   // []
+}
+
+/* Helper to get if a capability is public */
+#define macro IS_CAPABILITY_PUBLIC() = takes (2) returns (1) {
+  LOAD_ELEMENT_FROM_KEYS(0x00)       // [public]
+}
+
+/* Checks if a user can call a function on a given address */
+/* ie, does the user have a role with the respective capability */
+#define macro CAN_CALL() = takes (0) returns (0) {
+  // Is the capability public
+  // return isCapabilityPublic[target][functionSig]
+  0x44 calldataload                  // [sig]
+  0x24 calldataload                  // [target, sig]
+  IS_CAPABILITY_PUBLIC()             // [public]
+  approved jumpi                     // []
+
+  // Check if the user has the role for the capability
+  // return bytes32(0) != getUserRoles[user] & getRolesWithCapability[target][functionSig]
+  0x04 calldataload                  // [account]
+  GET_ROLES_FOR_ACCOUNT()            // [roles]
+  0x44 calldataload                  // [sig, roles]
+  0x24 calldataload                  // [target, sig, roles]
+  GET_ROLE_FOR_CAPABILITY()          // [capabilities, roles]
+  and approved jumpi                 // []
+
+  // Return false otherwise
+  false 0x00 mstore
+  0x20 0x00 return
+
+  approved:
+    true 0x00 mstore
+    0x20 0x00 return
+}
+
+/* Set a Public Capability */
+/* NOTE: Requires Auth */
+#define macro SET_PUBLIC_CAPABILITY() = takes (0) returns (0) {
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Set the capability to the passed in value
+  0x44 calldataload                  // [value]
+  0x24 calldataload                  // [sig, value]
+  0x04 calldataload                  // [target, sig, value]
+  STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+  // Emit the capability updated event
+  0x44 calldataload                  // [value]
+  0x24 calldataload                  // [func, value]
+  0x04 calldataload                  // [target, func, value]
+  [PUBLIC_CAPABILITY_UPDATED_SIG]    // [sig, target, func, value]
+  0x00 0x00                          // [0, 0, sig, target, func, value]
+  log3                               // []
+
+  // End Execution
+  stop
+}
+
+/* Sets the capability for a role */
+/* NOTE: Requires Auth */
+#define macro SET_ROLE_CAPABILITY() = takes (0) returns (0) {
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Check if enabled
+  0x64 calldataload                    // [value]
+  enable jumpi                         // []
+
+  // Disable the capability
+  disable:
+    // Get the current roles with the capability
+    0x44 calldataload                  // [sig]
+    0x24 calldataload                  // [target, sig]
+    GET_ROLE_FOR_CAPABILITY()          // [roles]
+
+    // Shift 1 left the role
+    0x01 0x04 calldataload shl         // [role, roles]
+    not                                // [others, roles]
+    and                                // [updated]
+
+    // Store the new capability
+    0x44 calldataload                  // [sig, updated]
+    0x24 calldataload                  // [target, sig, updated]
+    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+    // Jump to the emit log label
+    emit_log jump
+
+  // Enable the capability
+  enable:
+    // Get the current roles with the capability
+    0x44 calldataload                  // [sig]
+    0x24 calldataload                  // [target, sig]
+    GET_ROLE_FOR_CAPABILITY()          // [roles]
+
+    // Shift 1 left the role
+    0x01 0x04 calldataload shl         // [role, roles]
+    or                                 // [capabilies]
+
+    // Store the new capability
+    0x44 calldataload                  // [sig, capabilies]
+    0x24 calldataload                  // [target, sig, capabilies]
+    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+  // Emit the capability updated event
+  emit_log:
+    0x64 calldataload                  // [enabled]
+    0x44 calldataload                  // [func, enabled]
+    0x24 calldataload                  // [target, func, enabled]
+    0x04 calldataload                  // [role, target, func, enabled]
+    [ROLE_CAPABILITY_UPDATED_SIG]      // [sig, role, target, func, enabled]
+    0x00 0x00                          // [0, 0, sig, role, target, func, enabled]
+    log4                               // []
+
+    // End Execution
+    stop
+}
+
+/* Sets an accounts role */
+#define macro SET_ACCOUNT_ROLE() = takes (0) returns (0) {
+  // Check that the caller is authorized
+  REQUIRES_AUTH()
+
+  // Check if enabled
+  0x44 calldataload                    // [enabled]
+  enable jumpi                         // []
+
+  // Disable the role
+  disable:
+    // Get the account roles
+    0x04 calldataload                  // [account]
+    GET_ROLES_FOR_ACCOUNT()            // [roles]
+
+    // Shift 1 left the role
+    0x01 0x24 calldataload shl         // [new_role, roles]
+    not                                // [others, roles]
+    and                                // [updated]
+
+    // Store the new roles
+    0x04 calldataload                  // [account, updated]
+    [USER_ROLES_LOCATION]              // [key, account, updated]
+    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+    // Jump to the emit log label
+    emit_log jump
+
+  // Enable the role
+  enable:
+    // Get the account roles
+    0x04 calldataload                  // [account]
+    GET_ROLES_FOR_ACCOUNT()            // [roles]
+
+    // Shift 1 left the role
+    0x01 0x24 calldataload shl         // [new_role, roles]
+    or                                 // [updated]
+
+    // Store the new roles
+    0x04 calldataload                  // [account, updated]
+    [USER_ROLES_LOCATION]              // [key, account, updated]
+    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+
+
+  // Emit the user role updated event
+  emit_log:
+    0x44 calldataload                  // [enabled]
+    0x24 calldataload                  // [role, enabled]
+    0x04 calldataload                  // [account, role, enabled]
+    [USER_ROLE_UPDATED_SIG]            // [sig, account, role, enabled]
+    0x00 0x00                          // [0, 0, sig, account, role, enabled]
+    log3                               // []
+
+    // End Execution
+    stop
+}
+
+/* Main Macro - The contract entrypoint */
+#define macro MAIN() = takes(0) returns (0) {
+    // Identify which function is being called using the 4 byte function signature
+    0x00 calldataload 0xe0 shr
+    dup1 0x95a8c58d eq has_role jumpi
+    dup1 0xb4bad06a eq role_capability jumpi
+    dup1 0xb7009613 eq can_call jumpi
+    dup1 0xc6b0263e eq set_public_capability jumpi
+    dup1 0x7d40583d eq set_role_capability jumpi
+    dup1 0x67aff484 eq set_account_role jumpi
+
+    // Auth Sigs
+    dup1 0x13af4035 eq set_owner jumpi
+    dup1 0x7a9e5e4b eq set_authority jumpi
+    dup1 0x8da5cb5b eq owner jumpi
+    dup1 0xbf7e214f eq authority jumpi
+
+    // Revert if no signatures match
+    0x00 0x00 revert
+
+    has_role:
+      HAS_ROLE()
+    role_capability:
+      ROLE_CAPABILITY()
+    can_call:
+      CAN_CALL()
+    set_public_capability:
+      SET_PUBLIC_CAPABILITY()
+    set_role_capability:
+      SET_ROLE_CAPABILITY()
+    set_account_role:
+      SET_ACCOUNT_ROLE()
+
+    set_owner:
+        SET_OWNER()
+    set_authority:
+        SET_AUTHORITY()
+    owner:
+        OWNER()
+    authority:
+        AUTHORITY()
+}
+
+

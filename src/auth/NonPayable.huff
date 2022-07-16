@@ -1,0 +1,12 @@
+/* Non Payable - Reverts if msg.value is non-zero */
+#define macro NON_PAYABLE() = takes (0) returns (0) {
+  // Check if callvalue is 0
+  callvalue                            // [msg.value]
+  iszero                               // [msg.value == 0]
+  continue jumpi                       // []
+
+  // If not, revert, otherwise jump over this line
+  0x00 0x00 revert
+
+  continue:
+}
