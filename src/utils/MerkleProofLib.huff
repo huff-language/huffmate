@@ -1,16 +1,17 @@
 // https://github.com/Rari-Capital/solmate/blob/v7/src/utils/MerkleProofLib.sol
 #define macro VERIFY_PROOF() = takes (3) returns (1) {
-    // Input Stack:        [leaf, root, proof_cd_ptr]
+    // Input Stack:        [proof_cd_ptr, leaf, root]
 
-    // Store end of input arr offset in memory
-    dup3 calldataload   // [proof_arr_len, leaf, root, proof_cd_ptr]
-    0x05 shl            // [proof_arr_len << 5, leaf, root, proof_cd_ptr]
-    dup4 0x20 add add   // [proof_cd_ptr + 0x20 + proof_arr_len << 5, leaf, root, proof_cd_ptr]
-    0x40 mstore         // [leaf, root, proof_cd_ptr]
+    // Store end of input arr offset in memory @ 0x40
+    dup1 calldataload   // [proof_arr_len, proof_cd_ptr, leaf, root]
+    0x05 shl            // [proof_arr_len << 5, proof_cd_ptr, leaf, root]
+    swap1 0x20 add      // [proof_cd_ptr + 0x20, proof_arr_len << 5, leaf, root]
+    dup1 swap2          // [proof_cd_ptr + 0x20, proof_arr_len << 5, proof_cd_ptr + 0x20, leaf, root]
+    add                 // [proof_cd_ptr + 0x20 + proof_arr_len << 5, proof_cd_ptr + 0x20, leaf, root]
+    0x40 mstore         // [proof_cd_ptr + 0x20, leaf, root]
 
-    // Store loop index in memory
-    dup3 0x20 add       // [proof_cd_ptr + 0x20, leaf, root, proof_cd_ptr]
-    0x60 mstore         // [leaf, root, proof_cd_ptr]
+    // Store loop index in memory @ 0x60
+    0x60 mstore         // [leaf, root]
 
     loop:
         0x40 mload      // [proof_arr_end, leaf, root]
@@ -45,7 +46,5 @@
 
         loop jump
     finish:
-        // Exit stack:     [leaf, root, proof_cd_ptr]
-        swap2 pop       // [root, leaf]
         eq              // [root == leaf]
 }
