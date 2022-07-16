@@ -1,5 +1,146 @@
 // TODO: Add function wrappers for macros once #164 is merged in huff-rs
 
+#define constant WAD = 0x0de0b6b3a7640000
+
+// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L13
+#define macro MUL_WAD_DOWN() = takes (2) returns (1) {
+    // Input stack:            [x, y]
+    [WAD]                   // [WAD, x, y]
+    ARRANGE_STACK_MULWAD()  // [x, y, WAD]
+    MUL_DIV_DOWN()          // [result]
+}
+
+// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L17
+#define macro MUL_WAD_UP() = takes (2) returns (1) {
+    // Input stack:            [x, y]
+    [WAD]                   // [WAD, x, y]
+    ARRANGE_STACK_MULWAD()  // [x, y, WAD]
+    MUL_DIV_UP()            // [result]
+}
+
+// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L21
+#define macro DIV_WAD_DOWN() = takes (2) returns (1) {
+    // Input stack:            [x, y]
+    [WAD]                   // [WAD, x, y]
+    ARRANGE_STACK_DIVWAD()  // [x, WAD, y]
+    MUL_DIV_DOWN()
+}
+
+// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L25
+#define macro DIV_WAD_UP() = takes (2) returns (1) {
+    // Input stack:            [x, y]
+    [WAD]                   // [WAD, x, y]
+    ARRANGE_STACK_DIVWAD()  // [x, WAD, y]
+    MUL_DIV_UP()            // [result]
+}
+
+// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L34
+#define macro EXP_WAD() = takes (1) returns (1) {
+    // Input stack:            [x]
+
+    0xfffffffffffffffffffffffffffffffffffffffffffffffdb731c958f34d94c1
+    dup2                    // [x, 0xfff..., x]
+    sgt iszero              // [x <= 0xfff..., x]
+    ret_zero jumpi          // [x]
+
+    0x0755bf798b4a1bf1e5    // [0x755bf798b4a1bf1e5, x]
+    dup2                    // [x, 0x755bf798b4a1bf1e5, x]
+    slt iszero              // [x >= 0x755bf798b4a1bf1e5, x]
+    fail jumpi              // [x]
+
+    0x12 0x05 exp           // [0x05 ** 0x12, x]
+    swap1                   // [x, 0x05 ** 0x12]
+    0x4e shl                // [x << 0x4e, 0x05 ** 0x12]
+    div                     // [x << 0x4e / 0x05 ** 0x12]
+
+    0xb17217f7d1cf79abc9e3b398
+    dup2                    // [x, 0xb17217f7d1cf79abc9e3b398, x]
+    0x60 shl                // [x << 96, 0xb17217f7d1cf79abc9e3b398, x]
+    div                     // [x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    0x5f 0x02 exp           // [2**95, x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    add                     // [2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    0x60 shr                // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+
+    dup1                    // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    0xb17217f7d1cf79abc9e3b398
+    mul                     // [((2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96) * 0xb17217f7d1cf79abc9e3b398, (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    dup3                    // [x, ((2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96) * 0xb17217f7d1cf79abc9e3b398, (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    sub                     // [x (new), (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    swap2 pop               // [k, x]
+
+    0x10fe68e7fd37d0007b713f7650
+    dup3                    // [x, 0x10fe68e7fd37d0007b713f7650, k, x]
+    add                     // [y, k, x]
+
+    0x02d16720577bd19bf614176fe9ea
+    dup2 dup5 mul           // [x * y, 0x02d16720577bd19bf614176fe9ea, y, k, x]
+    0x60 shr                // [(x * y) >> 0x60, 0x02d16720577bd19bf614176fe9ea, y, k, x]
+    add                     // [((x * y) >> 0x60) + 0x02d16720577bd19bf614176fe9ea, y, k, x]
+    swap1 pop               // [y, k, x]
+
+    0x04a4fd9f2a8b96949216d2255a6c
+    dup4 dup3 add           // [x + y, 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
+    sub                     // [x + y - 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
+    
+    dup2                    // [y, x + y - 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
+    mul                     // [y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c), y, k, x]
+    0x60 shr                // [(y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c)) >> 0x60, y, k, x]
+    0x0587f503bb6ea29d25fcb740196450
+    add                     // [p, y, k, x]
+
+    dup4                    // [x, p, y, k, x]
+    mul                     // [x * p, y, k, x]
+    0xd835ebba824c98fb31b83b2ca45c
+    0x60 shl                // [0xd835ebba824c98fb31b83b2ca45c << 0x60, x * p, y, k, x]
+    add                     // [p, y, k, x]
+
+    0x240c330e9fb2d9cbaf0fd5aafc
+    dup5 sub                // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x0277594991cfc85f6e2461837cd9
+    add                     // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x1a521255e34f6a5061b25ef1c9c4 swap1
+    sub                     // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0xb1bbb201f443cf962f1a1d3db4a5
+    add                     // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x02c72388d9f74f51a9331fed693f15 swap1
+    sub                     // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x05180bb14799ab47a8a8cb2a527d57
+    add                     // [q, p, y, k, x]
+
+    swap1 sdiv              // [p / q (r), y, k, x]
+    
+    0x029d9dc38563c32e5c2f6dc192ee70ef65f9978af3
+    mul                     // [0x29d9... * r, y, k, x]
+    dup3                    // [k, 0x29d9... * r, y, k, x]
+    0xc3 sub                // [0xc3 - k, 0x29d9... * r, y, k, x]
+    shr                     // [(0x29d9... * r) >> 0xc3 - k, y, k, x]
+
+    finish jump
+
+    fail:
+        0x00 0x00 revert
+    ret_zero:
+        0x00 0x00 mstore
+        0x20 0x00 return
+    finish:
+        // ...
+}
+
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L34
 #define macro MUL_DIV_DOWN() = takes (3) returns (1) {
     // Input stack:      [x, y, denominator]
@@ -224,4 +365,15 @@
         finish:
             pop pop             // [] - Clear stack
             0x60 mload          // [result]
+}
+
+#define macro ARRANGE_STACK_MULWAD() = takes (0) returns (0) {
+    // Input stack: [WAD, x, y]
+    swap2        // [y, x, WAD]
+    swap1        // [x, y, WAD]
+}
+
+#define macro ARRANGE_STACK_DIVWAD() = takes (0) returns (0) {
+    // Input stack: [WAD, x, y]
+    swap1        // [x, WAD, y]
 }
