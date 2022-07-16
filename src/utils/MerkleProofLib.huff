@@ -1,0 +1,51 @@
+// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/MerkleProofLib.sol
+#define macro VERIFY_PROOF() = takes (3) returns (1) {
+    // Input Stack:        [leaf, root, proof_cd_ptr]
+
+    // Store end of input arr offset in memory
+    dup3 calldataload   // [proof_arr_len, leaf, root, proof_cd_ptr]
+    0x05 shl            // [proof_arr_len << 5, leaf, root, proof_cd_ptr]
+    dup4 0x20 add add   // [proof_cd_ptr + 0x20 + proof_arr_len << 5, leaf, root, proof_cd_ptr]
+    0x40 mstore         // [leaf, root, proof_cd_ptr]
+
+    // Store loop index in memory
+    dup3 0x20 add       // [proof_cd_ptr + 0x20, leaf, root, proof_cd_ptr]
+    0x60 mstore         // [leaf, root, proof_cd_ptr]
+
+    loop:
+        0x40 mload      // [proof_arr_end, leaf, root]
+        0x60 mload      // [loop_idx, proof_arr_end, leaf, root]
+        lt              // [loop_idx < proof_arr_end, leaf, root]
+        // If loop index is >= the proof arr end offset, finish the loop
+        iszero finish jumpi
+
+        // Load data at proof_arr[loop_idx]
+        0x60 mload      // [loop_idx, leaf, root]
+        calldataload    // [proof_arr[loop_idx], leaf, root]
+
+        dup1            // [proof_arr[loop_idx], proof_arr[loop_idx], leaf, root]
+        dup3            // [leaf, proof_arr[loop_idx], proof_arr[loop_idx], leaf, root]
+        gt              // [leaf > proof_arr[loop_idx], proof_arr[loop_idx], leaf, root]
+        0x05 shl        // [leaf > proof_arr[loop_idx] << 5, proof_arr[loop_idx], leaf, root]
+
+        dup3            // [leaf, leaf > proof_arr[loop_idx] << 5, proof_arr[loop_idx], leaf, root]
+        dup2            // [leaf > proof_arr[loop_idx] << 5, leaf, leaf > proof_arr[loop_idx] << 5, proof_arr[loop_idx], leaf, root]
+        mstore          // [leaf > proof_arr[loop_idx] << 5, proof_arr[loop_idx], leaf, root]
+
+        0x20 xor        // [(leaf > proof_arr[loop_idx] << 5) ^ 0x20, proof_arr[loop_idx], leaf, root]
+        mstore          // [leaf, root]
+
+        pop             // [root]
+        0x40 0x00 sha3  // [leaf, root]
+
+        // Add 32 to ptr
+        0x60 mload      // [loop_idx, leaf, root]
+        0x20 add        // [loop_idx + 0x20, leaf, root]
+        0x60 mstore     // [leaf, root]
+
+        loop jump
+    finish:
+        // Exit stack:     [leaf, root, proof_cd_ptr]
+        swap2 pop       // [root, leaf]
+        eq              // [root == leaf]
+}
