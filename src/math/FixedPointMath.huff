@@ -51,15 +51,15 @@
     0x12 0x05 exp           // [0x05 ** 0x12, x]
     swap1                   // [x, 0x05 ** 0x12]
     0x4e shl                // [x << 0x4e, 0x05 ** 0x12]
-    div                     // [x << 0x4e / 0x05 ** 0x12]
+    sdiv                    // [x << 0x4e / 0x05 ** 0x12]
 
     0xb17217f7d1cf79abc9e3b398
     dup2                    // [x, 0xb17217f7d1cf79abc9e3b398, x]
     0x60 shl                // [x << 96, 0xb17217f7d1cf79abc9e3b398, x]
-    div                     // [x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    sdiv                     // [x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
     0x5f 0x02 exp           // [2**95, x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
     add                     // [2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
-    0x60 shr                // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    0x60 sar                // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
 
     dup1                    // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
     0xb17217f7d1cf79abc9e3b398
@@ -74,7 +74,7 @@
 
     0x02d16720577bd19bf614176fe9ea
     dup2 dup5 mul           // [x * y, 0x02d16720577bd19bf614176fe9ea, y, k, x]
-    0x60 shr                // [(x * y) >> 0x60, 0x02d16720577bd19bf614176fe9ea, y, k, x]
+    0x60 sar                // [(x * y) >> 0x60, 0x02d16720577bd19bf614176fe9ea, y, k, x]
     add                     // [((x * y) >> 0x60) + 0x02d16720577bd19bf614176fe9ea, y, k, x]
     swap1 pop               // [y, k, x]
 
@@ -84,7 +84,7 @@
     
     dup2                    // [y, x + y - 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
     mul                     // [y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c), y, k, x]
-    0x60 shr                // [(y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c)) >> 0x60, y, k, x]
+    0x60 sar                // [(y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c)) >> 0x60, y, k, x]
     0x0587f503bb6ea29d25fcb740196450
     add                     // [p, y, k, x]
 
@@ -98,27 +98,27 @@
     dup5 sub                // [q, p, y, k, x]
 
     dup5 mul                // [x * q, p, y, k, x]
-    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
     0x0277594991cfc85f6e2461837cd9
     add                     // [q, p, y, k, x]
 
     dup5 mul                // [x * q, p, y, k, x]
-    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
     0x1a521255e34f6a5061b25ef1c9c4 swap1
     sub                     // [q, p, y, k, x]
 
     dup5 mul                // [x * q, p, y, k, x]
-    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
     0xb1bbb201f443cf962f1a1d3db4a5
     add                     // [q, p, y, k, x]
 
     dup5 mul                // [x * q, p, y, k, x]
-    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
     0x02c72388d9f74f51a9331fed693f15 swap1
     sub                     // [q, p, y, k, x]
 
     dup5 mul                // [x * q, p, y, k, x]
-    0x60 shr                // [(x * q) >> 0x60, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
     0x05180bb14799ab47a8a8cb2a527d57
     add                     // [q, p, y, k, x]
 
