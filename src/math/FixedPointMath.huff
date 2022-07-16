@@ -1,6 +1,4 @@
-#define function mulDivDown(uint256,uint256,uint256) pure returns(uint256)
-#define function mulDivUp(uint256,uint256,uint256) pure returns(uint256)
-#define function rpow(uint256,uint256,uint256) pure returns(uint256)
+// TODO: Add function wrappers for macros once #164 is merged in huff-rs
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L34
 #define macro MUL_DIV_DOWN() = takes (3) returns (1) {
@@ -33,7 +31,7 @@
     0x00 mload        // [x * y, denominator]
     div               // [(x * y) / denominator]
 
-    0x01 finish jumpi
+    finish jump
 
     fail:
         0x00 0x00 revert
@@ -84,7 +82,7 @@
     swap3             // [denominator, x, y, ((x * y - 1 / denominator) + 1) * (x * y != 0)]
     pop pop pop       // [((x * y - 1 / denominator) + 1) * (x * y != 0)]
 
-    0x01 finish jumpi
+    finish jump
 
     fail:
         0x00 0x00 revert
@@ -99,7 +97,7 @@
     dup1                        // [x, x, n, scalar]
 
     iszero zero jumpi           // Jump to "zero" if x == 0
-    0x01 default jumpi          // Jump to "default" if x != 0
+    default jump                // Jump to "default" if x != 0
 
     zero:
         dup2                    // [n, x, n, scalar]
@@ -111,12 +109,12 @@
         zero_inner:
             swap2               // [scalar, n, x]
             0x60 mstore         // [n, x]
-            0x01 finish jumpi   // Finish execution
+            finish jump         // Finish execution
         // 0 ** n = 0
         zero_default:
             // 0x60 is blank, no need to set it.
             pop                 // [n, scalar] - Others will be popped in `finish`
-            0x01 finish jumpi   // Finish execution
+            finish jump         // Finish execution
     default:
         0x20 mstore             // [n, scalar]
         0x40 mstore             // [scalar]
@@ -130,18 +128,18 @@
         mod                     // [n % 2, scalar]
 
         iszero even jumpi       // Set result to scalar for now if n % 2 is even
-        0x01 odd jumpi          // Set result to x for now if n % 2 is odd
+        odd jump                // Set result to x for now if n % 2 is odd
 
         // n % 2 is even
         even:
             dup1                // [scalar, scalar]
             0x60 mstore         // [scalar]
-            0x01 loop jumpi     // Start loop
+            loop jump           // Start loop
         // n % 2 is odd
         odd:
             0x20 mload          // [x, scalar]
             0x60 mstore         // [scalar]
-            0x01 loop jumpi     // Start loop
+            loop jump           // Start loop
         loop:
             0x40 mload          // [n, scalar]
             dup1                // [n, n, scalar]
@@ -184,7 +182,7 @@
             // If n is odd, continue logic
             odd_inner jumpi
             // If n is even, continue loop
-            0x01 loop jumpi
+            loop jump
         odd_inner:
             // Multiply x * result
             0x60 mload          // [result]
@@ -218,7 +216,7 @@
             div                 // [((scalar >> 1) + (x * result)) / scalar, scalar]
             0x60 mstore         // [scalar]
 
-            0x01 loop jumpi     // Continue loop
+            loop jump           // Continue loop
         // Revert
         fail:
             0x00 0x00 revert
@@ -226,46 +224,4 @@
         finish:
             pop pop             // [] - Clear stack
             0x60 mload          // [result]
-}
-
-#define macro MUL_DIV_DOWN_WRAPPER() = takes (0) returns (0) {
-    0x44 calldataload // [denominator]
-    0x24 calldataload // [y, denominator]
-    0x04 calldataload // [x, y, denominator]
-    MUL_DIV_DOWN()    // [result]
-    0x00 mstore       // []
-    0x20 0x00 return
-}
-
-#define macro MUL_DIV_UP_WRAPPER() = takes (0) returns (0) {
-    0x44 calldataload // [denominator]
-    0x24 calldataload // [y, denominator]
-    0x04 calldataload // [x, y, denominator]
-    MUL_DIV_UP()      // [result]
-    0x00 mstore       // []
-    0x20 0x00 return
-}
-
-#define macro RPOW_WRAPPER() = takes (0) returns (0) {
-    0x44 calldataload // [scalar]
-    0x24 calldataload // [n, scalar]
-    0x04 calldataload // [x, n, scalar]
-    RPOW()            // [result]
-    0x00 mstore       // []
-    0x20 0x00 return
-}
-
-
-#define macro MAIN() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr
-    dup1 0xb67bee04 eq mulDivDown jumpi
-    dup1 0x12bd6ac0 eq mulDivUp   jumpi
-    dup1 0x67b870af eq rpow       jumpi
-
-    mulDivDown:
-        MUL_DIV_DOWN_WRAPPER()
-    mulDivUp:
-        MUL_DIV_UP_WRAPPER()
-    rpow:
-        RPOW_WRAPPER()
 }
