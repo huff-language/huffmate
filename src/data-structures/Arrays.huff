@@ -1,0 +1,70 @@
+
+#define macro SET_ARRAY_FROM_CALLDATA() = takes(1) returns (0) {
+    // Input stack: [slot]
+    // load length
+    0x04 calldataload           // [length, slot]
+    // store length at slot
+    dup1 dup3                   // [slot, length, length, slot]
+    sstore                      // [length, slot]
+
+    // store slot in memory scratch space and compute hash
+    dup2 0x00 mstore            // [length, slot]
+    0x20 0x00 sha3              // [sha3(slot), length, slot]
+
+    // loop and store every element in slot sha3(slot)+n
+    0x00                        // [index(0), sha3(slot), length, slot]
+    start jump
+    continue:
+        // if index == length -> it's over
+        eq end jumpi                // [index(i), sha3(slot), length, slot]
+        start:
+        // compute calldata offset, load from calldata
+        0x24 dup2 add 0x20 mul calldataload // [value(i), index(i), sha3(slot), length, slot]
+        // store at slot sha3(slot)+index
+        dup3 dup3 add sstore        // [index(i), sha3(slot), length, slot]
+        // inc index
+        0x01 add                    // [index(i+1), sha3(slot), length, slot]
+        dup1 dup4                   // [length, index(i+1), index(i+1), sha3(slot), length, slot]
+        continue jump
+
+    end:
+}
+
+#define macro LOAD_ARRAY(mem_ptr) = takes(1) returns (0) {
+    // Input stack: [slot]
+
+    // store the size of each element in memory
+    0x20 <mem_ptr> mstore       // [slot]
+    <mem_ptr>                   // [mem_ptr, slot]
+    // load length from storage
+    dup2 sload dup1             // [length, length, curr_mem_ptr, slot]
+    // store length in memory
+    swap2 0x20 add              // [curr_mem_ptr+0x20, length, length, slot]
+    swap1 dup2 mstore           // [curr_mem_ptr, length, slot]
+
+    // store slot in memory scratch space and compute hash
+    swap2 0x00 mstore           // [length, curr_mem_ptr]
+    0x20 0x00 sha3 swap2        // [curr_mem_ptr, length, sha3(slot)]
+
+    // loop and load every element in slot sha3(slot)+n
+    0x00 start jump             // [index(0), curr_mem_ptr, length, sha3(slot)]
+    continue:
+        // if index == length -> it's over
+        eq end jumpi            // [index(i), curr_mem_ptr, length, sha3(slot)]
+        start:                  
+        // load from storage
+        dup4 sload              // [array(i), index(i), curr_mem_ptr, length, sha3(slot)]
+        // store value in memory
+        swap2 0x20 add          // [curr_mem_ptr+0x20, index(i), array(i), length, sha3(slot)]
+        dup1 swap3 swap1 mstore // [index(i), curr_mem_ptr, length, sha3(slot)]
+        // update index and slot
+        0x01 add                // [index(i+1), curr_mem_ptr, length, sha3(slot)]
+        swap3 0x01 add swap3    // [index(i+1), curr_mem_ptr, length, sha3(slot)+i]
+        dup1 dup3               // [length, index(i+1), index(i+1), curr_mem_ptr, length, sha3(slot)+i]
+        continue jump
+
+    end:
+    // size of data to return
+    swap2 0x05 shl                 // [size, curr_mem_ptr, index(i), sha3(slot)]
+    <mem_ptr> return
+}
