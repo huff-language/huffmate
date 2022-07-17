@@ -7,12 +7,13 @@ import "forge-std/Test.sol";
 interface IFixedPointMath {
     function mulDivDown(uint256,uint256,uint256) external pure returns(uint256);
     function mulDivUp(uint256,uint256,uint256) external pure returns(uint256);
-    function rpow(uint256,uint256,uint256) external pure returns(uint256);
-    function expWad(int256) external pure returns(int256);
     function mulWadDown(uint256,uint256) external pure returns(uint256);
     function mulWadUp(uint256,uint256) external pure returns(uint256);
     function divWadDown(uint256,uint256) external pure returns(uint256);
     function divWadUp(uint256,uint256) external pure returns(uint256);
+    function rpow(uint256,uint256,uint256) external pure returns(uint256);
+    function expWad(int256) external pure returns(int256);
+    function log2(uint256) external pure returns(uint256);
 }
 
 contract FixedPointMathTest is Test {
@@ -75,6 +76,14 @@ contract FixedPointMathTest is Test {
             // True value: 578960446186580976_49816762928942336782129491980154662247847962410455084893091
             // Relative error: 5.653904247484822e-21
         );
+    }
+
+    function testLog2() public {
+        assertEq(math.log2(2), 1);
+        assertEq(math.log2(4), 2);
+        assertEq(math.log2(1024), 10);
+        assertEq(math.log2(1048576), 20);
+        assertEq(math.log2(1073741824), 30);
     }
 
     function testMulDivDown() public {
@@ -324,5 +333,13 @@ contract FixedPointMathTest is Test {
 
     function testFailFuzzDivWadUpZeroDenominator(uint256 x) public {
         math.divWadUp(x, 0);
+    }
+
+    function testFuzzLog2() public {
+        for (uint256 i = 1; i < 255; i++) {
+            assertEq(math.log2((1 << i) - 1), i - 1);
+            assertEq(math.log2((1 << i)), i);
+            assertEq(math.log2((1 << i) + 1), i);
+        }
     }
 }
