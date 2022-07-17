@@ -9,7 +9,7 @@
 #define constant LOCATION = FREE_STORAGE_POINTER()
 
 #define macro SET_FROM_CALLDATA() = takes(0) returns(0) {
-    [LOCATION]
+    [LOCATION] 0x04
     SET_ARRAY_FROM_CALLDATA()
     stop
 }

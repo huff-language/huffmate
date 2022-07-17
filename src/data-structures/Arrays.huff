@@ -1,30 +1,34 @@
-
-#define macro SET_ARRAY_FROM_CALLDATA() = takes(1) returns (0) {
-    // Input stack: [slot]
+// Sets an array in storage from calldata.
+// Note that since no assumptions is made regarding the context in which
+// this function is called, the position of the encoded array in the calldata
+// has to be specified.
+#define macro SET_ARRAY_FROM_CALLDATA() = takes(2) returns (0) {
+    // Input stack: [calldata_start, slot]
+    dup1 0x20 add swap1         // [calldata_start, calldata_offset, slot]
     // load length
-    0x04 calldataload           // [length, slot]
+    calldataload                // [length, calldata_offset, slot]
     // store length at slot
-    dup1 dup3                   // [slot, length, length, slot]
-    sstore                      // [length, slot]
+    dup1 dup4                   // [slot, length, length, calldata_offset, slot]
+    sstore                      // [length, calldata_offset, slot]
 
     // store slot in memory scratch space and compute hash
-    dup2 0x00 mstore            // [length, slot]
-    0x20 0x00 sha3              // [sha3(slot), length, slot]
+    dup3 0x00 mstore            // [length, calldata_offset, slot]
+    0x20 0x00 sha3              // [sha3(slot), length, calldata_offset, slot]
 
     // loop and store every element in slot sha3(slot)+n
-    0x00                        // [index(0), sha3(slot), length, slot]
+    0x00                        // [index(0), sha3(slot), length, calldata_offset, slot]
     start jump
     continue:
         // if index == length -> it's over
-        eq end jumpi                // [index(i), sha3(slot), length, slot]
+        eq end jumpi                // [index(i), sha3(slot), length, calldata_offset, slot]
         start:
-        // compute calldata offset, load from calldata
-        0x24 dup2 add 0x20 mul calldataload // [value(i), index(i), sha3(slot), length, slot]
+        // load from calldata
+        dup4 dup2 add 0x20 mul calldataload // [value(i), index(i), sha3(slot), length, calldata_offset, slot]
         // store at slot sha3(slot)+index
-        dup3 dup3 add sstore        // [index(i), sha3(slot), length, slot]
+        dup3 dup3 add sstore        // [index(i), sha3(slot), length, calldata_offset, slot]
         // inc index
-        0x01 add                    // [index(i+1), sha3(slot), length, slot]
-        dup1 dup4                   // [length, index(i+1), index(i+1), sha3(slot), length, slot]
+        0x01 add                    // [index(i+1), sha3(slot), length, calldata_offset, slot]
+        dup1 dup4                   // [length, index(i+1), index(i+1), sha3(slot), length, calldata_offset, slot]
         continue jump
 
     end:
