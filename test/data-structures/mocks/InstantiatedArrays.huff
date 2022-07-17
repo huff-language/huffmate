@@ -1,6 +1,6 @@
 // Sets an array from calldata.
-// sig: 0x38068d47
-#define function setArrayFromCalldata(uint256[]) view
+// sig: 0x226ce6b7
+#define function setArrayFromCalldata(uint256[]) view returns ()
 
 // Returns an array.
 // sig: 0xde9ee75c
@@ -25,7 +25,7 @@
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
     0x00 calldataload 0xE0 shr
-    dup1 0x38068d47 eq set_from_calldata jumpi
+    dup1 0x226ce6b7 eq set_from_calldata jumpi
     dup1 0xde9ee75c eq load jumpi
 
     // Revert if otherwise
