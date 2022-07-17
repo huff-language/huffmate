@@ -58,15 +58,14 @@
         // if index == length -> it's over
         eq end jumpi            // [index(i), curr_mem_ptr, length, sha3(slot)]
         start:                  
-        // load from storage
-        dup4 sload              // [array(i), index(i), curr_mem_ptr, length, sha3(slot)]
-        // store value in memory
-        swap2 0x20 add          // [curr_mem_ptr+0x20, index(i), array(i), length, sha3(slot)]
-        dup1 swap3 swap1 mstore // [curr_mem_ptr+0x20, array(i), index(i), curr_mem_ptr+0x20, length, sha3(slot)]
-        // update index and slot
-        0x01 add                // [index(i+1), curr_mem_ptr, length, sha3(slot)]
-        swap3 0x01 add swap3    // [index(i+1), curr_mem_ptr, length, sha3(slot)+i]
-        dup3 dup2               // [index(i+1), length, index(i+1), curr_mem_ptr, length, sha3(slot)+i]
+        // load from storage ; add index to sha3(slot)
+        dup1 dup5 add sload         // [array(i), index(i), curr_mem_ptr, length, sha3(slot)]
+        // store in memory
+        swap1 swap2 0x20 add        // [curr_mem_ptr+0x20, array(i), index(i), length, sha3(slot)]
+        dup1 swap2 swap1 mstore     // [curr_mem_ptr+0x20, index(i), length, sha3(slot)]
+        // update index
+        swap1 0x01 add              // [index(i+1), curr_mem_ptr, length, sha3(slot)]
+        dup1 dup4                   
         continue jump
 
     end:
