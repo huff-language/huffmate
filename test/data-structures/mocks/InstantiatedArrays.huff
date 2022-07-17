@@ -16,9 +16,9 @@
 
 
 // Store the value for the given key.
-#define macro LOAD() = takes(0) returns(0) {
+#define macro RETURN() = takes(0) returns(0) {
     [LOCATION]
-    LOAD_ARRAY(0x80)
+    RETURN_ARRAY(0x80)
 }
 
 /* Main Macro - The contract entrypoint */
@@ -34,5 +34,5 @@
     set_from_calldata:
         SET_FROM_CALLDATA()
     load:
-        LOAD()
+        RETURN()
 }

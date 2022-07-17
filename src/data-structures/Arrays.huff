@@ -4,7 +4,9 @@
 // has to be specified.
 #define macro SET_ARRAY_FROM_CALLDATA() = takes(2) returns (0) {
     // Input stack: [calldata_start, slot]
-    dup1 0x20 add swap1         // [calldata_start, calldata_offset, slot]
+    // skip size of one individual element
+    0x20 add                    // [calldata_start+0x20, slot]
+    dup1 0x20 add swap1         // [calldata_start+0x20, calldata_start+0x40, slot]
     // load length
     calldataload                // [length, calldata_offset, slot]
     // store length at slot
@@ -13,28 +15,28 @@
 
     // store slot in memory scratch space and compute hash
     dup3 0x00 mstore            // [length, calldata_offset, slot]
-    0x20 0x00 sha3              // [sha3(slot), length, calldata_offset, slot]
+    0x20 0x00 sha3              // [sha3(slot), length, ,calldata_offset slot]
 
     // loop and store every element in slot sha3(slot)+n
     0x00                        // [index(0), sha3(slot), length, calldata_offset, slot]
     start jump
     continue:
         // if index == length -> it's over
-        eq end jumpi                // [index(i), sha3(slot), length, calldata_offset, slot]
+        eq end jumpi                        // [index(i), sha3(slot), length, calldata_offset, slot]
         start:
         // load from calldata
-        dup4 dup2 add 0x20 mul calldataload // [value(i), index(i), sha3(slot), length, calldata_offset, slot]
+        dup1 0x20 mul dup5 add calldataload  // [array(i), index(i), sha3(slot), length, calldata_offset, slot]
         // store at slot sha3(slot)+index
         dup3 dup3 add sstore        // [index(i), sha3(slot), length, calldata_offset, slot]
         // inc index
         0x01 add                    // [index(i+1), sha3(slot), length, calldata_offset, slot]
-        dup1 dup4                   // [length, index(i+1), index(i+1), sha3(slot), length, calldata_offset, slot]
+        dup3 dup2                   // [index(i+1), length, index(i+1), sha3(slot), length, calldata_offset, slot]
         continue jump
 
     end:
 }
 
-#define macro LOAD_ARRAY(mem_ptr) = takes(1) returns (0) {
+#define macro RETURN_ARRAY(mem_ptr) = takes(1) returns (0) {
     // Input stack: [slot]
 
     // store the size of each element in memory
@@ -60,15 +62,15 @@
         dup4 sload              // [array(i), index(i), curr_mem_ptr, length, sha3(slot)]
         // store value in memory
         swap2 0x20 add          // [curr_mem_ptr+0x20, index(i), array(i), length, sha3(slot)]
-        dup1 swap3 swap1 mstore // [index(i), curr_mem_ptr, length, sha3(slot)]
+        dup1 swap3 swap1 mstore // [curr_mem_ptr+0x20, array(i), index(i), curr_mem_ptr+0x20, length, sha3(slot)]
         // update index and slot
         0x01 add                // [index(i+1), curr_mem_ptr, length, sha3(slot)]
         swap3 0x01 add swap3    // [index(i+1), curr_mem_ptr, length, sha3(slot)+i]
-        dup1 dup3               // [length, index(i+1), index(i+1), curr_mem_ptr, length, sha3(slot)+i]
+        dup3 dup2               // [index(i+1), length, index(i+1), curr_mem_ptr, length, sha3(slot)+i]
         continue jump
 
     end:
-    // size of data to return
-    swap2 0x05 shl                 // [size, curr_mem_ptr, index(i), sha3(slot)]
+    // size of data to return = size of individual element + array length + encoded elements
+    swap2 0x02 add 0x05 shl     // [size, curr_mem_ptr, index(i), sha3(slot)]
     <mem_ptr> return
 }
