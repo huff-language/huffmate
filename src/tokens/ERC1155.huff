@@ -1,0 +1,384 @@
+
+#include "../data-structures/Hashmap.huff"
+#include "../math/SafeMath.huff"
+
+/* Interface */
+
+#define function mint(address,uint256,uint256,bytes) nonpayable returns ()
+#define function batchMint(address,uint256[],uint256[],bytes) nonpayable returns ()
+#define function safeTransferFrom(address,address,uint256,uint256,bytes) nonpayable returns ()
+#define function safeBatchTransferFrom(address,address,uint256[],uint256[],bytes) nonpayable returns()
+#define function setApprovalForAll(address,bool) nonpayable returns ()
+
+/* View functions */
+#define function getApproved(uint256) view returns (address)
+#define function isApprovedForAll(address,address) view returns (bool)
+#define function balanceOf(address,uint256) view returns (uint256)
+
+#define function name() view returns (string)
+#define function symbol() view returns (string)
+#define function tokenURI(uint256) view returns (string)
+#define function supportsInterface(bytes4) view returns (bool)
+
+/* Events */
+#define event TransferSingle(address,address,address,uint256,uint256)
+#define event ApprovalForAll(address,address,bool)
+#define event URI(string,uint256)
+
+/* Event Signatures */
+#define constant TRANSFER_SINGLE_SIGNATURE = 0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62
+#define constant TRANSFER_BATCH_SIGNATURE = 0x13eb9248a9ef11cb06c98b58bfdc389b461152c8668d155983ad4e9d249a02a0
+#define constant APPROVAL_FOR_ALL_EVENT_SIGNATURE = 0x2ce3f86be9eea89ec6cccd2733d6b5d5cbf20f592201255984d0178f76d55757
+#define constant URI_EVENT_SIGNATURE = 0x6bb7ff708619ba0610cba295a58592e0451dee2622938c8755667688daf3529b
+
+/* Storage Slots */
+// Hard code these????? - save gas
+#define constant NAME_LOCATION = FREE_STORAGE_POINTER()
+#define constant SYMBOL_LOCATION = FREE_STORAGE_POINTER()
+#define constant BALANCE_LOCATION = FREE_STORAGE_POINTER()
+#define constant IS_APPROVED_FOR_ALL_LOCATION = FREE_STORAGE_POINTER()
+
+/* Constructor */
+#define macro CONSTRUCTOR() = takes(0) returns (0){
+    
+}
+
+/* View functions */
+#define macro BALANCE_OF() = takes(0) returns(0) {
+    0x24 calldataload                               // [tokenId]     // 0x04 ignores function selector
+    0x04 calldataload                               // [account, tokenId]
+    
+    [BALANCE_LOCATION] 
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)                    // [val] <mem_ptr> is 0x0 <- no need for scratch space?>
+    0x00 mstore                                     // [] load into mem
+    0x20 0x00 return                                // [] return 32 bytes
+}
+
+#define macro NAME() = takes (0) returns (0) {
+    // length 0b
+    0x0b4855464645524331313535          // hufferc1155
+    0x2b mstore                         // [] load into mem
+    
+    0x20 returndatasize mstore                    // dyn offset
+    0x60 returndatasize return                     
+}
+
+#define macro SYMBOL() = takes (0) returns (0) {
+    0x054831313535                      // h1155
+    0x25 mstore
+
+    0x20 returndatasize mstore
+    0x60 returndatasize return
+}
+
+// TODO: pack tokenId onto end 0x04 calldataload
+#define macro TOKEN_URI() = takes (0) returns (0) {
+    // take the token id from calldata
+    // ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/
+    
+    0x00 0x00 revert
+}
+
+
+// /* External functions */
+#define macro SET_APPROVAL_FOR_ALL() = takes(0) returns(0){
+    0x24 calldataload                   // [approved]
+    
+    dup1 0x00 mstore                    // store approved in memory for the log - optomise placing it where it will be used in the sha calculation
+    
+    0x04 calldataload                   // [operator, approved]
+    caller                              // [msg.sender, operator, approved]
+
+    dup2 dup2                           // [msg.sender, operator, msg.sender, operator, approved]
+
+    // emit ApprovalForAll(msg.sender, operator, approved)
+    [APPROVAL_FOR_ALL_EVENT_SIGNATURE]  // [sig, msg.sender, operator, msg.sender, operator, approved]
+    0x20 0x00                           // [0x20, 0x00, sig, msg.sender, operator, msg.sender, operator, approved]
+    log3                                // [msg.sender, operator, approved]
+
+    [IS_APPROVED_FOR_ALL_LOCATION]      // [slot, msg.sender, operator, approved] 
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)    // []
+    stop
+}
+
+#define macro IS_APPROVED_FOR_ALL() = takes(0) returns(0) {
+    0x24 calldataload                 // [operator]
+    0x04 calldataload                 // [owner, operator]
+    
+    [IS_APPROVED_FOR_ALL_LOCATION]    // [slot, owner, operator] 
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)   // [val]
+    
+    0x00 mstore
+    0x20 0x00 return
+}
+
+// address, tokenId, amount, data
+#define macro MINT() = takes(0) returns (0){
+    // get stuff for mint function
+
+    // increase the balance of the address # TODO: increment current balance
+    0x44 calldataload       // [amount]
+    
+    // store for log
+    dup1 0x60 mstore        // [amount]
+
+    0x24 calldataload       // [tokenId, amount]
+
+    // store for log
+    dup1 0x40 mstore        // [tokenId, amount]
+
+    0x04 calldataload       // [to, tokenId, amount]
+    INCREASE_BALANCE(0x00)
+
+    // emit transfer event    
+    0x04 calldataload       // [to]
+    0x00                    // [zero_address, to]
+    caller                  // [msg.sender, zero_address, to]
+    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender, zero_address, to] 
+    0x40 0x40
+    log4
+
+    stop
+    // todo: safe transfer logic
+}
+
+
+// TODO: optimize this
+#define macro IS_OWNER_OR_APPROVED(error) = takes(0) returns(0){
+
+    // check called by owner
+    0x04 calldataload       // [from] 
+    caller                  // [msg.sender, from]
+    dup2                    // [from, msg.sender, from]     
+    dup3                    // [from, msg.sender, from, msg.sender]
+    eq continue jumpi       // [from, msg.sender]       
+    
+    // check sender is approved for all
+    [IS_APPROVED_FOR_ALL_LOCATION]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)
+    eq iszero <error> jumpi 
+
+    continue:
+}
+
+// Optimize swaps
+#define macro DECREASE_BALANCE() = takes(3) returns(0){
+    // takes 3 [from, tokenId, amount]
+    [BALANCE_LOCATION]              // [&balance, from, tokenId, amount]
+    GET_SLOT_FROM_KEYS_2D(0x00)      // [slot, amount]
+    dup1                            // [slot,slot,amount]
+    sload                           // [bal, slot, amount]  
+    swap1                           // [slot, bal, amount]
+    swap2                           // [amount, bal, slot]
+    swap1                           // [bal, amount, slot]
+     
+    // calc and store new sender balance // Safe sub balance to revert on underflow
+    SAFE_SUB()                      // [(bal-amount), slot]
+    
+    // Store decreased balance
+    swap1                           // [slot, (bal-amount)]
+    sstore                          // []    
+}
+
+#define macro INCREASE_BALANCE() = takes(3) returns(0) {
+    // takes3                       // [to, tokenId, amount]
+    [BALANCE_LOCATION]              // [&balance, to, tokenId, amount]
+    GET_SLOT_FROM_KEYS_2D(0x00)     // [slot, amount]
+    dup1                            // [slot, slot,amount]
+    sload                           // [bal, slot, amount]  
+    swap1                           // [slot, bal, amount]
+    swap2                           // [amount, bal, slot]
+     
+    // calc and store new sender balance // Safe sub balance to revert on underflow
+    SAFE_ADD()                      // [(bal+amount), slot]
+    
+    // Store decreased balance
+    swap1                           // [slot, (bal+amount)]
+    sstore                          // []   
+}
+
+
+// (from, to, id, amount, data) //0x00 as scratch space may have to change here
+// TODO, optimize
+#define macro SAFE_TRANSFER_FROM() = takes(0) returns (0) {
+    IS_OWNER_OR_APPROVED(error)
+
+    // Decrease the balance of the from address
+    0x64 calldataload               // [amount]
+    0x44 calldataload               // [tokenId, amount]
+    dup2 dup1                       // [amount, amount, tokenId, amount]
+    dup3                            // [tokenId, amount, amount, tokenId, amount]
+    0x04 calldataload               // [from, tokenId, amount, amount, tokenId, amount]
+    DECREASE_BALANCE()              // [amount, tokenId, amount]    
+    
+    // Perform increase balance     // [amount, tokenId, amount]
+    dup2                            // [tokenId, amount, tokenId, amount] 
+    0x24 calldataload               // [to, tokenId, amount, tokenId, amount]
+    INCREASE_BALANCE()
+
+    // Emit transfer log            // [tokenId, amount]
+    0x00 mstore                     // store tokenId in memory for log can store in 0x00 as scratch space is no longer in use
+    0x20 mstore                     // store amount in memory for log           
+
+    0x24 calldataload               // [to]
+    0x04 calldataload               // [from, to]
+    caller                          // [msg.sender, from, to]
+    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender, from, to] 
+    0x00 0x40                       // log data
+    log4
+
+    stop
+
+    error:
+        0x00 dup1 revert
+
+    // TODO implement the safe part
+}
+
+// _burn(address from,uint256 id,uint256 amount
+#define macro BURN_TOKEN() = takes(0) returns(0){
+    0x44 calldataload               // [amount]
+    0x24 calldataload               // [tokenId, amount]
+    dup2 dup2                       // [tokenId, amount, tokenId, amount]
+    0x04 calldataload               // [from, tokenId, amount]
+
+    DECREASE_BALANCE()              // [tokenId, amount]
+    
+    // Emit transfer log
+    0x00 mstore                     // store tokenId in memory for log
+    0x20 mstore                     // store amount in memory for log           
+
+    0x00                            // [zero_address]
+    0x04 calldataload               // [from, zero_address]
+    caller                          // [msg.sender, from,zero_address]
+    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender,from, zero_address] 
+    0x00 0x40                       // log data
+    log4
+
+    0x00
+}
+
+// TODO: over haul this entire thing and use memory, and log
+#define macro BATCH_MINT() = takes(0) returns(0){
+
+    // get length of arrays
+    0x04 calldataload           // [to]
+
+    // get length of the ids array - stash arr pointers at end of stack
+    0x44 calldataload 0x4 add dup1  // [&amount, &amount, to]
+    0x24 calldataload 0x4 add dup1  // [&ids, &ids, &amount, &amount, to] 
+    swap2                           // [&amount, &ids, &amount, &amount, to]
+    calldataload swap1              // [&ids, amounts.length, &amount, &ids, to] 
+    calldataload dup1               // [ids.length, ids.length, amounts.length, &amount, &ids, to ]
+    swap2                           // [amounts.len, ids.len, ids.len, &amount, &ids, to]
+
+    eq isTrue                         // [amounts.length == ids.length, ids.len, &amount, &ids, to]
+    jumpi                           // [ids.len, &amount, &ids, to]
+    0x00 0x00 revert
+
+    isTrue:
+
+        // loop over the arrays of ids and amounts and increase the balance
+    0x00    // [i, ids.length, &amount, &ids, to]
+    loop:
+        dup2 dup2           //[i, ids.length, i, ids.length, &amount, &ids, to]
+        eq exit jumpi       // [i, ids.length, &amount, &ids, to]
+
+
+        // takes: to, tokenId, amount
+        swap2               // [&amount, ids.length, i,  &ids, to]
+        0x20 add            // [&amount+32, ids.len, i,  &ids, to]
+        dup1                // [&amount+32, &amount+32, ids.len, i, &ids, to]
+        swap3               // [i, &amount+32, ids.len, &amount+32, &ids, to]
+        swap1               // [&amount+32, i, ids.len, &amount+32, &ids, to]
+        calldataload        // [amount[0], i, ids.len, &amount+32, &ids, to]
+
+        swap1               // [i, amount[0], ids.len, &amount+32, &ids, to]
+        swap4               // [&ids, amount[0], ids.len, &amount+32, i, to]
+        0x20 add            // [&ids+32, amount[0], ids.len, &amount+32, i, to]
+        dup1                // [&ids+32, &ids+32, amount[0], ids.len, &amount+32, i, to]
+        swap5 swap1         // [&ids+32, i, amount[0], ids.len, &amount+32, &ids+32, to]               
+        calldataload        // [ids[0], i, amount[0], ids.len, &amount+32, &ids+32, to]
+
+        swap1 swap2         // [ ids[0], amount[0], i,  ids.len, &amount+32, &ids+32, to]
+        
+        0x04 calldataload   // [to, ids[0], amount[0], i,  ids.len, &amount+32, &ids+32, to]   
+        INCREASE_BALANCE()
+
+        // todo increase i
+        0x01 add
+                            // [ i,  ids.len, &amount+32, &ids+32, to]
+    loop jump
+    
+    exit:
+
+    // TODO emit log
+
+    stop
+}
+
+
+#define macro BATCH_BURN() = takes(0) returns(0) {
+    // TODO: implementation
+}
+
+
+#define macro SUPPORTS_INTERFACE() = takes(0) returns(0) {
+    0x04 calldataload
+    dup1 0x01ffc9a7 eq isTrue jumpi
+    dup1 0xd9b67a26 eq isTrue jumpi
+    dup1 0x0e89341c eq isTrue jumpi
+
+    0x00 0x00 mstore ret jump 
+
+    isTrue:
+        0x01 0x00 mstore
+
+    ret:
+        0x00 0x20 return
+}
+
+
+/* Main */
+#define macro MAIN() = takes(0) returns(0) {
+    0x00 calldataload 0xE0 shr      // [function selector on stack]
+    
+    dup1 __FUNC_SIG(mint) eq mint jumpi
+    dup1 __FUNC_SIG(safeTransferFrom) eq safeTransferFrom jumpi
+    dup1 __FUNC_SIG(setApprovalForAll) eq setApprovalForAll jumpi
+    dup1 __FUNC_SIG(batchMint) eq batchMint jumpi 
+    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi 
+    dup1 __FUNC_SIG(burn) eq burn jumpi
+    dup1 __FUNC_SIG(name) eq name jumpi
+    dup1 __FUNC_SIG(symbol) eq symbol jumpi
+    dup1 __FUNC_SIG(supportsInterface) eq getName jumpi
+    dup1 __FUNC_SIG(isApprovedForAll) eq isApprovedForAll jumpi
+    dup1 __FUNC_SIG(symbol) eq symbol jumpi
+    dup1 __FUNC_SIG(getName) eq getName jumpi
+
+    supportsInterface:
+        SUPPORTS_INTERFACE()
+    getName:
+        NAME()
+    mint:
+        MINT()
+    balanceOf:
+        BALANCE_OF()
+    safeTransferFrom:
+        SAFE_TRANSFER_FROM()
+    burn:
+        BURN_TOKEN()
+    batchMint:
+        BATCH_MINT()
+    name:
+        NAME()
+    symbol:
+        SYMBOL()
+    isApprovedForAll:
+        IS_APPROVED_FOR_ALL()
+    setApprovalForAll:
+        SET_APPROVAL_FOR_ALL()
+
+    // No fallback function
+    0x00 0x00 revert
+}
