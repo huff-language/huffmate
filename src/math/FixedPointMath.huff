@@ -2,6 +2,10 @@
 
 #define constant WAD = 0x0de0b6b3a7640000
 
+////////////////////////////////////////////////////////////////
+//             SIMPLIFIED FIXED POINT OPERATIONS              //
+////////////////////////////////////////////////////////////////
+
 // https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L13
 #define macro MUL_WAD_DOWN() = takes (2) returns (1) {
     // Input stack:            [x, y]
@@ -170,6 +174,144 @@
     finish:
     // Return stack:           [result]
 }
+
+#define macro LN_WAD() = takes (1) returns (1) {
+    // Input stack:            [x]
+    0x00 dup2 sgt           // [x > 0, x]
+    iszero                  // [x <= 0, x]
+    fail jumpi              // [x]
+
+    // We want to convert x from 10**18 fixed point to 2**96 fixed point.
+    // We do this by multiplying by 2**96 / 10**18. But since
+    // ln(x * C) = ln(x) + ln(C), we can simply do nothing here
+    // and add ln(2**96 / 10**18) at the end.
+
+    // Reduce range of x to (1, 2) * 2**96
+    // ln(2^k * x) = k * ln(2) + ln(x)
+    0x60                    // [0x60, x]
+    dup2 LOG_2()            // [log2(x), 0x60, x]
+    sub                     // [k, x]
+
+    dup2 dup2               // [k, x, k, x]
+    0x9f sub                // [k - 0x9f, x, k, x]
+    shl                     // [x << (k - 0x9f), k, x]
+    0x9f shr                // [x_new, k, x]
+    swap2 pop               // [k, x]
+
+    // Evaluate using a (8, 8)-term rational approximation.
+    // p is made monic, we will multiply by a scale factor later.
+    dup2                    // [x, k, x]
+    0x29508e458543d8aa4df2abee78
+    add                     // [p, k, x]
+
+    dup3 mul                // [p * x, k, x]
+    0x60 sar                // [(p * x) >> 0x60, k, x]
+    0x0139601a2efabe717e604cbb4894
+    add                     // [p, k, x]
+
+    dup3 mul                // [p * x, k, x]
+    0x60 sar                // [(p * x) >> 0x60, k, x]
+    0x02247f7a7b6594320649aa03aba1
+    add                     // [p, k, x]
+
+    0x8c3f38e95a6b1ff2ab1c3b3437
+    swap1 dup4 mul          // [p * x, 0x8c3f..., k, x]
+    0x60 sar                // [(p * x) >> 0x60, 0x8c3f..., k, x]
+    sub                     // [p, k, x]
+
+    0x02384773bdf1ac5676facced6091
+    swap1 dup4 mul          // [p * x, 0x0238..., k, x]
+    0x60 sar                // [(p * x) >> 0x60, 0x0238..., k, x]
+    sub                     // [p, k, x]
+
+    0xb9a025d814b29c212b8b1a07ce
+    swap1 dup4 mul          // [p * x, 0xb9a0..., k, x]
+    0x60 sar                // [(p * x) >> 0x60, 0xb9a0..., k, x]
+    sub                     // [p, k, x]
+
+    0x0a09507084cc699bb0e71ea86a
+    0x60 shl                // [0x0a09... << 0x60, p, k, x]
+    swap1                   // [p, 0x0a09... << 0x60, k, x]
+    dup4 mul                // [p * x, 0x0a09... << 0x60, k, x]
+    sub                     // [p, k, x]
+
+    // We leave p in 2**192 basis so we don't need to scale it back up for the division.
+    // q is monic by convention.
+    dup3                    // [x, p, k, x]
+    0x465772b2bbbb5f824b15207a30
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x0388eaa27412d5aca026815d636e
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x0df99ac502031bf953eff472fdcc
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x13cdffb29d51d99322bdff5f2211
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 shr                // [(q * x) >> 0x60, p, k, x]
+    0x0a0f742023def783a307a986912e
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x01920d8043ca89b5239253284e42
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x0b7a86d7375468fac667a0a527
+    add                     // [q, p, k, x]
+
+    // The q polynomial is known not to have zeros in the domain.
+    // No scaling required because p is already 2**96 too large.
+    swap1 sdiv              // [p / q (r), k, x]
+
+    // r is in the range (0, 0.125) * 2**96
+
+    // Finalization, we need to:
+    // * multiply by the scale factor s = 5.549...
+    // * add ln(2**96 / 10**18)
+    // * add k * ln(2)
+    // * multiply by 10**18 / 2**96 = 5**18 >> 78
+
+    // mul s * 5e18 * 2**96, base is now 5**18 * 2**192
+    0x1340daa0d5f769dba1915cef59f0815a5506 mul
+
+    // add ln(2) * k * 5e18 * 2**192
+    swap1                   // [k, r, x]
+    0x0267a36c0c95b3975ab3ee5b203a7614a3f75373f047d803ae7b6687f2b3
+    mul                     // [k * 0x0267..., r, x]
+    add                     // [r, x]
+
+    // add ln(2**96 / 10**18) * 5e18 * 2**192
+    0x57115e47018c7177eebf7cd370a3356a1b7863008a5ae8028c72b8864284
+    add                     // [r, x]
+
+    // base conversion: mul 2**18 / 2**192
+    0xAE sar                // [r >> 0xAE, x]
+
+    finish jump
+
+    fail:
+        0x00 0x00 revert
+    finish:
+        // Clean stack
+        swap1 pop
+    // Return stack:           [result]
+}
+
+////////////////////////////////////////////////////////////////
+//              LOW LEVEL FIXED POINT OPERATIONS              //
+////////////////////////////////////////////////////////////////
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L34
 #define macro MUL_DIV_DOWN() = takes (3) returns (1) {
@@ -397,6 +539,10 @@
             0x60 mload          // [result]
 }
 
+////////////////////////////////////////////////////////////////
+//                  GENERAL NUMBER UTILITIES                  //
+////////////////////////////////////////////////////////////////
+
 #define macro LOG_2() = takes (1) returns (1) {
     // Input stack:                [x]
 
@@ -457,6 +603,10 @@
     finish:
     // Return stack:            // [result]
 }
+
+////////////////////////////////////////////////////////////////
+//                       HELPER MACROS                        //
+////////////////////////////////////////////////////////////////
 
 #define macro ARRANGE_STACK_MULWAD() = takes (0) returns (0) {
     // Input stack: [WAD, x, y]
