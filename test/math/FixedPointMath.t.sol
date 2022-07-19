@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "foundry-huff/HuffDeployer.sol";
-import "../lib/HuffTest.sol";
+import "forge-std/Test.sol";
 
 interface IFixedPointMath {
     function mulDivDown(uint256,uint256,uint256) external pure returns(uint256);
@@ -10,15 +10,14 @@ interface IFixedPointMath {
     function rpow(uint256,uint256,uint256) external pure returns(uint256);
 }
 
-contract FixedPointMathTest is HuffTest {
+contract FixedPointMathTest is Test {
     IFixedPointMath math;
-
-    constructor() HuffTest("math/FixedPointMath") {}
 
     function setUp() public {
         /// @notice deploy a new instance of IFixedPointMath by
         /// passing in the address of the deployed Huff contract
-        math = IFixedPointMath(deploy());
+        string memory wrapper_code = vm.readFile("test/math/mocks/FixedPointMathWrappers.huff");
+        math = IFixedPointMath(HuffDeployer.deploy_with_code("math/FixedPointMath", wrapper_code));
     }
 
     function testMulDivDown() public {
