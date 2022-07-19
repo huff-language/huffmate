@@ -14,6 +14,7 @@ interface IFixedPointMath {
     function rpow(uint256,uint256,uint256) external pure returns(uint256);
     function expWad(int256) external pure returns(int256);
     function lnWad(int256) external pure returns(int256);
+    function powWad(int256,int256) external pure returns(int256);
     function sqrt(uint256) external pure returns(uint256);
     function log2(uint256) external pure returns(uint256);
 }
@@ -78,6 +79,13 @@ contract FixedPointMathTest is Test {
             // True value: 578960446186580976_49816762928942336782129491980154662247847962410455084893091
             // Relative error: 5.653904247484822e-21
         );
+    }
+
+    function testPowWad() public {
+        assertEq(math.powWad(1, 8), 999999999999999669);
+        assertEq(math.powWad(2, 1e18), 1);
+        assertEq(math.powWad(2e27, 4e18), 15999999999999999962947398429798144256963724914467878199);
+        assertEq(math.powWad(4e36, 9e9), 1000000385495508618);
     }
 
     function testMulWadDown() public {

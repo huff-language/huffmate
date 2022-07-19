@@ -193,8 +193,8 @@
     sub                     // [k, x]
 
     dup2 dup2               // [k, x, k, x]
-    0x9f sub                // [k - 0x9f, x, k, x]
-    shl                     // [x << (k - 0x9f), k, x]
+    0x9f sub                // [0x9f - k, x, k, x]
+    shl                     // [x << (0x9f - k), k, x]
     0x9f shr                // [x_new, k, x]
     swap2 pop               // [k, x]
 
@@ -307,6 +307,15 @@
         // Clean stack
         swap1 pop
     // Return stack:           [result]
+}
+
+#define macro POW_WAD() = takes (2) returns (1) {
+    // Input Stack:            [x, y]
+    LN_WAD()                // [lnWad(x), y]
+    mul                     // [lnWad(x) * y]
+    [WAD] swap1             // [lnWad(x) * y, 1e18]
+    sdiv                    // [(lnWad(x) * y) / 1e18]
+    EXP_WAD()               // [result]
 }
 
 ////////////////////////////////////////////////////////////////
