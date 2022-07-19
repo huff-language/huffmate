@@ -414,19 +414,17 @@
 
     zero:
         dup2                    // [n, x, n, scalar]
-
         iszero zero_inner jumpi // If n == 0 && x == 0, return the scalar (0 ** 0 = 1).
-        zero_default jumpi      // If n != 0 && x == 0, return 0.
+
+        // 0x60 is blank, no need to set it.
+        // 0 ** n = 0
+        pop                     // [n, scalar] - Others will be popped in `finish`
+        finish jump             // Finish execution
 
         // 0 ** 0 = 1
         zero_inner:
             swap2               // [scalar, n, x]
             0x60 mstore         // [n, x]
-            finish jump         // Finish execution
-        // 0 ** n = 0
-        zero_default:
-            // 0x60 is blank, no need to set it.
-            pop                 // [n, scalar] - Others will be popped in `finish`
             finish jump         // Finish execution
     default:
         0x20 mstore             // [n, scalar]
