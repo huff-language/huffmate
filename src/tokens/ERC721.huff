@@ -1,6 +1,5 @@
 
 /* Imports */
-#include "./contracts/utils/Ownable.huff"
 #include "./contracts/utils/Address.huff"
 #include "./contracts/utils/Utils.huff"
 #include "./contracts/utils/HashMap.huff"
@@ -43,8 +42,6 @@
 /* Constructor */
 
 #define macro CONSTRUCTOR() = takes(0) returns (0) {
-    // Set msg.sender as the owner of the contract.
-    OWNABLE_CONSTRUCTOR()
 }
 
 /// >>>>>>>>>>>>>>>>>>>>>  VIEW FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
@@ -272,9 +269,6 @@
 
 /* Mint Functions */
 #define macro MINT() = takes(0) returns (0) {
-    // Ensure that the sender is the owner of the contract.
-    ONLY_OWNER()
-
     // Setup the stack for the mint function.
     0x24 calldataload                               // [tokenId]
     0x04 calldataload                               // [to, tokenId]
