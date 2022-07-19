@@ -32,6 +32,7 @@ utils
 ├─ Data — TODO
 ├─ ReentrancyGuard — TODO
 ├─ SSTORE2 — TODO
+├─ MerkleProofLib — "Gas optimized merkle proof verification library"
 ```
 
 ## Safety
