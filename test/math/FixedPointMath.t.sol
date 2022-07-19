@@ -14,6 +14,7 @@ interface IFixedPointMath {
     function rpow(uint256,uint256,uint256) external pure returns(uint256);
     function expWad(int256) external pure returns(int256);
     function lnWad(int256) external pure returns(int256);
+    function sqrt(uint256) external pure returns(uint256);
     function log2(uint256) external pure returns(uint256);
 }
 
@@ -79,179 +80,6 @@ contract FixedPointMathTest is Test {
         );
     }
 
-    function testLnWad() public {
-        assertEq(math.lnWad(1e18), 0);
-
-        // Actual: 999999999999999999.8674576…
-        assertEq(math.lnWad(2718281828459045235), 999999999999999999);
-
-        // Actual: 2461607324344817917.963296…
-        assertEq(math.lnWad(11723640096265400935), 2461607324344817918);
-    }
-
-    function testLnWadSmall() public {
-        // Actual: -41446531673892822312.3238461…
-        assertEq(math.lnWad(1), -41446531673892822313);
-
-        // Actual: -37708862055609454006.40601608…
-        assertEq(math.lnWad(42), -37708862055609454007);
-
-        // Actual: -32236191301916639576.251880365581…
-        assertEq(math.lnWad(1e4), -32236191301916639577);
-
-        // Actual: -20723265836946411156.161923092…
-        assertEq(math.lnWad(1e9), -20723265836946411157);
-    }
-
-    function testLnWadBig() public {
-        // Actual: 135305999368893231589.070344787…
-        assertEq(math.lnWad(2**255 - 1), 135305999368893231589);
-
-        // Actual: 76388489021297880288.605614463571…
-        assertEq(math.lnWad(2**170), 76388489021297880288);
-
-        // Actual: 47276307437780177293.081865…
-        assertEq(math.lnWad(2**128), 47276307437780177293);
-    }
-
-    function testLnWadNegative() public {
-        // TODO: Blocked on <https://github.com/gakonst/foundry/issues/864>
-        // hevm.expectRevert(math.LnNegativeUndefined.selector);
-        // math.lnWad(-1);
-        // math.lnWad(-2**255);
-    }
-
-    function testLnWadOverflow() public {
-        // TODO: Blocked on <https://github.com/gakonst/foundry/issues/864>
-        // hevm.expectRevert(math.Overflow.selector);
-        // math.lnWad(0);
-    }
-
-    function testLog2() public {
-        assertEq(math.log2(2), 1);
-        assertEq(math.log2(4), 2);
-        assertEq(math.log2(1024), 10);
-        assertEq(math.log2(1048576), 20);
-        assertEq(math.log2(1073741824), 30);
-    }
-
-    function testMulDivDown() public {
-        assertEq(math.mulDivDown(2.5e27, 0.5e27, 1e27), 1.25e27);
-        assertEq(math.mulDivDown(2.5e18, 0.5e18, 1e18), 1.25e18);
-        assertEq(math.mulDivDown(2.5e8, 0.5e8, 1e8), 1.25e8);
-        assertEq(math.mulDivDown(369, 271, 1e2), 999);
-
-        assertEq(math.mulDivDown(1e27, 1e27, 2e27), 0.5e27);
-        assertEq(math.mulDivDown(1e18, 1e18, 2e18), 0.5e18);
-        assertEq(math.mulDivDown(1e8, 1e8, 2e8), 0.5e8);
-
-        assertEq(math.mulDivDown(2e27, 3e27, 2e27), 3e27);
-        assertEq(math.mulDivDown(3e18, 2e18, 3e18), 2e18);
-        assertEq(math.mulDivDown(2e8, 3e8, 2e8), 3e8);
-    }
-
-    function testMulDivDownEdgeCases() public {
-        assertEq(math.mulDivDown(0, 1e18, 1e18), 0);
-        assertEq(math.mulDivDown(1e18, 0, 1e18), 0);
-        assertEq(math.mulDivDown(0, 0, 1e18), 0);
-    }
-
-    function testFailMulDivDownZeroDenominator() public view {
-        math.mulDivDown(1e18, 1e18, 0);
-    }
-
-    function testMulDivUp() public {
-        assertEq(math.mulDivUp(2.5e27, 0.5e27, 1e27), 1.25e27);
-        assertEq(math.mulDivUp(2.5e18, 0.5e18, 1e18), 1.25e18);
-        assertEq(math.mulDivUp(2.5e8, 0.5e8, 1e8), 1.25e8);
-        assertEq(math.mulDivUp(369, 271, 1e2), 1000);
-
-        assertEq(math.mulDivUp(1e27, 1e27, 2e27), 0.5e27);
-        assertEq(math.mulDivUp(1e18, 1e18, 2e18), 0.5e18);
-        assertEq(math.mulDivUp(1e8, 1e8, 2e8), 0.5e8);
-
-        assertEq(math.mulDivUp(2e27, 3e27, 2e27), 3e27);
-        assertEq(math.mulDivUp(3e18, 2e18, 3e18), 2e18);
-        assertEq(math.mulDivUp(2e8, 3e8, 2e8), 3e8);
-    }
-
-    function testMulDivUpEdgeCases() public {
-        assertEq(math.mulDivUp(0, 1e18, 1e18), 0);
-        assertEq(math.mulDivUp(1e18, 0, 1e18), 0);
-        assertEq(math.mulDivUp(0, 0, 1e18), 0);
-    }
-
-    function testFailMulDivUpZeroDenominator() public view {
-        math.mulDivUp(1e18, 1e18, 0);
-    }
-
-    function testMulDivDown(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) public {
-        // Ignore cases where x * y overflows or denominator is 0.
-        unchecked {
-            if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
-        }
-
-        assertEq(math.mulDivDown(x, y, denominator), (x * y) / denominator);
-    }
-
-    function testFailMulDivDownOverflow(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) public view {
-        // Ignore cases where x * y does not overflow or denominator is 0.
-        unchecked {
-            if (denominator == 0 || (x * y) / x == y) revert();
-        }
-
-        math.mulDivDown(x, y, denominator);
-    }
-
-    function testFailMulDivDownZeroDenominator(uint256 x, uint256 y) public view {
-        math.mulDivDown(x, y, 0);
-    }
-
-    function testMulDivUp(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) public {
-        // Ignore cases where x * y overflows or denominator is 0.
-        unchecked {
-            if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
-        }
-
-        assertEq(math.mulDivUp(x, y, denominator), x * y == 0 ? 0 : (x * y - 1) / denominator + 1);
-    }
-
-    function testFailMulDivUpOverflow(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) public view {
-        // Ignore cases where x * y does not overflow or denominator is 0.
-        unchecked {
-            if (denominator == 0 || (x * y) / x == y) revert();
-        }
-
-        math.mulDivUp(x, y, denominator);
-    }
-
-    function testFailMulDivUpZeroDenominator(uint256 x, uint256 y) public view {
-        math.mulDivUp(x, y, 0);
-    }
-
-    function testRpow() public {
-        assertEq(math.rpow(2e27, 2, 1e27), 4e27);
-        assertEq(math.rpow(2e18, 2, 1e18), 4e18);
-        assertEq(math.rpow(2e8, 2, 1e8), 4e8);
-        assertEq(math.rpow(8, 3, 1), 512);
-    }
-
     function testMulWadDown() public {
         assertEq(math.mulWadDown(2.5e18, 0.5e18), 1.25e18);
         assertEq(math.mulWadDown(3e18, 1e18), 3e18);
@@ -302,6 +130,127 @@ contract FixedPointMathTest is Test {
 
     function testFailDivWadUpZeroDenominator() public {
         math.divWadUp(1e18, 0);
+    }
+
+    function testMulDivDown() public {
+        assertEq(math.mulDivDown(2.5e27, 0.5e27, 1e27), 1.25e27);
+        assertEq(math.mulDivDown(2.5e18, 0.5e18, 1e18), 1.25e18);
+        assertEq(math.mulDivDown(2.5e8, 0.5e8, 1e8), 1.25e8);
+        assertEq(math.mulDivDown(369, 271, 1e2), 999);
+
+        assertEq(math.mulDivDown(1e27, 1e27, 2e27), 0.5e27);
+        assertEq(math.mulDivDown(1e18, 1e18, 2e18), 0.5e18);
+        assertEq(math.mulDivDown(1e8, 1e8, 2e8), 0.5e8);
+
+        assertEq(math.mulDivDown(2e27, 3e27, 2e27), 3e27);
+        assertEq(math.mulDivDown(3e18, 2e18, 3e18), 2e18);
+        assertEq(math.mulDivDown(2e8, 3e8, 2e8), 3e8);
+    }
+
+    function testMulDivDownEdgeCases() public {
+        assertEq(math.mulDivDown(0, 1e18, 1e18), 0);
+        assertEq(math.mulDivDown(1e18, 0, 1e18), 0);
+        assertEq(math.mulDivDown(0, 0, 1e18), 0);
+    }
+
+    function testFailMulDivDownZeroDenominator() public {
+        math.mulDivDown(1e18, 1e18, 0);
+    }
+
+    function testMulDivUp() public {
+        assertEq(math.mulDivUp(2.5e27, 0.5e27, 1e27), 1.25e27);
+        assertEq(math.mulDivUp(2.5e18, 0.5e18, 1e18), 1.25e18);
+        assertEq(math.mulDivUp(2.5e8, 0.5e8, 1e8), 1.25e8);
+        assertEq(math.mulDivUp(369, 271, 1e2), 1000);
+
+        assertEq(math.mulDivUp(1e27, 1e27, 2e27), 0.5e27);
+        assertEq(math.mulDivUp(1e18, 1e18, 2e18), 0.5e18);
+        assertEq(math.mulDivUp(1e8, 1e8, 2e8), 0.5e8);
+
+        assertEq(math.mulDivUp(2e27, 3e27, 2e27), 3e27);
+        assertEq(math.mulDivUp(3e18, 2e18, 3e18), 2e18);
+        assertEq(math.mulDivUp(2e8, 3e8, 2e8), 3e8);
+    }
+
+    function testMulDivUpEdgeCases() public {
+        assertEq(math.mulDivUp(0, 1e18, 1e18), 0);
+        assertEq(math.mulDivUp(1e18, 0, 1e18), 0);
+        assertEq(math.mulDivUp(0, 0, 1e18), 0);
+    }
+
+    function testFailMulDivUpZeroDenominator() public {
+        math.mulDivUp(1e18, 1e18, 0);
+    }
+
+    function testLnWad() public {
+        assertEq(math.lnWad(1e18), 0);
+
+        // Actual: 999999999999999999.8674576…
+        assertEq(math.lnWad(2718281828459045235), 999999999999999999);
+
+        // Actual: 2461607324344817917.963296…
+        assertEq(math.lnWad(11723640096265400935), 2461607324344817918);
+    }
+
+    function testLnWadSmall() public {
+        // Actual: -41446531673892822312.3238461…
+        assertEq(math.lnWad(1), -41446531673892822313);
+
+        // Actual: -37708862055609454006.40601608…
+        assertEq(math.lnWad(42), -37708862055609454007);
+
+        // Actual: -32236191301916639576.251880365581…
+        assertEq(math.lnWad(1e4), -32236191301916639577);
+
+        // Actual: -20723265836946411156.161923092…
+        assertEq(math.lnWad(1e9), -20723265836946411157);
+    }
+
+    function testLnWadBig() public {
+        // Actual: 135305999368893231589.070344787…
+        assertEq(math.lnWad(2**255 - 1), 135305999368893231589);
+
+        // Actual: 76388489021297880288.605614463571…
+        assertEq(math.lnWad(2**170), 76388489021297880288);
+
+        // Actual: 47276307437780177293.081865…
+        assertEq(math.lnWad(2**128), 47276307437780177293);
+    }
+
+    function testLnWadNegative() public {
+        // TODO: Blocked on <https://github.com/gakonst/foundry/issues/864>
+        // hevm.expectRevert(math.LnNegativeUndefined.selector);
+        // math.lnWad(-1);
+        // math.lnWad(-2**255);
+    }
+
+    function testLnWadOverflow() public {
+        // TODO: Blocked on <https://github.com/gakonst/foundry/issues/864>
+        // hevm.expectRevert(math.Overflow.selector);
+        // math.lnWad(0);
+    }
+
+    function testRPow() public {
+        assertEq(math.rpow(2e27, 2, 1e27), 4e27);
+        assertEq(math.rpow(2e18, 2, 1e18), 4e18);
+        assertEq(math.rpow(2e8, 2, 1e8), 4e8);
+        assertEq(math.rpow(8, 3, 1), 512);
+    }
+
+    function testSqrt() public {
+        assertEq(math.sqrt(0), 0);
+        assertEq(math.sqrt(1), 1);
+        assertEq(math.sqrt(2704), 52);
+        assertEq(math.sqrt(110889), 333);
+        assertEq(math.sqrt(32239684), 5678);
+    }
+
+    function testLog2() public {
+        assertEq(math.log2(2), 1);
+        assertEq(math.log2(4), 2);
+        assertEq(math.log2(1024), 10);
+        assertEq(math.log2(1048576), 20);
+        assertEq(math.log2(1073741824), 30);
     }
 
     function testFuzzMulWadDown(uint256 x, uint256 y) public {
@@ -382,6 +331,78 @@ contract FixedPointMathTest is Test {
 
     function testFailFuzzDivWadUpZeroDenominator(uint256 x) public {
         math.divWadUp(x, 0);
+    }
+
+    function testFuzzMulDivDown(
+        uint256 x,
+        uint256 y,
+        uint256 denominator
+    ) public {
+        // Ignore cases where x * y overflows or denominator is 0.
+        unchecked {
+            if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
+        }
+
+        assertEq(math.mulDivDown(x, y, denominator), (x * y) / denominator);
+    }
+
+    function testFailFuzzMulDivDownOverflow(
+        uint256 x,
+        uint256 y,
+        uint256 denominator
+    ) public {
+        // Ignore cases where x * y does not overflow or denominator is 0.
+        unchecked {
+            if (denominator == 0 || (x * y) / x == y) revert();
+        }
+
+        math.mulDivDown(x, y, denominator);
+    }
+
+    function testFailFuzzMulDivDownZeroDenominator(uint256 x, uint256 y) public {
+        math.mulDivDown(x, y, 0);
+    }
+
+    function testFuzzMulDivUp(
+        uint256 x,
+        uint256 y,
+        uint256 denominator
+    ) public {
+        // Ignore cases where x * y overflows or denominator is 0.
+        unchecked {
+            if (denominator == 0 || (x != 0 && (x * y) / x != y)) return;
+        }
+
+        assertEq(math.mulDivUp(x, y, denominator), x * y == 0 ? 0 : (x * y - 1) / denominator + 1);
+    }
+
+    function testFailFuzzMulDivUpOverflow(
+        uint256 x,
+        uint256 y,
+        uint256 denominator
+    ) public {
+        // Ignore cases where x * y does not overflow or denominator is 0.
+        unchecked {
+            if (denominator == 0 || (x * y) / x == y) revert();
+        }
+
+        math.mulDivUp(x, y, denominator);
+    }
+
+    function testFailFuzzMulDivUpZeroDenominator(uint256 x, uint256 y) public {
+        math.mulDivUp(x, y, 0);
+    }
+
+    function testFuzzSqrt(uint256 x) public {
+        uint256 root = math.sqrt(x);
+        uint256 next = root + 1;
+
+        // Ignore cases where next * next overflows.
+        unchecked {
+            if (next * next < next) return;
+        }
+
+        assertTrue(root * root <= x && next * next > x);
     }
 
     function testFuzzLog2() public {

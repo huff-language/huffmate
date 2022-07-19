@@ -7,6 +7,7 @@
 #define function rpow(uint256,uint256,uint256) pure returns(uint256)
 #define function expWad(int256) pure returns(int256)
 #define function lnWad(int256) pure returns(int256)
+#define function sqrt(uint256) pure returns(uint256)
 #define function log2(uint256) pure returns(uint256)
 
 #define macro MUL_DIV_DOWN_WRAPPER() = takes (0) returns (0) {
@@ -82,6 +83,13 @@
     0x20 0x00 return
 }
 
+#define macro SQRT_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    SQRT()            // [result]
+    0x00 mstore
+    0x20 0x00 return
+}
+
 #define macro LOG_2_WRAPPER() = takes (0) returns (0) {
     0x04 calldataload // [x]
     LOG_2()           // [result]
@@ -100,6 +108,7 @@
     dup1 __FUNC_SIG(rpow)       eq rpow       jumpi
     dup1 __FUNC_SIG(expWad)     eq expWad     jumpi
     dup1 __FUNC_SIG(lnWad)      eq lnWad      jumpi
+    dup1 __FUNC_SIG(sqrt)       eq sqrt       jumpi
     dup1 __FUNC_SIG(log2)       eq logTwo     jumpi
     
     mulDivDown:
@@ -120,6 +129,8 @@
         EXP_WAD_WRAPPER()
     lnWad:
         LN_WAD_WRAPPER()
+    sqrt:
+        SQRT_WRAPPER()
     logTwo:
         LOG_2_WRAPPER()
 }
