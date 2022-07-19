@@ -7,35 +7,35 @@
 ////////////////////////////////////////////////////////////////
 
 // https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L13
-#define macro MUL_WAD_DOWN() = takes (2) returns (1) {
+#define macro MUL_WAD_DOWN(fail) = takes (2) returns (1) {
     // Input stack:            [x, y]
     [WAD]                   // [WAD, x, y]
     ARRANGE_STACK_MULWAD()  // [x, y, WAD]
-    MUL_DIV_DOWN()          // [result]
+    MUL_DIV_DOWN(fail)      // [result]
 }
 
 // https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L17
-#define macro MUL_WAD_UP() = takes (2) returns (1) {
+#define macro MUL_WAD_UP(fail) = takes (2) returns (1) {
     // Input stack:            [x, y]
     [WAD]                   // [WAD, x, y]
     ARRANGE_STACK_MULWAD()  // [x, y, WAD]
-    MUL_DIV_UP()            // [result]
+    MUL_DIV_UP(fail)        // [result]
 }
 
 // https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L21
-#define macro DIV_WAD_DOWN() = takes (2) returns (1) {
+#define macro DIV_WAD_DOWN(fail) = takes (2) returns (1) {
     // Input stack:            [x, y]
     [WAD]                   // [WAD, x, y]
     ARRANGE_STACK_DIVWAD()  // [x, WAD, y]
-    MUL_DIV_DOWN()
+    MUL_DIV_DOWN(fail)
 }
 
 // https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L25
-#define macro DIV_WAD_UP() = takes (2) returns (1) {
+#define macro DIV_WAD_UP(fail) = takes (2) returns (1) {
     // Input stack:            [x, y]
     [WAD]                   // [WAD, x, y]
     ARRANGE_STACK_DIVWAD()  // [x, WAD, y]
-    MUL_DIV_UP()            // [result]
+    MUL_DIV_UP(fail)        // [result]
 }
 
 // https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L34
@@ -323,92 +323,63 @@
 ////////////////////////////////////////////////////////////////
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L34
-#define macro MUL_DIV_DOWN() = takes (3) returns (1) {
+#define macro MUL_DIV_DOWN(fail) = takes (3) returns (1) {
     // Input stack:      [x, y, denominator]
-    dup3              // [denominator, x, y, denominator]
-    dup3              // [y, denominator, x, y, denominator]
-    dup3              // [x, y, denominator, x, y, denominator]
+    dup1 dup3 mul     // [x * y, x, y, denominator]
+    dup1              // [x * y, x * y, x, y, denominator]
+    swap2 dup1        // [x, x, x * y, x * y, y, denominator]
 
-    mul               // [x * y, denominator, x, y, denominator]
-    0x00 mstore       // [denominator, x, y, denominator]
+    iszero            // [x == 0, x, x * y, x * y, y, denominator]
+    swap2             // [x * y, x, x == 0, x * y, y, denominator]
+    div               // [(x * y) / x, x == 0, x * y, y, denominator]
+    dup4 eq           // [y == (x * y) / x, x == 0, x * y, y, denominator]
+    or                // [y == (x * y) / x | x == 0, x * y, y, denominator]
+    swap2 pop         // [x * y, y == (x * y) / x | x == 0, denominator]
+    swap1 dup3        // [denominator, y == (x * y) / x | x == 0, x * y, denominator]
+    iszero iszero     // [denominator != 0, y == (x * y) / x | x == 0, x * y, denominator]
+    and               // [denominator != 0 & y == (x * y) / x | x == 0, x * y, denominator]
 
-    iszero iszero     // [denominator != 0, x, y, denominator]
+    iszero <fail> jumpi // [x * y, denominator]
 
-    swap1             // [x, denominator != 0, y, denominator]
-    dup1              // [x, x, denominator != 0, y, denominator]
-    iszero            // [x == 0, x, denominator != 0, y, denominator]
-
-    swap1             // [x, x == 0, denominator != 0, y, denominator]
-    0x00 mload        // [x * y, x, x == 0, denominator != 0, y, denominator]
-    div               // [(x * y) / x, x == 0, denominator != 0, y, denominator]
-
-    dup4              // [y, (x * y) / x, x == 0, denominator != 0, y, denominator]
-    eq                // [y == (x * y) / x, x == 0, denominator != 0, y, denominator]
-    or                // [y == (x * y) / x | x == 0, denominator != 0, y, denominator]
-    and               // [(y == (x * y) / x | x == 0) & denominator != 0, y, denominator]
-
-    iszero fail jumpi // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
-
-    pop               // [denominator]
-    0x00 mload        // [x * y, denominator]
     div               // [(x * y) / denominator]
-
-    finish jump
-
-    fail:
-        0x00 0x00 revert
-    finish:
     // Return stack:     [(x * y) / denominator]
 }
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L53
-#define macro MUL_DIV_UP() = takes (3) returns (1) {
+#define macro MUL_DIV_UP(fail) = takes (3) returns (1) {
     // Input stack:      [x, y, denominator]
-    dup3              // [denominator, x, y, denominator]
-    dup3              // [y, denominator, x, y, denominator]
-    dup3              // [x, y, denominator, x, y, denominator]
+    dup1 dup3 mul     // [x * y, x, y, denominator]
+    dup1              // [x * y, x * y, x, y, denominator]
+    swap2 dup1        // [x, x, x * y, x * y, y, denominator]
 
-    mul               // [x * y, denominator, x, y, denominator]
-    0x00 mstore       // [denominator, x, y, denominator]
+    iszero            // [x == 0, x, x * y, x * y, y, denominator]
+    swap2             // [x * y, x, x == 0, x * y, y, denominator]
+    div               // [(x * y) / x, x == 0, x * y, y, denominator]
+    dup4 eq           // [y == (x * y) / x, x == 0, x * y, y, denominator]
+    or                // [y == (x * y) / x | x == 0, x * y, y, denominator]
+    swap2 pop         // [x * y, y == (x * y) / x | x == 0, denominator]
+    swap1 dup3        // [denominator, y == (x * y) / x | x == 0, x * y, denominator]
+    iszero iszero     // [denominator != 0, y == (x * y) / x | x == 0, x * y, denominator]
+    and               // [denominator != 0 & y == (x * y) / x | x == 0, x * y, denominator]
 
-    iszero iszero     // [denominator != 0, x, y, denominator]
+    iszero <fail> jumpi // [x * y, denominator]
 
-    dup2              // [x, denominator != 0, x, y, denominator]
-    iszero            // [x == 0, denominator != 0, x, y, denominator]
+    dup1              // [x * y, x * y, denominator]
+    iszero iszero     // [x * y != 0, x * y, denominator]
 
-    dup3              // [x, x == 0, denominator != 0, x, y, denominator]
-    0x00 mload        // [x * y, x, x == 0, denominator != 0, x, y, denominator]
-    div               // [(x * y) / x, x == 0, denominator != 0, x, y, denominator]
+    dup3              // [denominator, x * y != 0, x * y, denominator]
+    0x01              // [1, denominator, x * y != 0, x * y, denominator]
+    dup4              // [x * y, 1, denominator, x * y != 0, x * y, denominator]
+    sub               // [x * y - 1, denominator, x * y != 0, x * y, denominator]
+    div               // [x * y - 1 / denominator, x * y != 0, x * y, denominator]
+    0x01              // [1, x * y - 1 / denominator, x * y != 0, x * y, denominator]
+    add               // [(x * y - 1 / denominator) + 1, x * y != 0, x * y, denominator]
 
-    dup5              // [y, (x * y) / x, x == 0, denominator != 0, x, y, denominator]
-    eq                // [y == (x * y) / x, x == 0, denominator != 0, x, y, denominator]
-    or                // [y == (x * y) / x | x == 0, denominator != 0, x, y, denominator]
-    and               // [y == (x * y) / x | x == 0 & denominator != 0, x, y, denominator]
-
-    iszero fail jumpi // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
-
-    0x00 mload        // [x * y, x, y, denominator]
-    iszero iszero     // [x * y != 0, x, y, denominator]
-
-    dup4              // [denominator, x * y != 0, x, y, denominator]
-    0x01              // [1, denominator, x * y != 0, x, y, denominator]
-    0x00 mload        // [x * y, 1, denominator, x * y != 0, x, y, denominator]
-    sub               // [x * y - 1, denominator, x * y != 0, x, y, denominator]
-    div               // [x * y - 1 / denominator, x * y != 0, x, y, denominator]
-    0x01              // [1, x * y - 1 / denominator, x * y != 0, x, y, denominator]
-    add               // [(x * y - 1 / denominator) + 1, x * y != 0, x, y, denominator]
-
-    mul               // [((x * y - 1 / denominator) + 1) * (x * y != 0), x, y, denominator]
+    mul               // [((x * y - 1 / denominator) + 1) * (x * y != 0), x * y, denominator]
 
     // Clear extra stack items before continuing
-    swap3             // [denominator, x, y, ((x * y - 1 / denominator) + 1) * (x * y != 0)]
-    pop pop pop       // [((x * y - 1 / denominator) + 1) * (x * y != 0)]
-
-    finish jump
-
-    fail:
-        0x00 0x00 revert
-    finish:
+    swap2             // [denominator, x * y, ((x * y - 1 / denominator) + 1) * (x * y != 0)]
+    pop pop           // [((x * y - 1 / denominator) + 1) * (x * y != 0)]
     // Return stack:     [((x * y - 1 / denominator) + 1) * (x * y != 0)]
 }
 
