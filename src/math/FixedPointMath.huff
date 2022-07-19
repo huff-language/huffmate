@@ -742,13 +742,13 @@
 //                       HELPER MACROS                        //
 ////////////////////////////////////////////////////////////////
 
-#define macro ARRANGE_STACK_MULWAD() = takes (0) returns (0) {
+#define macro ARRANGE_STACK_MULWAD() = takes (3) returns (3) {
     // Input stack: [WAD, x, y]
     swap2        // [y, x, WAD]
     swap1        // [x, y, WAD]
 }
 
-#define macro ARRANGE_STACK_DIVWAD() = takes (0) returns (0) {
+#define macro ARRANGE_STACK_DIVWAD() = takes (3) returns (3) {
     // Input stack: [WAD, x, y]
     swap1        // [x, WAD, y]
 }

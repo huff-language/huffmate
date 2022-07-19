@@ -120,6 +120,8 @@
     dup1 __FUNC_SIG(powWad)     eq powWad     jumpi
     dup1 __FUNC_SIG(sqrt)       eq sqrt       jumpi
     dup1 __FUNC_SIG(log2)       eq logTwo     jumpi
+
+    0x00 0x00 revert
     
     mulDivDown:
         MUL_DIV_DOWN_WRAPPER()
