@@ -3,8 +3,6 @@
 #include "../data-strcutures/HashMap.huff"
 
 /* Interface */
-#define function mint(address,uint256) nonpayable returns ()
-
 #define function name() nonpayable returns (string)
 #define function symbol() nonpayable returns (string)
 #define function tokenURI(uint256) nonpayable returns (string)
@@ -114,6 +112,34 @@
         pop                 // []
         0x01 0x00 mstore    // []
         0x20 0x00 return    // []
+}
+
+/// >>>>>>>>>>>>>>>>>>>>>  INTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
+
+#define macro _MINT() = takes(2) returns (0) {
+    // Input stack:                                 // [to, tokenId]
+    0x00                                            // [from (0x00), to, tokenId]
+    dup3                                            // [tokenId, from (0x00), to, tokenId]
+
+    //check no one owns it
+    [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, from (0x00), to, tokenId]
+    iszero cont jumpi
+        error jump
+
+    cont:
+
+    // Give tokens to the recipient.
+    TRANSFER_GIVE_TO()                              // [from (0x00), to, tokenId]
+
+    // Emit the transfer event.
+    [TRANSFER_EVENT_SIGNATURE]                      // [sig, from (0x00), to, tokenId]
+    0x00 0x00                                       // [0, 0, sig, from (0x00), to, tokenId]
+    log4                                            // []
+
+    stop
+
+    error:
+        0x00 0x00 revert
 }
 
 /// >>>>>>>>>>>>>>>>>>>>>  EXTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
@@ -265,35 +291,6 @@
     0x00 0x00 revert
 }
 
-/* Mint Functions */
-#define macro MINT() = takes(0) returns (0) {
-    // Setup the stack for the mint function.
-    0x24 calldataload                               // [tokenId]
-    0x04 calldataload                               // [to, tokenId]
-    0x00                                            // [from (0x00), to, tokenId]
-    dup3                                            // [tokenId, from (0x00), to, tokenId]
-
-    //check no one owns it
-    [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, from (0x00), to, tokenId]
-    iszero cont jumpi
-        error jump
-
-    cont:
-
-    // Give tokens to the recipient.
-    TRANSFER_GIVE_TO()                              // [from (0x00), to, tokenId]
-
-    // Emit the transfer event.
-    [TRANSFER_EVENT_SIGNATURE]                      // [sig, from (0x00), to, tokenId]
-    0x00 0x00                                       // [0, 0, sig, from (0x00), to, tokenId]
-    log4                                            // []
-
-    stop
-
-    error:
-        0x00 0x00 revert
-}
-
 // Main Macro
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called.
@@ -321,8 +318,6 @@
         SAFE_TRANSFER_FROM()    // not implemented yet
     safeTransferFromWithData:
         SAFE_TRANSFER_FROM_WITH_DATA()  // not implemented yet
-    mint:
-        MINT()
     balanceOf:
         BALANCE_OF()
     approve:
