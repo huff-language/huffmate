@@ -1,4 +1,8 @@
-// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/MerkleProofLib.sol
+/// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/MerkleProofLib.sol
+/// @dev The `proof_cd_ptr` passed via the stack to this macro should point to the offset
+///      of the proof array's length in the calldata. This macro assumes that the proof 
+///      array contains 32 byte values, hence why we skip over the array's element
+///      size information in the calldata.
 #define macro VERIFY_PROOF() = takes (3) returns (1) {
     // Input Stack:        [proof_cd_ptr, leaf, root]
 
