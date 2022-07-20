@@ -25,8 +25,8 @@
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
     0x00 calldataload 0xE0 shr
-    dup1 0x226ce6b7 eq set_from_calldata jumpi
-    dup1 0xde9ee75c eq load jumpi
+    dup1 __FUNC_SIG(setArrayFromCalldata) eq set_from_calldata jumpi
+    dup1 __FUNC_SIG(loadArray) eq load jumpi
 
     // Revert if otherwise
     0x00 0x00 revert
