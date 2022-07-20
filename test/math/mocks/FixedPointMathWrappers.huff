@@ -61,33 +61,33 @@
     0x20 0x00 return
 }
 
-#define macro RPOW_WRAPPER() = takes (0) returns (0) {
+#define macro RPOW_WRAPPER(fail) = takes (0) returns (0) {
     0x44 calldataload // [scalar]
     0x24 calldataload // [n, scalar]
     0x04 calldataload // [x, n, scalar]
-    RPOW()            // [result]
+    RPOW(fail)        // [result]
     0x00 mstore       // []
     0x20 0x00 return
 }
 
-#define macro EXP_WAD_WRAPPER() = takes (0) returns (0) {
+#define macro EXP_WAD_WRAPPER(fail) = takes (0) returns (0) {
     0x04 calldataload // [x]
-    EXP_WAD()         // [result]
+    EXP_WAD(fail)     // [result]
     0x00 mstore
     0x20 0x00 return
 }
 
-#define macro LN_WAD_WRAPPER() = takes (0) returns (0) {
+#define macro LN_WAD_WRAPPER(fail) = takes (0) returns (0) {
     0x04 calldataload // [x]
-    LN_WAD()          // [result]
+    LN_WAD(fail)      // [result]
     0x00 mstore
     0x20 0x00 return
 }
 
-#define macro POW_WAD_WRAPPER() = takes (0) returns (0) {
+#define macro POW_WAD_WRAPPER(fail) = takes (0) returns (0) {
     0x24 calldataload // [y]
     0x04 calldataload // [x, y]
-    POW_WAD()         // [result]
+    POW_WAD(fail)     // [result]
     0x00 mstore       // []
     0x20 0x00 return
 }
@@ -99,9 +99,9 @@
     0x20 0x00 return
 }
 
-#define macro LOG_2_WRAPPER() = takes (0) returns (0) {
+#define macro LOG_2_WRAPPER(fail) = takes (0) returns (0) {
     0x04 calldataload // [x]
-    LOG_2()           // [result]
+    LOG_2(fail)       // [result]
     0x00 mstore
     0x20 0x00 return
 }
@@ -136,15 +136,15 @@
     divWadUp:
         DIV_WAD_UP_WRAPPER(fail)
     rpow:
-        RPOW_WRAPPER()
+        RPOW_WRAPPER(fail)
     expWad:
-        EXP_WAD_WRAPPER()
+        EXP_WAD_WRAPPER(fail)
     lnWad:
-        LN_WAD_WRAPPER()
+        LN_WAD_WRAPPER(fail)
     powWad:
-        POW_WAD_WRAPPER()
+        POW_WAD_WRAPPER(fail)
     sqrt:
         SQRT_WRAPPER()
     logTwo:
-        LOG_2_WRAPPER()
+        LOG_2_WRAPPER(fail)
 }

@@ -39,7 +39,7 @@
 }
 
 // https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L34
-#define macro EXP_WAD() = takes (1) returns (1) {
+#define macro EXP_WAD(fail) = takes (1) returns (1) {
     // Input stack:            [x]
 
     // When the result is < 0.5 we return zero. This happens when
@@ -54,7 +54,7 @@
     0x0755bf798b4a1bf1e5    // [0x0755bf798b4a1bf1e5, x]
     dup2                    // [x, 0x0755bf798b4a1bf1e5, x]
     slt iszero              // [x >= 0x0755bf798b4a1bf1e5, x]
-    fail jumpi              // [x]
+    <fail> jumpi            // [x]
 
     // x is now in the range (-42, 136) * 1e18. Convert to (-42, 136) * 2**96
     // for more intermediate precision and a binary basis. This base conversion
@@ -166,8 +166,6 @@
 
     finish jump
 
-    fail:
-        0x00 0x00 revert
     ret_zero:
         0x00 0x00 mstore
         0x20 0x00 return
@@ -175,11 +173,11 @@
     // Return stack:           [result]
 }
 
-#define macro LN_WAD() = takes (1) returns (1) {
+#define macro LN_WAD(fail) = takes (1) returns (1) {
     // Input stack:            [x]
     0x00 dup2 sgt           // [x > 0, x]
     iszero                  // [x <= 0, x]
-    fail jumpi              // [x]
+    <fail> jumpi              // [x]
 
     // We want to convert x from 10**18 fixed point to 2**96 fixed point.
     // We do this by multiplying by 2**96 / 10**18. But since
@@ -189,7 +187,7 @@
     // Reduce range of x to (1, 2) * 2**96
     // ln(2^k * x) = k * ln(2) + ln(x)
     0x60                    // [0x60, x]
-    dup2 LOG_2()            // [log2(x), 0x60, x]
+    dup2 LOG_2(fail)        // [log2(x), 0x60, x]
     sub                     // [k, x]
 
     dup2 dup2               // [k, x, k, x]
@@ -301,21 +299,19 @@
 
     finish jump
 
-    fail:
-        0x00 0x00 revert
     finish:
         // Clean stack
         swap1 pop
     // Return stack:           [result]
 }
 
-#define macro POW_WAD() = takes (2) returns (1) {
+#define macro POW_WAD(fail) = takes (2) returns (1) {
     // Input Stack:            [x, y]
-    LN_WAD()                // [lnWad(x), y]
+    LN_WAD(fail)                // [lnWad(x), y]
     mul                     // [lnWad(x) * y]
     [WAD] swap1             // [lnWad(x) * y, 1e18]
     sdiv                    // [(lnWad(x) * y) / 1e18]
-    EXP_WAD()               // [result]
+    EXP_WAD(fail)               // [result]
 }
 
 ////////////////////////////////////////////////////////////////
@@ -384,20 +380,23 @@
 }
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L74
-// TODO: Optimize, works but not great
-#define macro RPOW() = takes (3) returns (1) {
+// TODO: Optimize
+#define macro RPOW(fail) = takes (3) returns (1) {
     // Input stack:                [x, n, scalar]
     dup1                        // [x, x, n, scalar]
 
     iszero iszero default jumpi // Jump to "default" if x != 0
 
-    dup2                        // [n, x, n, scalar]
-    iszero finish jumpi         // If n == 0 && x == 0, return the scalar (0 ** 0 = 1).
+    // TODO: Fix hack- code following `finish` label pops four items off of 
+    //       the stack, so we fill it with extra items here in order to return
+    //       the scalar or 0.
 
-    // 0x60 is blank, no need to set it.
+    dup2 iszero                // [n == 0, x, n, scalar]
+    dup4 dup5 swap2            // [n == 0, scalar, scalar, x, n, scalar]
+    finish jumpi               // If n == 0 && x == 0, return the scalar (0 ** 0 = 1).
+
     // 0 ** n = 0
-    pop                         // [n, scalar] - Others will be popped in `finish`
-    finish jump                 // Finish execution
+    0x00 0x00 finish jump       // Finish execution
 
     default:
         dup3                    // [scalar, x, n, scalar]
@@ -429,7 +428,7 @@
             // Revert if x ** 2 will overflow.
             dup3                // [x, result, scalar >> 1, x, n, scalar]
             0x80 shr            // [x >> 128, result, scalar >> 1, x, n, scalar]
-            fail jumpi          // [result, scalar >> 1, x, n, scalar]
+            <fail> jumpi        // [result, scalar >> 1, x, n, scalar]
 
             // Square x and duplicate it on the stack for use later.
             dup3                // [x, result, scalar >> 1, x, n, scalar]
@@ -443,7 +442,7 @@
             // Revert if x ** 2 + scalar >> 1 overflowed
             swap1               // [x * x, (scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
             dup2                // [(scalar >> 1) + (x * x), x * x, (scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
-            lt fail jumpi       // [(scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
+            lt <fail> jumpi     // [(scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
 
             // Set x to ((scalar >> 1) + (x * x)) / scalar
             dup6                // [scalar, (scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
@@ -475,7 +474,7 @@
             eq iszero           // [result != (x * result / x), x * result, x * result, result, scalar >> 1, x, n, scalar]
             dup6                // [x, result != (x * result / x), x * result, x * result, result, scalar >> 1, x, n, scalar]
             iszero iszero       // [x != 0, result != (x * result / x), x * result, x * result, result, scalar >> 1, x, n, scalar]
-            and fail jumpi      // Revert if x * result overflowed
+            and <fail> jumpi    // Revert if x * result overflowed
 
             // Round to the nearest number
             dup4                // [scalar >> 1, x * result, x * result, result, scalar >> 1, x, n, scalar]
@@ -484,7 +483,7 @@
             // Check if x ** 2 + scalar >> 1 overflowed
             swap1               // [x * result, (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
             dup2                // [(scalar >> 1) + (x * result), x * result, (scalar >> 1) + (x * result)]
-            lt fail jumpi       // Revert if ((scalar >> 1) + (x * result)) < x * result
+            lt <fail> jumpi     // Revert if ((scalar >> 1) + (x * result)) < x * result
 
             // Scale rounded result
             dup6                // [scalar, (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
@@ -493,9 +492,6 @@
             swap1 pop           // [result, scalar >> 1, x, n, scalar]
 
             loop jump           // Continue loop
-        // Revert
-        fail:
-            0x00 0x00 revert
         // Return result
         finish:
             // Clean Stack
@@ -635,11 +631,11 @@
     swap1 sub                   // [z - (x / z) < z]
 }
 
-#define macro LOG_2() = takes (1) returns (1) {
+#define macro LOG_2(fail) = takes (1) returns (1) {
     // Input stack:                [x]
 
     dup1 iszero                 // [x == 0, x]
-    fail jumpi                  // [x]
+    <fail> jumpi                // [x]
 
     dup1                        // [x, x]
     0xffffffffffffffffffffffffffffffff
@@ -688,11 +684,6 @@
     or                          // [r, x]
     swap1 pop                   // [r]
 
-    finish jump
-
-    fail:
-        0x00 0x00 revert
-    finish:
     // Return stack:            // [result]
 }
 
