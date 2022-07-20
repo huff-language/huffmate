@@ -1,0 +1,75 @@
+// Sets an array in storage from calldata.
+// Note that since no assumptions is made regarding the context in which
+// this function is called, the position of the encoded array in the calldata
+// has to be specified.
+#define macro SET_ARRAY_FROM_CALLDATA() = takes(2) returns (0) {
+    // Input stack: [calldata_start, slot]
+    // skip size of one individual element
+    0x20 add                    // [calldata_start+0x20, slot]
+    dup1 0x20 add swap1         // [calldata_start+0x20, calldata_start+0x40, slot]
+    // load length
+    calldataload                // [length, calldata_offset, slot]
+    // store length at slot
+    dup1 dup4                   // [slot, length, length, calldata_offset, slot]
+    sstore                      // [length, calldata_offset, slot]
+
+    // store slot in memory scratch space and compute hash
+    dup3 0x00 mstore            // [length, calldata_offset, slot]
+    0x20 0x00 sha3              // [sha3(slot), length, ,calldata_offset slot]
+
+    // loop and store every element in slot sha3(slot)+n
+    0x00                        // [index(0), sha3(slot), length, calldata_offset, slot]
+    start jump
+    continue:
+        // if index == length -> it's over
+        eq end jumpi                        // [index(i), sha3(slot), length, calldata_offset, slot]
+        start:
+        // load from calldata
+        dup1 0x20 mul dup5 add calldataload  // [array(i), index(i), sha3(slot), length, calldata_offset, slot]
+        // store at slot sha3(slot)+index
+        dup3 dup3 add sstore        // [index(i), sha3(slot), length, calldata_offset, slot]
+        // inc index
+        0x01 add                    // [index(i+1), sha3(slot), length, calldata_offset, slot]
+        dup3 dup2                   // [index(i+1), length, index(i+1), sha3(slot), length, calldata_offset, slot]
+        continue jump
+
+    end:
+}
+
+#define macro RETURN_ARRAY(mem_ptr) = takes(1) returns (0) {
+    // Input stack: [slot]
+
+    // store the size of each element in memory
+    0x20 <mem_ptr> mstore       // [slot]
+    <mem_ptr>                   // [mem_ptr, slot]
+    // load length from storage
+    dup2 sload dup1             // [length, length, curr_mem_ptr, slot]
+    // store length in memory
+    swap2 0x20 add              // [curr_mem_ptr+0x20, length, length, slot]
+    swap1 dup2 mstore           // [curr_mem_ptr, length, slot]
+
+    // store slot in memory scratch space and compute hash
+    swap2 0x00 mstore           // [length, curr_mem_ptr]
+    0x20 0x00 sha3 swap2        // [curr_mem_ptr, length, sha3(slot)]
+
+    // loop and load every element in slot sha3(slot)+n
+    0x00 start jump             // [index(0), curr_mem_ptr, length, sha3(slot)]
+    continue:
+        // if index == length -> it's over
+        eq end jumpi            // [index(i), curr_mem_ptr, length, sha3(slot)]
+        start:                  
+        // load from storage ; add index to sha3(slot)
+        dup1 dup5 add sload         // [array(i), index(i), curr_mem_ptr, length, sha3(slot)]
+        // store in memory
+        swap1 swap2 0x20 add        // [curr_mem_ptr+0x20, array(i), index(i), length, sha3(slot)]
+        dup1 swap2 swap1 mstore     // [curr_mem_ptr+0x20, index(i), length, sha3(slot)]
+        // update index
+        swap1 0x01 add              // [index(i+1), curr_mem_ptr, length, sha3(slot)]
+        dup1 dup4                   
+        continue jump
+
+    end:
+    // size of data to return = size of individual element + array length + encoded elements
+    swap2 0x02 add 0x05 shl     // [size, curr_mem_ptr, index(i), sha3(slot)]
+    <mem_ptr> return
+}
