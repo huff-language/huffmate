@@ -1,6 +1,6 @@
 
 /* Imports */
-#include "../data-strcutures/HashMap.huff"
+#include "../data-structures/HashMap.huff"
 
 /* Interface */
 #define function name() nonpayable returns (string)
@@ -301,7 +301,6 @@
     dup1 0x095ea7b3 eq approve jumpi
     dup1 0xa22cb465 eq setApprovalForAll jumpi
     dup1 0x081812fc eq getApproved jumpi
-    dup1 0x40c10f19 eq mint jumpi
     dup1 0x70a08231 eq balanceOf jumpi
     dup1 0x6352211e eq ownerOf jumpi
     dup1 0x06fdde03 eq name jumpi
