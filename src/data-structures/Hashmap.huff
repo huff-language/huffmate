@@ -37,13 +37,21 @@
     <mem_ptr> 0x20 add  // [<mem_ptr> + 32, key1, key2]
     mstore              // [key2]
 
+    0x40                // [0x40, key2]
+    <mem_ptr>           // [<mem_ptr>, 0x40, key2]
+    sha3                // [slot1, key2]
+
+    // concat the two keys
+    <mem_ptr> 0x20 add  // [<mem_ptr> + 0x20, key2] put slot1 in memory
+    mstore              // [key2]
+
     // next byte
-    <mem_ptr> 0x40 add  // [<mem_ptr> + 64, key2]
+    <mem_ptr>           // [<mem_ptr>, key2]
     mstore              // []
 
     // Hash the data, generating a key.
-    0x60                // [96]
-    <mem_ptr>           // [<mem_ptr>, 96]
+    0x40                // [0x40]
+    <mem_ptr>           // [<mem_ptr>, 0x40]
     sha3                // [key]
 }
 
