@@ -384,8 +384,7 @@
 #define macro RPOW(fail) = takes (3) returns (1) {
     // Input stack:                [x, n, scalar]
     dup1                        // [x, x, n, scalar]
-
-    iszero iszero default jumpi // Jump to "default" if x != 0
+    default jumpi               // Jump to "default" if x != 0
 
     // TODO: Fix hack- code following `finish` label pops four items off of 
     //       the stack, so we fill it with extra items here in order to return
@@ -402,20 +401,16 @@
         dup3                    // [scalar, x, n, scalar]
         0x01 shr                // [scalar >> 1, x, n, scalar]
 
-        0x02                    // [2, scalar >> 1, x, n, scalar]
-        dup4                    // [n, 2, scalar >> 1, x, n, scalar]
-        mod                     // [n % 2, scalar >> 1, x, n, scalar]
+        dup4                    // [result, scalar >> 1, x, n, scalar]
+        0x02                    // [2, result, scalar >> 1, x, n, scalar]
+        dup5                    // [n, 2, result, scalar >> 1, x, n, scalar]
+        mod                     // [n % 2, result, scalar >> 1, x, n, scalar]
 
-        odd jumpi               // Set result to x for now if n % 2 is odd
-                                // Otherwise, set result to scalar for now if n % 2 is even
+        // Set result to scalar for now if n % 2 is even
+        iszero loop jumpi       // [result, scalar >> 1, x, n, scalar]]
 
-        // n % 2 is even
-        dup4                // [result, scalar >> 1, x, n, scalar]
-        loop jump           // Start loop
-
-        // n % 2 is odd
-        odd:
-            dup2                // [result, scalar >> 1, x, n, scalar]
+        // Set result to x for now if n % 2 is odd
+        pop dup2                // [result, scalar >> 1, x, n, scalar]
         loop:
             dup4                // [n, result, scalar >> 1, x, n, scalar]
             iszero finish jumpi // If n == 0, the loop is finished.
@@ -454,11 +449,10 @@
             dup5                // [n, 2, result, scalar >> 1, x, n, scalar]
             mod                 // [n % 2, result, scalar >> 1, x, n, scalar]
 
-            // If n is even, continue logic
-            even_inner jumpi
-            // If n is odd, continue loop
-            loop jump
-        even_inner:
+            // If n is even, continue loop
+            iszero loop jumpi
+            // If n is odd, continue logic
+            
             // Multiply x * result
             dup1                // [result, result, scalar >> 1, x, n, scalar]
             dup4                // [x, result, result, scalar >> 1, x, n, scalar]
@@ -482,7 +476,7 @@
 
             // Check if x ** 2 + scalar >> 1 overflowed
             swap1               // [x * result, (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
-            dup2                // [(scalar >> 1) + (x * result), x * result, (scalar >> 1) + (x * result)]
+            dup2                // [(scalar >> 1) + (x * result), x * result, (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
             lt <fail> jumpi     // Revert if ((scalar >> 1) + (x * result)) < x * result
 
             // Scale rounded result
