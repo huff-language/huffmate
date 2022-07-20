@@ -1,4 +1,4 @@
-name: Huff Tests
+name: ci
 
 on:
   # manual trigger
