@@ -1,6 +1,6 @@
 <img align="right" width="150" height="150" top="100" src="./assets/huff.jpg">
 
-# huffmate • [![ci](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yaml/badge.svg)](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yaml) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) ![Discord](https://img.shields.io/discord/980519274600882306)
+# huffmate • [![ci](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml/badge.svg)](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) ![Discord](https://img.shields.io/discord/980519274600882306)
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
