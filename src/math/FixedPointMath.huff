@@ -389,123 +389,108 @@
     // Input stack:                [x, n, scalar]
     dup1                        // [x, x, n, scalar]
 
-    iszero zero jumpi           // Jump to "zero" if x == 0
-    default jump                // Jump to "default" if x != 0
+    iszero iszero default jumpi // Jump to "default" if x != 0
 
-    zero:
-        dup2                    // [n, x, n, scalar]
-        iszero zero_inner jumpi // If n == 0 && x == 0, return the scalar (0 ** 0 = 1).
+    dup2                        // [n, x, n, scalar]
+    iszero finish jumpi         // If n == 0 && x == 0, return the scalar (0 ** 0 = 1).
 
-        // 0x60 is blank, no need to set it.
-        // 0 ** n = 0
-        pop                     // [n, scalar] - Others will be popped in `finish`
-        finish jump             // Finish execution
+    // 0x60 is blank, no need to set it.
+    // 0 ** n = 0
+    pop                         // [n, scalar] - Others will be popped in `finish`
+    finish jump                 // Finish execution
 
-        // 0 ** 0 = 1
-        zero_inner:
-            swap2               // [scalar, n, x]
-            0x60 mstore         // [n, x]
-            finish jump         // Finish execution
     default:
-        0x20 mstore             // [n, scalar]
-        0x40 mstore             // [scalar]
-            
-        dup1                    // [scalar, scalar]
-        0x01 shr                // [scalar >> 1, scalar]
-        0x00 mstore             // [scalar]
+        dup3                    // [scalar, x, n, scalar]
+        0x01 shr                // [scalar >> 1, x, n, scalar]
 
-        0x02                    // [2, scalar]
-        0x40 mload              // [n, 2, scalar]
-        mod                     // [n % 2, scalar]
+        0x02                    // [2, scalar >> 1, x, n, scalar]
+        dup4                    // [n, 2, scalar >> 1, x, n, scalar]
+        mod                     // [n % 2, scalar >> 1, x, n, scalar]
 
-        iszero even jumpi       // Set result to scalar for now if n % 2 is even
-        odd jump                // Set result to x for now if n % 2 is odd
+        odd jumpi               // Set result to x for now if n % 2 is odd
+                                // Otherwise, set result to scalar for now if n % 2 is even
 
         // n % 2 is even
-        even:
-            dup1                // [scalar, scalar]
-            0x60 mstore         // [scalar]
-            loop jump           // Start loop
+        dup4                // [result, scalar >> 1, x, n, scalar]
+        loop jump           // Start loop
+
         // n % 2 is odd
         odd:
-            0x20 mload          // [x, scalar]
-            0x60 mstore         // [scalar]
-            loop jump           // Start loop
+            dup2                // [result, scalar >> 1, x, n, scalar]
         loop:
-            0x40 mload          // [n, scalar]
-            dup1                // [n, n, scalar]
-
-            iszero finish jumpi // If n = 0, the loop is finished.
+            dup4                // [n, result, scalar >> 1, x, n, scalar]
+            iszero finish jumpi // If n == 0, the loop is finished.
 
             // Divide n by 2
-            0x01 shr            // [n >> 1, scalar]
-            0x40 mstore         // [scalar]
+            dup4                // [n, result, scalar >> 1, x, n, scalar]
+            0x01 shr            // [n >> 1, result, scalar >> 1, x, n, scalar]
+            swap4 pop           // [result, scalar >> 1, x, n, scalar]
 
             // Revert if x ** 2 will overflow.
-            0x20 mload          // [x, scalar]
-            0x80 shr            // [x >> 128, scalar]
-            fail jumpi          // [scalar]
+            dup3                // [x, result, scalar >> 1, x, n, scalar]
+            0x80 shr            // [x >> 128, result, scalar >> 1, x, n, scalar]
+            fail jumpi          // [result, scalar >> 1, x, n, scalar]
 
             // Square x and duplicate it on the stack for use later.
-            0x20 mload          // [x, scalar]
-            dup1 mul            // [x * x, scalar]
-            dup1                // [x * x, x * x, scalar]
+            dup3                // [x, result, scalar >> 1, x, n, scalar]
+            dup1 mul            // [x * x, result, scalar >> 1, x, n, scalar]
+            dup1                // [x * x, x * x, result, scalar >> 1, x, n, scalar]
 
             // Add x ** 2 to scalar >> 1
-            0x00 mload          // [scalar >> 1, x * x, x * x, scalar]
-            add                 // [(scalar >> 1) + (x * x), x * x, scalar]
+            dup4                // [scalar >> 1, x * x, x * x, result, scalar >> 1, x, n, scalar]
+            add                 // [(scalar >> 1) + (x * x), x * x, result, scalar >> 1, x, n, scalar]
 
             // Revert if x ** 2 + scalar >> 1 overflowed
-            swap1               // [x * x, (scalar >> 1) + (x * x), scalar]
-            dup2                // [(scalar >> 1) + (x * x), x * x, (scalar >> 1) + (x * x), scalar]
-            lt fail jumpi       // [(scalar >> 1) + (x * x), scalar]
+            swap1               // [x * x, (scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
+            dup2                // [(scalar >> 1) + (x * x), x * x, (scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
+            lt fail jumpi       // [(scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
 
             // Set x to ((scalar >> 1) + (x * x)) / scalar
-            dup2                // [scalar, (scalar >> 1) + (x * x), scalar]
-            swap1               // [(scalar >> 1) + (x * x), scalar, scalar]
-            div                 // [((scalar >> 1) + (x * x)) / scalar, scalar]
-            0x20 mstore         // [scalar]
+            dup6                // [scalar, (scalar >> 1) + (x * x), result, scalar >> 1, x, n, scalar]
+            swap1               // [(scalar >> 1) + (x * x), scalar, result, scalar >> 1, x, n, scalar]
+            div                 // [((scalar >> 1) + (x * x)) / scalar, result, scalar >> 1, x, n, scalar]
+            swap3 pop           // [result, scalar >> 1, x, n, scalar]
 
-            0x02                // [2, scalar]
-            0x40 mload          // [n, 2, scalar]
-            mod                 // [n % 2, scalar]
+            0x02                // [2, result, scalar >> 1, x, n, scalar]
+            dup5                // [n, 2, result, scalar >> 1, x, n, scalar]
+            mod                 // [n % 2, result, scalar >> 1, x, n, scalar]
 
-            // If n is odd, continue logic
-            odd_inner jumpi
-            // If n is even, continue loop
+            // If n is even, continue logic
+            even_inner jumpi
+            // If n is odd, continue loop
             loop jump
-        odd_inner:
+        even_inner:
             // Multiply x * result
-            0x60 mload          // [result]
-            0x20 mload          // [x, result]
-            mul                 // [x * result]
-            dup1                // [x * result, x * result]
-            dup1                // [x * result, x * result, x * result]
+            dup1                // [result, result, scalar >> 1, x, n, scalar]
+            dup4                // [x, result, result, scalar >> 1, x, n, scalar]
+            mul                 // [x * result, result, scalar >> 1, x, n, scalar]
+            dup1                // [x * result, x * result, result, scalar >> 1, x, n, scalar]
+            dup1                // [x * result, x * result, x * result, result, scalar >> 1, x, n, scalar]
 
             // Check if x * result overflowed
-            0x20 mload          // [x, x * result, x * result, x * result]
-            swap1               // [x * result, x, x * result, x * result]
-            div                 // [x * result / x, x * result, x * result]
-            0x60 mload          // [result, x * result / x, x * result, x * result]
-            eq iszero           // [result != (x * result / x), x * result, x * result]
-            0x20 mload          // [x, result != (x * result / x), x * result, x * result]
-            iszero iszero       // [x != 0, result != (x * result / x), x * result, x * result]
+            dup6                // [x, x * result, x * result, x * result, result, scalar >> 1, x, n, scalar]
+            swap1               // [x * result, x, x * result, x * result, result, scalar >> 1, x, n, scalar]
+            div                 // [x * result / x, x * result, x * result, result, scalar >> 1, x, n, scalar]
+            dup4                // [result, x * result / x, x * result, x * result, result, scalar >> 1, x, n, scalar]
+            eq iszero           // [result != (x * result / x), x * result, x * result, result, scalar >> 1, x, n, scalar]
+            dup6                // [x, result != (x * result / x), x * result, x * result, result, scalar >> 1, x, n, scalar]
+            iszero iszero       // [x != 0, result != (x * result / x), x * result, x * result, result, scalar >> 1, x, n, scalar]
             and fail jumpi      // Revert if x * result overflowed
 
             // Round to the nearest number
-            0x00 mload          // [scalar >> 1, x * result, x * result]
-            add                 // [(scalar >> 1) + (x * result), x * result]
+            dup4                // [scalar >> 1, x * result, x * result, result, scalar >> 1, x, n, scalar]
+            add                 // [(scalar >> 1) + (x * result), x * result, result, scalar >> 1, x, n, scalar]
 
             // Check if x ** 2 + scalar >> 1 overflowed
-            swap1               // [x * result, (scalar >> 1) + (x * result)]
+            swap1               // [x * result, (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
             dup2                // [(scalar >> 1) + (x * result), x * result, (scalar >> 1) + (x * result)]
             lt fail jumpi       // Revert if ((scalar >> 1) + (x * result)) < x * result
 
             // Scale rounded result
-            dup2                // [scalar, ((scalar >> 1) + (x * result), scalar]
-            swap1               // [((scalar >> 1) + (x * result), scalar, scalar]
-            div                 // [((scalar >> 1) + (x * result)) / scalar, scalar]
-            0x60 mstore         // [scalar]
+            dup6                // [scalar, (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
+            swap1               // [(scalar >> 1) + (x * result), scalar, result, scalar >> 1, x, n, scalar]
+            div                 // [(scalar >> 1) + (x * result)) / scalar, result, scalar >> 1, x, n, scalar]
+            swap1 pop           // [result, scalar >> 1, x, n, scalar]
 
             loop jump           // Continue loop
         // Revert
@@ -513,8 +498,10 @@
             0x00 0x00 revert
         // Return result
         finish:
-            pop pop             // [] - Clear stack
-            0x60 mload          // [result]
+            // Clean Stack
+            swap4               // [scalar, scalar >> 1, x, n, result]
+            pop pop pop pop     // [result]
+        // Return stack:           [result]
 }
 
 ////////////////////////////////////////////////////////////////
