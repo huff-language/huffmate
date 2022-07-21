@@ -238,29 +238,25 @@
 
 /* [INTERNAL] Mint */
 #define macro MINT() = takes(0) returns (0) {
-    // Ensure that the sender is the owner of the contract.
-    ONLY_OWNER()
-
-    // Setup the stack for the mint function.
-    0x04 calldataload   // [to]
-    0x00                // [from (0x00), to]
-    0x24 calldataload   // [value, from, to]
+    // Load Calldata
+    0x04 calldataload                   // [to]
+    0x00                                // [from, to]
+    0x24 calldataload                   // [value, from, to]
 
     // Give tokens to the recipient.
-    TRANSFER_GIVE_TO()  // [value, from, to]
+    TRANSFER_GIVE_TO()                  // [value, from, to]
 
     // Update totalSupply
-    dup1                            // [value, value, from, to]
-    [TOTAL_SUPPLY_LOCATION] sload    // [supply,value,value,from,to]
-    add                             // [supply+value,value,from,to]
-    [TOTAL_SUPPLY_LOCATION] sstore  // [value,from,to]
-
+    dup1                                // [value, value, from, to]
+    [TOTAL_SUPPLY_LOCATION] sload       // [supply, value, value, from, to]
+    add                                 // [supply + value, value, from, to]
+    [TOTAL_SUPPLY_LOCATION] sstore      // [value, from, to]
 
     // Emit the transfer event.
-    0x00 mstore                 // [from, to]
-    [TRANSFER_EVENT_SIGNATURE]  // [sig, from, to]
-    0x20 0x00                   // [0, 32, sig, from, to]
-    log3                        // []
+    0x00 mstore                         // [from, to]
+    [TRANSFER_EVENT_SIGNATURE]          // [sig, from, to]
+    0x20 0x00                           // [0, 32, sig, from, to]
+    log3                                // []
 }
 
 /* [INTERNAL] Burn */
@@ -304,46 +300,4 @@
     [DECIMALS_LOCATION] sload          // [decimals]
     0x00 mstore                        // []
     0x20 0x00 return                   // []
-}
-
-/**************/
-/* MAIN MACRO */
-/**************/
-
-/* Main */
-#define macro MAIN() = takes(0) returns (0) {
-    0x00 calldataload 0xE0 shr
-    dup1 0xa9059cbb eq transfer jumpi
-    // dup1 0x40c10f19 eq mints jumpi
-    dup1 0x70a08231 eq balanceOf jumpi
-    dup1 0x18160ddd eq totalSupply jumpi
-    dup1 __FUNC_SIG(approve) eq approve jumpi
-    dup1 0xdd62ed3e eq allowance jumpi
-
-    dup1 __FUNC_SIG(name) eq name jumpi
-    dup1 __FUNC_SIG(symbol) eq symbol jumpi
-    dup1 __FUNC_SIG(decimals) eq decimals jumpi
-    dup1 __FUNC_SIG(DOMAIN_SEPARATOR) eq separator jumpi
-
-    // Revert if no selector matches
-    0x00 0x00 revert
-
-    name:
-        NAME()
-    symbol:
-        SYMBOL()
-    decimals:
-        DECIMALS()
-    separator:
-        GET_DOMAIN_SEPARATOR()
-    transfer:
-        TRANSFER()
-    balanceOf:
-        BALANCE_OF()
-    totalSupply:
-        TOTAL_SUPPLY()
-    approve:
-        APPROVE()
-    allowance:
-        ALLOWANCE()
 }

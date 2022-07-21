@@ -3,7 +3,8 @@ pragma solidity ^0.8.15;
 
 import "forge-std/console.sol";
 import "forge-std/Test.sol";
-import "foundry-huff/HuffDeployer.sol";
+import {HuffConfig} from "foundry-huff/HuffConfig.sol";
+import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 
 interface ERC20 {
   /* Metadata */
@@ -25,6 +26,7 @@ interface ERC20 {
   function transferFrom(address, address, uint256) external;
   function approve(address, uint256) external;
   function permit(address, address, uint256, uint256, uint8, bytes32, bytes32) external;
+  function mint(address, uint256) external;
 }
 
 contract ERC20Test is Test {
@@ -43,14 +45,7 @@ contract ERC20Test is Test {
     console.logString(string(symbol));
 
     bytes memory args = bytes.concat(bytes32(name), bytes32(symbol), abi.encode(8));
-    console.logBytes(args);
-
-    coin = ERC20(
-      HuffDeployer.deploy_with_args(
-        "tokens/ERC20",
-        args
-      )
-    );
+    coin = ERC20(HuffDeployer.config().with_args(args).deploy("tokens/ERC20Mintable"));
   }
 
   /// @notice Test name metadata
@@ -95,13 +90,41 @@ contract ERC20Test is Test {
   function testApprove(address from, address to, uint256 amount) public {
     // Approve
     vm.startPrank(from);
-    vm.expectEmit(true, true, true, true);
-    emit Approve(from, to, amount);
+    // vm.expectEmit(true, true, true, true);
+    // emit Approve(from, to, amount);
     coin.approve(to, amount);
     vm.stopPrank();
 
     // Get Approval
     uint256 allowance = coin.allowance(from, to);
     assertEq(allowance, amount);
+  }
+
+  /// @notice Test transferring
+  // function testTransfer(address from, address to, uint256 amount) public {
+  //   // Approve
+  //   vm.startPrank(from);
+  //   // vm.expectEmit(true, true, true, true);
+  //   // emit Approve(from, to, amount);
+  //   coin.transfer(to, amount);
+  //   vm.stopPrank();
+
+  //   // Get Approval
+  //   uint256 allowance = coin.allowance(from, to);
+  //   assertEq(allowance, amount);
+  // }
+
+  /// @notice Test mint
+  /// @notice Only the owner can mint
+  function testMint(address from, address to, uint256 amount) public {
+    vm.startPrank(from);
+    vm.expectEmit(true, true, true, true);
+    emit Transfer(address(0), to, amount);
+    coin.mint(to, amount);
+    vm.stopPrank();
+
+    // Get Balance
+    uint256 balance = coin.balanceOf(from);
+    assertEq(balance, amount);
   }
 }

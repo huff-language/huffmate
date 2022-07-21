@@ -1,0 +1,46 @@
+#include "./ERC20.huff"
+
+#define function mint(address to, uint256 amount) nonpayable returns ()
+#define function burn(address from, uint256 amount) nonpayable returns ()
+
+#define macro MAIN() = takes(0) returns (0) {
+    0x00 calldataload 0xE0 shr
+    dup1 __FUNC_SIG(transfer) eq transfer jumpi
+    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi
+    dup1 __FUNC_SIG(totalSupply) eq totalSupply jumpi
+    dup1 __FUNC_SIG(approve) eq approve jumpi
+    dup1 __FUNC_SIG(allowance) eq allowance jumpi
+    dup1 __FUNC_SIG(mint) eq mint jumpi
+    dup1 __FUNC_SIG(from) eq from jumpi
+
+    dup1 __FUNC_SIG(name) eq name jumpi
+    dup1 __FUNC_SIG(symbol) eq symbol jumpi
+    dup1 __FUNC_SIG(decimals) eq decimals jumpi
+    dup1 __FUNC_SIG(DOMAIN_SEPARATOR) eq separator jumpi
+
+    // Revert if no selector matches
+    0x00 0x00 revert
+
+    mint:
+        MINT()
+    burn:
+        BURN()
+    name:
+        NAME()
+    symbol:
+        SYMBOL()
+    decimals:
+        DECIMALS()
+    separator:
+        GET_DOMAIN_SEPARATOR()
+    transfer:
+        TRANSFER()
+    balanceOf:
+        BALANCE_OF()
+    totalSupply:
+        TOTAL_SUPPLY()
+    approve:
+        APPROVE()
+    allowance:
+        ALLOWANCE()
+}
