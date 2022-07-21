@@ -4,44 +4,8 @@
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
-## Contracts
 
-```ml
-auth
-├─ Owned — "Simple single owner authorization"
-├─ Auth — "Flexible and updatable auth pattern"
-├─ RolesAuthority — "Role based Authority that supports up to 256 roles"
-data-structures
-├─ Arrays - TODO
-├─ Bytes — TODO
-├─ Hashmap - TODO
-factories
-├─ Factory - TODO
-├─ ProxyFactory — TODO
-math
-├─ FixedPointMath - TODO
-├─ Math — TODO
-├─ SafeMath — TODO
-tokens
-├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
-├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
-├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
-├─ ERC4626 — "Minimal ERC4626 tokenized Vault implementation"
-utils
-├─ Calls - TODO
-├─ Data — TODO
-├─ ReentrancyGuard — TODO
-├─ SSTORE2 — TODO
-├─ MerkleProofLib — "Gas optimized merkle proof verification library"
-```
-
-## Safety
-
-This is **experimental software** and is provided on an "as is" and "as available" basis.
-
-We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
-
-## Installation
+## Usage
 
 To install with [**Foundry**](https://github.com/foundry-rs/foundry):
 
@@ -54,6 +18,46 @@ To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffl
 ```sh
 npm install @pentagonxyz/huffmate
 ```
+
+
+## Contracts
+
+```ml
+auth
+├─ Owned — "Simple single owner authorization"
+├─ Auth — "Flexible and updatable auth pattern"
+├─ RolesAuthority — "Role based Authority that supports up to 256 roles"
+data-structures
+├─ Arrays - "Memory translation handlers for arrays"
+├─ Bytes — TODO
+├─ Hashmap - "Simple mapping utilities for 32 byte words"
+factories
+├─ Factory - TODO
+├─ ProxyFactory — TODO
+math
+├─ FixedPointMath - "Fixed-point number arithmetic"
+├─ Math — "Refactored, common arithmetic macros"
+├─ SafeMath — "Safe wrappers for primitive arithmetic operations"
+tokens
+├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
+├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
+├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
+├─ ERC4626 — "Minimal ERC4626 tokenized Vault implementation"
+utils
+├─ Calls - TODO
+├─ Data — TODO
+├─ MerkleProofLib — "Gas optimized merkle proof verification library"
+├─ ReentrancyGuard — TODO
+├─ SSTORE2 — TODO
+```
+
+
+## Safety
+
+Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
+
+We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
+
 
 ## Acknowledgements
 
