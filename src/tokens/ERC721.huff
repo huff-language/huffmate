@@ -29,18 +29,17 @@
 #define constant APPROVAL_FOR_ALL_EVENT_SIGNATURE = 0x17307EAB39AB6107E8899845AD3D59BD9653F200F220920489CA2B5937696C31
 
 /* Storage Slots */
-#define constant NAME_LOCATION = FREE_STORAGE_POINTER()
 #define constant SYMBOL_LOCATION = FREE_STORAGE_POINTER()
 #define constant OWNER_LOCATION = FREE_STORAGE_POINTER() // ownerOf
 #define constant BALANCE_LOCATION = FREE_STORAGE_POINTER() // balanceOf
 #define constant SINGLE_APPROVAL_LOCATION = FREE_STORAGE_POINTER() // getApproved
 
-/* Constructor */
-
-#define macro CONSTRUCTOR() = takes(0) returns (0) {
-}
-
 /// >>>>>>>>>>>>>>>>>>>>>  VIEW FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
+
+#define macro NAME() = takes (0) returns (0) {
+    // Must setup override
+    NAME_OVERRIDE()
+}
 
 #define macro BALANCE_OF() = takes (0) returns (0) {
     0x04 calldataload                               // [account]
