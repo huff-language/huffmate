@@ -3,12 +3,19 @@
 
 // Constants
 #define constant META_NAME = 0x05546f6b656e // "Token"
+#define constant META_SYMBOL = 0x03544B4E // "TKN"
 
 /// >>>>>>>>>>>>>>>>>>>>>  OVERRIDES  <<<<<<<<<<<<<<<<<<<<<< ///
 
 #define macro NAME_OVERRIDE() = takes (0) returns (0) {
     0x20 0x20 mstore
     [META_NAME] 0x45 mstore
+    0x60 0x20 return
+}
+
+#define macro SYMBOL_OVERRIDE() = takes (0) returns (0) {
+    0x20 0x20 mstore
+    [META_SYMBOL] 0x43 mstore
     0x60 0x20 return
 }
 
