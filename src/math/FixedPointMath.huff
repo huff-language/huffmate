@@ -323,101 +323,93 @@
 ////////////////////////////////////////////////////////////////
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L34
-#define macro MUL_DIV_DOWN() = takes(0) returns (1) {
-                       // Stack: []
-    /* Perform Safe Multiplication */
-    0x04 calldataload  // Stack: [ a ]
-    0x24 calldataload  // Stack: [ b, a ]
-    dup1               // Stack: [ b, b, a]
-    iszero             // Stack: [ (b==0), b, a]
-    error jumpi        // If b==0 then a*b/c == 0, revert;
-                       // Stack: [ b, a ]
+#define macro MUL_DIV_DOWN() = takes (3) returns (1) {
+    // Input stack:      [x, y, denominator]
+    dup3              // [denominator, x, y, denominator]
+    dup3              // [y, denominator, x, y, denominator]
+    dup3              // [x, y, denominator, x, y, denominator]
 
-    dup2               // Stack: [ a, b, a ]
-    dup2               // Stack: [ b, a, b, a ]
-    mul                // Stack: [ (b*a), b, a ]
-    swap2              // Stack: [ a, b, (b*a) ]
-    dup3               // Stack: [ (b*a), a, b, (b*a) ]
-    div                // Stack: [ ((b*a)/a), b, (b*a) ]
-    eq                 // Stack: [ (((b*a)/a) == b), (b*a) ]
-    iszero             // Stack: [ ((((b*a)/a) == b) == 0), (b*a) ]
-    error jumpi
-                       // Stack: [(b*a)]
+    mul               // [x * y, denominator, x, y, denominator]
+    0x00 mstore       // [denominator, x, y, denominator]
 
-    /* Equivalent to require(denominator != 0) */
-    0x44 calldataload  // Stack: [denominator, (b*a)]
-    dup1               // Stack: [denominator, denominator, (b*a)]
-    iszero             // // Stack: [(denominator==0), denominator, (b*a)]
-    error jumpi
-                       // Stack: [denominator, (b*a)]
-    
-    swap1              // Stack: [(b*a), denominator]
-    div                // Stack: [((b*a) / denominator)]
+    iszero iszero     // [denominator != 0, x, y, denominator]
 
-    0x00               // Stack: [0x00, ((b*a) / denominator)]
-    mstore             // store in memory, memory[0x00:0x00+32] = ((b*a) / denominator)
+    swap1             // [x, denominator != 0, y, denominator]
+    dup1              // [x, x, denominator != 0, y, denominator]
+    iszero            // [x == 0, x, denominator != 0, y, denominator]
 
-                       // Stack: []
-    0x20 0x00 return   // return value at memory location 0x20, memory[0x20:0x20+0x00]
+    swap1             // [x, x == 0, denominator != 0, y, denominator]
+    0x00 mload        // [x * y, x, x == 0, denominator != 0, y, denominator]
+    div               // [(x * y) / x, x == 0, denominator != 0, y, denominator]
 
-    error:
+    dup4              // [y, (x * y) / x, x == 0, denominator != 0, y, denominator]
+    eq                // [y == (x * y) / x, x == 0, denominator != 0, y, denominator]
+    or                // [y == (x * y) / x | x == 0, denominator != 0, y, denominator]
+    and               // [(y == (x * y) / x | x == 0) & denominator != 0, y, denominator]
+
+    iszero fail jumpi // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
+
+    pop               // [denominator]
+    0x00 mload        // [x * y, denominator]
+    div               // [(x * y) / denominator]
+
+    finish jump
+
+    fail:
         0x00 0x00 revert
-
+    finish:
+    // Return stack:     [(x * y) / denominator]
 }
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L53
-#define macro MUL_DIV_UP() = takes(0) returns (1) {
-                       // Stack: []
-    /* Perform Safe Multiplication */
-    0x04 calldataload  // Stack: [ a ]
-    0x24 calldataload  // Stack: [ b, a ]
-    dup1               // Stack: [ b, b, a]
-    iszero             // Stack: [ (b==0), b, a]
-    error jumpi        // If b==0, a*b/c == 0, revert;
-                       // Stack: [ b, a ]
+#define macro MUL_DIV_UP() = takes (3) returns (1) {
+    // Input stack:      [x, y, denominator]
+    dup3              // [denominator, x, y, denominator]
+    dup3              // [y, denominator, x, y, denominator]
+    dup3              // [x, y, denominator, x, y, denominator]
 
-    dup2               // Stack: [ a, b, a ]
-    dup2               // Stack: [ b, a, b, a ]
-    mul                // Stack: [ (b*a), b, a ]
-    swap2              // Stack: [ a, b, (b*a) ]
-    dup3               // Stack: [ (b*a), a, b, (b*a) ]
-    div                // Stack: [ ((b*a)/a), b, (b*a) ]
-    eq                 // Stack: [ (((b*a)/a) == b), (b*a) ]
-    iszero             // Stack: [ ((((b*a)/a) == b) == 0), (b*a) ]
-    error jumpi
-                       // Stack: [(b*a)]
+    mul               // [x * y, denominator, x, y, denominator]
+    0x00 mstore       // [denominator, x, y, denominator]
 
-    dup1               // Stack: [(b*a), (b*a)]
+    iszero iszero     // [denominator != 0, x, y, denominator]
 
-    /* Equivalent to require(denominator != 0) */
-    0x44 calldataload  // Stack: [denominator, (b*a), (b*a)]
-    dup1               // Stack: [denominator, denominator, (b*a), (b*a)]
-    iszero             // // Stack: [(denominator==0), denominator, (b*a), (b*a)]
-    error jumpi
-                       // Stack: [denominator, (b*a), (b*a)]
-    
-    swap1              // Stack: [(b*a), denominator, (b*a)]
-    iszero             // Stack: [((b*a)==0), denominator, (b*a)]
-    iszero             // Stack: [(((b*a)==0)==0), denominator, (b*a)]
+    dup2              // [x, denominator != 0, x, y, denominator]
+    iszero            // [x == 0, denominator != 0, x, y, denominator]
 
-    swap2              // Stack: [(b*a), denominator, (((b*a)==0)==0)]
-    0x01               // Stack: [0x01, (b*a), denominator, (((b*a)==0)==0)]
-    swap1              // Stack: [(b*a), 0x01, denominator, (((b*a)==0)==0)]
-    sub                // Stack: [((b*a) - 0x01), denominator, (((b*a)==0)==0)]
-    div                // Stack: [(((b*a) - 0x01) / denominator), (((b*a)==0)==0)]
-    0x01               // Stack: [0x01, (((b*a) - 0x01) / denominator), (((b*a)==0)==0)]
-    add                // Stack: [(0x01 + (((b*a) - 0x01) / denominator)), (((b*a)==0)==0)]
-    mul                // Stack: [((0x01 + (((b*a) - 0x01) / denominator)) * (((b*a)==0)==0))]
+    dup3              // [x, x == 0, denominator != 0, x, y, denominator]
+    0x00 mload        // [x * y, x, x == 0, denominator != 0, x, y, denominator]
+    div               // [(x * y) / x, x == 0, denominator != 0, x, y, denominator]
 
-    0x00               // Stack: [0x00, ((0x01 + (((b*a) - 0x01) / denominator)) * (((b*a)==0)==0))]
-    mstore             // store in memory, memory[0x00:0x00+32] = ((0x01 + (((b*a) - 0x01) / denominator)) * (((b*a)==0)==0))
+    dup5              // [y, (x * y) / x, x == 0, denominator != 0, x, y, denominator]
+    eq                // [y == (x * y) / x, x == 0, denominator != 0, x, y, denominator]
+    or                // [y == (x * y) / x | x == 0, denominator != 0, x, y, denominator]
+    and               // [y == (x * y) / x | x == 0 & denominator != 0, x, y, denominator]
 
-                       // Stack: []
-    0x20 0x00 return   // return value at memory location 0x20, memory[0x20:0x20+0x00]
+    iszero fail jumpi // Revert if (y == (x * y) / x | x == 0) & denominator != 0 is not satisfied
 
-    error:
+    0x00 mload        // [x * y, x, y, denominator]
+    iszero iszero     // [x * y != 0, x, y, denominator]
+
+    dup4              // [denominator, x * y != 0, x, y, denominator]
+    0x01              // [1, denominator, x * y != 0, x, y, denominator]
+    0x00 mload        // [x * y, 1, denominator, x * y != 0, x, y, denominator]
+    sub               // [x * y - 1, denominator, x * y != 0, x, y, denominator]
+    div               // [x * y - 1 / denominator, x * y != 0, x, y, denominator]
+    0x01              // [1, x * y - 1 / denominator, x * y != 0, x, y, denominator]
+    add               // [(x * y - 1 / denominator) + 1, x * y != 0, x, y, denominator]
+
+    mul               // [((x * y - 1 / denominator) + 1) * (x * y != 0), x, y, denominator]
+
+    // Clear extra stack items before continuing
+    swap3             // [denominator, x, y, ((x * y - 1 / denominator) + 1) * (x * y != 0)]
+    pop pop pop       // [((x * y - 1 / denominator) + 1) * (x * y != 0)]
+
+    finish jump
+
+    fail:
         0x00 0x00 revert
-
+    finish:
+    // Return stack:     [((x * y - 1 / denominator) + 1) * (x * y != 0)]
 }
 
 // https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L74
