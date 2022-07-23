@@ -1,3 +1,5 @@
+// TODO: SAFE CALL IS COMPLETE - make sure that it passes the tests of solmate, then commit
+// TODO: add sage call to the end of batch mint
 
 #include "../data-structures/Hashmap.huff"
 #include "../math/SafeMath.huff"
@@ -114,8 +116,6 @@
 
 // address, tokenId, amount, data
 #define macro MINT() = takes(0) returns (0){
-    // get stuff for mint function
-
     // increase the balance of the address # TODO: increment current balance
     0x44 calldataload       // [amount]
     
@@ -131,15 +131,16 @@
     INCREASE_BALANCE(0x00)
 
     // emit transfer event    
-    0x04 calldataload       // [to]
-    0x00                    // [zero_address, to]
-    caller                  // [msg.sender, zero_address, to]
-    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender, zero_address, to] 
-    0x40 0x40
-    log4
+    0x04 calldataload dup1  // [to]
+    0x00                    // [zero_address, to, to]
+    caller                  // [msg.sender, zero_address, to, to]
+    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender, zero_address, to, to] 
+    0x40 0x40               // TODO
+    log4                    // [to]
 
-    stop
-    // todo: safe transfer logic
+    0x00 swap1
+    // [to, from]
+    SAFE_CALL()
 }
 
 
@@ -197,10 +198,12 @@
     sstore                          // []   
 }
 
-
-// (from, to, id, amount, data) //0x00 as scratch space may have to change here
+//  0x04, 0x24, 0x44, 0x64, 0x84
+// (from, to, id, amount, data) 
 // TODO, optimize
 #define macro SAFE_TRANSFER_FROM() = takes(0) returns (0) {
+
+    // data is currently ignored
     IS_OWNER_OR_APPROVED(error)
 
     // Decrease the balance of the from address
@@ -220,20 +223,93 @@
     0x00 mstore                     // store tokenId in memory for log can store in 0x00 as scratch space is no longer in use
     0x20 mstore                     // store amount in memory for log           
 
-    0x24 calldataload               // [to]
-    0x04 calldataload               // [from, to]
-    caller                          // [msg.sender, from, to]
-    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender, from, to] 
-    0x00 0x40                       // log data
+    0x24 calldataload dup1          // [to, to]
+    0x04 calldataload               // [from, to, to]
+    caller                          // [msg.sender, from, to, to]
+    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender, from, to, to] 
+    0x00 0x40                       // [to] log data
     log4
 
+    SAFE_CALL()
+}
+
+#define macro SAFE_CALL() = takes(2) returns(0) {
+    // [to, from]
+
+    // safe transfer
+    // if the contract to has code
+
+    dup1                            // [to, to, from]
+    extcodesize                     // [codesize(to), to, to, from]
+    iszero                          // [!(codesize(to)), to, to, from]
+    iszero                          // [!!(codesize(to)), to, to, from]
+
+    // Jump to do safe check if the caller is a contract
+    isContract                               // jump is sender 
+    jumpi                           // [to, to, from]
+
+    // check for zero address, if sent to the zero address revert, otherwise fin
+    iszero                          // [!to, to, from]
+    error jumpi                     // [to, from]
+    continue jump                   // [to, from]
+
+    isContract:
+    // make external call to contract
+    // get data
+    
+    // get value
+    
+
+    0xf23a6e61 0xE0 shl             // [selector]
+    dup1 0x20 mstore                // [selector, selector]
+
+    0x04 calldatasize sub           // [(cds-4), ]
+    0x04
+    0x44
+    calldatacopy
+        
+    
+    // store caller in first calldata slot
+    caller 0x24 mstore              // [selector, to, from]
+
+    // store from in the second
+    dup3 0x44 mstore                // [selector, to, from]]
+    
+    // update location of the bytes calldata
+    0xa0 0xa4  mstore
+
+    // clear return space in preparation for the call
+    0x00 0x00 mstore                // [selector, to, from]
+
+    // call
+    0x20                            // [retSize, selector, to]                                                   retSize: 0x04
+    0x00                            // [retOffset, retSize, selector, to]                                        retOffset: 0x00
+    calldatasize 0x20 add           // [argSize, retOffset, retSize, selector, to]                               argSize: calldatasize + 20 // we add one more address into the mix
+    0x20                            // [argOffset, argSize, retOffset, retSize, selector, to]                    argOffset: 0x20            // read the args from 0x20
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, selector, to]             value: 0x00                // send no ether
+    dup7                            // [to, value, argOffset, argSize, retOffset, retSize, selector, to]         to: to                     // send to the to address
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, selector, to]    gas: gas                   // forward all gas    
+    call                            // [success, selector, to]                                                   call 
+
+
+    iszero error jumpi
+
+    // read response
+    0x00 mload 0xE0 shr             // [response]
+    0xf23a6e61 
+    eq 
+    iszero
+    error 
+    jumpi
+    
+    continue:
     stop
 
     error:
         0x00 dup1 revert
-
-    // TODO implement the safe part
 }
+ 
+
 
 // _burn(address from,uint256 id,uint256 amount
 #define macro BURN_TOKEN() = takes(0) returns(0){
@@ -262,7 +338,7 @@
 #define macro BATCH_MINT() = takes(0) returns(0){
 
     // get length of arrays
-    0x04 calldataload           // [to]
+    0x04 calldataload               // [to]
 
     // get length of the ids array - stash arr pointers at end of stack
     0x44 calldataload 0x4 add dup1  // [&amount, &amount, to]
@@ -272,7 +348,7 @@
     calldataload dup1               // [ids.length, ids.length, amounts.length, &amount, &ids, to ]
     swap2                           // [amounts.len, ids.len, ids.len, &amount, &ids, to]
 
-    eq isTrue                         // [amounts.length == ids.length, ids.len, &amount, &ids, to]
+    eq isTrue                       // [amounts.length == ids.length, ids.len, &amount, &ids, to]
     jumpi                           // [ids.len, &amount, &ids, to]
     0x00 0x00 revert
 
@@ -312,9 +388,113 @@
     
     exit:
 
-    // TODO emit log
+    // don't log the data field, so we can get length to be 32 bytes less than the data pointer 
+    // ids alays start at 0x84
 
-    stop
+    0x84                            // [&ids]
+    0x64 calldataload 0x4 add       // [(&data + 0x4), &ids]
+    sub                             // [len(ids, amounts)]
+    dup1                            // [len(ids, amounts), len(ids, amounts)]
+
+    0x84                            // [0x84, len(ids, amounts), len(ids, amounts)]         // [&ids]
+    0x60                            // [0x60, 0x84, len(ids, amounts), len(ids, amounts)]   // offset, &ids
+    calldatacopy                    // [len(ids, amounts)]
+
+    // store the pointers to the ids and amounts in memory
+    0x60 0x20 mstore                // [log &ids, len(ids, amounts)]] 
+    0x60 0x20 dup4 dup2 mul add add 0x40 mstore  //  
+
+    // TODO: an optimistaion for contract calls can be made by loading the entire contents in to memory at this point
+    0x04 calldataload               // [to, len(ids, amounts)]
+    0x00                            // [0x00, to, len(ids, amounts)]
+    caller                          // [caller, 0x00, to, len(ids, amounts)]
+    dup4 0x40 add                   // [len(ids, amounts), caller, 0x00, to, len(ids, amounts)]
+    0x20                            // [offset, len(ids, amounts), caller, 0x00, to, len(ids, amounts)]
+    log4
+
+    // safe multi call
+    
+    // [to, from]
+    0x00
+    0x04 calldataload
+    
+    
+    // safe transfer
+    // if the contract to has code
+
+    dup1                            // [to, to, from]
+    extcodesize                     // [codesize(to), to, to, from]
+    iszero                          // [!(codesize(to)), to, to, from]
+    iszero                          // [!!(codesize(to)), to, to, from]
+
+    // Jump to do safe check if the caller is a contract
+    isContract                               // jump is sender 
+    jumpi                           // [to, to, from]
+
+    // check for zero address, if sent to the zero address revert, otherwise fin
+    iszero                          // [!to, to, from]
+    error jumpi                     // [to, from]
+    continue jump                   // [to, from]
+
+    isContract:
+    // make external call to contract
+    // get data
+    
+    // get value
+    
+
+    0xbc197c81 0xE0 shl             // [selector]
+    dup1 0x20 mstore                // [selector, selector]
+
+    0x04 calldatasize sub           // [(cds-4), ]
+    0x04
+    0x44
+    calldatacopy
+        
+    
+    // store caller in first calldata slot
+    caller 0x24 mstore              // [selector, to, from]
+
+    // store from in the second
+    dup3 0x44 mstore                // [selector, to, from]]
+
+    // increase the dyn pointer balances by 0x20 for each dynamic type, this is due to the introduction of the from value in the call
+    0x20                                    // [0x20, selector, to, from]
+    0x64 dup1 mload dup3 add swap1 mstore                          
+    0x84 dup1 mload dup3 add swap1 mstore  
+    0xa4 dup1 mload dup3 add swap1 mstore
+    
+    // remove 0x20 from the stack
+    pop 
+    
+    // clear return space in preparation for the call
+    0x00 0x00 mstore                // [selector, to, from]
+
+    // call
+    0x20                            // [retSize, selector, to]                                                   retSize: 0x04
+    0x00                            // [retOffset, retSize, selector, to]                                        retOffset: 0x00
+    calldatasize 0x20 add           // [argSize, retOffset, retSize, selector, to]                               argSize: calldatasize + 20 // we add one more address into the mix
+    0x20                            // [argOffset, argSize, retOffset, retSize, selector, to]                    argOffset: 0x20            // read the args from 0x20
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, selector, to]             value: 0x00                // send no ether
+    dup7                            // [to, value, argOffset, argSize, retOffset, retSize, selector, to]         to: to                     // send to the to address
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, selector, to]    gas: gas                   // forward all gas    
+    call                            // [success, selector, to]                                                   call 
+
+    iszero error jumpi
+
+    // read response
+    0x00 mload 0xE0 shr             // [response]
+    0xbc197c81 
+    eq 
+    iszero
+    error 
+    jumpi
+    
+    continue:
+        stop
+
+    error:
+        0x00 dup1 revert
 }
 
 
@@ -343,7 +523,7 @@
 #define macro MAIN() = takes(0) returns(0) {
     0x00 calldataload 0xE0 shr      // [function selector on stack]
     
-    dup1 __FUNC_SIG(mint) eq mint jumpi
+    dup1 0x731133e9 eq mint jumpi //__FUNC_SIG(mint)
     dup1 __FUNC_SIG(safeTransferFrom) eq safeTransferFrom jumpi
     dup1 __FUNC_SIG(setApprovalForAll) eq setApprovalForAll jumpi
     dup1 __FUNC_SIG(batchMint) eq batchMint jumpi 
@@ -355,6 +535,9 @@
     dup1 __FUNC_SIG(isApprovedForAll) eq isApprovedForAll jumpi
     dup1 __FUNC_SIG(symbol) eq symbol jumpi
     dup1 __FUNC_SIG(getName) eq getName jumpi
+
+    // No fallback function
+    0x00 0x00 revert
 
     supportsInterface:
         SUPPORTS_INTERFACE()
@@ -379,6 +562,4 @@
     setApprovalForAll:
         SET_APPROVAL_FOR_ALL()
 
-    // No fallback function
-    0x00 0x00 revert
 }
