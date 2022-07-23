@@ -1,3 +1,6 @@
+/// @title NonPayable
+/// @author asnared <https://github.com/abigger87>
+
 /* Non Payable - Reverts if msg.value is non-zero */
 #define macro NON_PAYABLE() = takes (0) returns (0) {
   // Check if callvalue is 0
