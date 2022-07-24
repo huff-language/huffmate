@@ -11,3 +11,9 @@
     shr                         // [newWord]
 }
 
+// word << (~0 >> length)
+#define macro UNPACK_FROM_LEFT() = takes (2) returns (1) {
+    // Input stack:             // [length, word]
+    0x00 not shr                // [shift, word]
+    shl                         // [newWord]
+}
