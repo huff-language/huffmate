@@ -1,0 +1,22 @@
+#define function packValue(bytes32, uint256, uint256, uint256) pure returns (bytes32)
+
+#define macro PACK_VALUE_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [value, word]
+    0x44 calldataload           // [index, value, word]
+    0x64 calldataload           // [length, index, value, word]
+    PACK_VALUE()                // [new_word]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    // Identify which function is being called using the 4 byte function signature
+    0x00 calldataload 0xE0 shr
+    dup1 __FUNC_SIG(packValue) eq packValue jumpi
+
+    0x00 0x00 revert
+
+    packValue:
+        PACK_VALUE_WRAPPER()
+}
