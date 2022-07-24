@@ -11,11 +11,11 @@
     shr                         // [value]
 }
 
-// word << (~0 >> length)
+// word >> (256 - length)
 #define macro UNPACK_FROM_LEFT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
-    0x00 not shr                // [shift, word]
-    shl                         // [value]
+    0x100 sub                   // [shift, word]
+    shr                         // [value]
 }
 
 // (word & ((~0 >> length) << (length - index))) >> (length - index)

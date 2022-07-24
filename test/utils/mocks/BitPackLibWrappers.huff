@@ -33,7 +33,7 @@
     0x00 calldataload 0xE0 shr
     dup1 0x20cf269e eq packValue jumpi
     dup1 0x0ec88d16 eq unpackValueFromRight jumpi
-    dup1 0x0ec88d16 eq unpackValueFromLeft jumpi
+    dup1 0xf59c8b86 eq unpackValueFromLeft jumpi
 
     0x00 0x00 revert
 
