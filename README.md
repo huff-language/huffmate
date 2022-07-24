@@ -24,8 +24,10 @@ npm install @pentagonxyz/huffmate
 
 ```ml
 auth
-├─ Owned — "Simple single owner authorization"
 ├─ Auth — "Flexible and updatable auth pattern"
+├─ NonPayable — "Modifier Macro that reverts the tx when msg.value > 0"
+├─ OnlyContract — "Basic Macro that reverts when the sender is an EOA"
+├─ Owned — "Simple single owner authorization"
 ├─ RolesAuthority — "Role based Authority that supports up to 256 roles"
 data-structures
 ├─ Arrays - "Memory translation handlers for arrays"

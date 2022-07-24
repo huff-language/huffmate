@@ -1,4 +1,4 @@
-[default]
+[profile.default]
 out = 'out'
 libs = ['lib']
 ffi = true
