@@ -18,13 +18,13 @@
     shr                         // [value]
 }
 
-// (word & ((~0 >> length) << (length - index))) >> (length - index)
-// shr((sub(length, index)), and(shl((sub(length, index)), shr(sub(0x100, length), not(0))), word))
+// (word & ((~0 >> 256 - length) << (256 - length - index))) >> (256 - length - index)
+// shr((sub(sub(0x100 - length), index)), and(shl((sub(sub(0x100 - length), index)), shr(sub(0x100, length), not(0))), word))
 #define macro UNPACK_FROM_CENTER() = takes (3) returns (1) {
     // Input stack:             // [length, index, word]
     0x100 sub                   // [offset, index, word]
     swap1 dup2 sub              // [shift, offset, word]
     0x00 not swap1 swap2 shr    // [offset_shift, shift, word]
     dup2 shl swap1 swap2 and    // [left_shifted_word, shift]
-    shr                         // [value]
+    swap1 shr                   // [value]
 }
