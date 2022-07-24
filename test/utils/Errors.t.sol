@@ -36,11 +36,27 @@ contract ErrorsTest is Test {
     function setUp() public {
         string memory wrapper_code = vm.readFile("test/utils/mocks/ErrorsMock.huff");
         eLib = IErrorsMock(HuffDeployer.deploy_with_code("utils/Errors", wrapper_code));
-        console.logBytes(address(eLib).code);
     }
 
+    /// @dev Hack because `vm.expectRevert(bytes)` is bugged.
     function testRequire() public {
-        vm.expectRevert(bytes("revert"));
-        eLib.simulateRequire();
+        (bool success, bytes memory returnData) = address(eLib).call(
+            abi.encodeCall(eLib.simulateRequire, ())
+        );
+
+        if (success) revert("call did not fail as expected");
+
+        assertEq(
+            keccak256(returnData),
+            keccak256(hex"08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000006726576657274")
+        );
+    }
+
+    function testAssert() public {
+        try eLib.simulateAssert() {
+            revert("did not fail");
+        } catch Panic(uint256 panicCode) {
+            assertEq(panicCode, 1);
+        }
     }
 }
