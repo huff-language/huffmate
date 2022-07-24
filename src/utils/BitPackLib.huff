@@ -8,14 +8,14 @@
 #define macro UNPACK_FROM_RIGHT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
     0x00 not shl                // [shift, word]
-    shr                         // [new_word]
+    shr                         // [value]
 }
 
 // word << (~0 >> length)
 #define macro UNPACK_FROM_LEFT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
     0x00 not shr                // [shift, word]
-    shl                         // [new_word]
+    shl                         // [value]
 }
 
 // (word & ((~0 >> length) << (length - index))) >> (length - index)
@@ -26,5 +26,5 @@
     swap1 dup2 sub              // [shift, offset, word]
     0x00 not swap1 swap2 shr    // [offset_shift, shift, word]
     dup2 shl swap1 swap2 and    // [left_shifted_word, shift]
-    shr                         // [new_word]
+    shr                         // [value]
 }
