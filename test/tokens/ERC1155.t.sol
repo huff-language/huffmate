@@ -11,7 +11,7 @@ import "../test-utils/FuzzingUtils.sol";
 interface ERC1155 {
     // view
     function balanceOf(address,uint256) view external returns(uint256);
-    function balanceOfBatch(address[] calldata, uint256[] calldata) external;
+    function balanceOfBatch(address[] calldata, uint256[] calldata) view external returns(uint256[] memory);
     function name() view external returns(string memory);
     function symbol() view external returns(string memory);
     function isApprovedForAll(address,address) view external returns(bool);
@@ -335,7 +335,8 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
     }
 
 
-    function testSafeBatchTransferFromToEOA() public {
+    function testSafeBatchTransferFromToEOAs
+    () public {
         address from = address(0xABCD);
 
         uint256[] memory ids = new uint256[](5);
@@ -437,38 +438,43 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         assertEq(token.balanceOf(address(to), 1341), 250);
     }
 
-//    function testBatchBalanceOf() public {
-//         address[] memory tos = new address[](5);
-//         tos[0] = address(0xBEEF);
-//         tos[1] = address(0xCAFE);
-//         tos[2] = address(0xFACE);
-//         tos[3] = address(0xDEAD);
-//         tos[4] = address(0xFEED);
+   function testBatchBalanceOf() public {
+        address[] memory tos = new address[](5);
+        tos[0] = address(0xBEEF);
+        tos[1] = address(0xCAFE);
+        tos[2] = address(0xFACE);
+        tos[3] = address(0xDEAD);
+        tos[4] = address(0xFEED);
 
-//         uint256[] memory ids = new uint256[](5);
-//         ids[0] = 1337;
-//         ids[1] = 1338;
-//         ids[2] = 1339;
-//         ids[3] = 1340;
-//         ids[4] = 1341;
+        uint256[] memory ids = new uint256[](5);
+        ids[0] = 1337;
+        ids[1] = 1338;
+        ids[2] = 1339;
+        ids[3] = 1340;
+        ids[4] = 1341;
 
-//         token.mint(address(0xBEEF), 1337, 100, "");
-//         token.mint(address(0xCAFE), 1338, 200, "");
-//         token.mint(address(0xFACE), 1339, 300, "");
-//         token.mint(address(0xDEAD), 1340, 400, "");
-//         token.mint(address(0xFEED), 1341, 500, "");
+        token.mint(address(0xBEEF), 1337, 100, "");
+        token.mint(address(0xCAFE), 1338, 200, "");
+        token.mint(address(0xFACE), 1339, 300, "");
+        token.mint(address(0xDEAD), 1340, 400, "");
+        token.mint(address(0xFEED), 1341, 500, "");
 
-//         uint256[] memory balances = token.balanceOfBatch(tos, ids);
+        uint256[] memory balances = token.balanceOfBatch(tos, ids);
+        
+        console.log(balances[0]);
+        console.log(balances[1]);
+        console.log(balances[2]);
+        console.log(balances[3]);
+        console.log(balances[4]);
+        assertEq(balances[0], 100);
+        assertEq(balances[1], 200);
+        assertEq(balances[2], 300);
+        assertEq(balances[3], 400);
+        assertEq(balances[4], 500);
+    }
 
-//         assertEq(balances[0], 100);
-//         assertEq(balances[1], 200);
-//         assertEq(balances[2], 300);
-//         assertEq(balances[3], 400);
-//         assertEq(balances[4], 500);
-//     }
-
-    function testFailMintToZero() public {
-        token.mint(address(0), 1337, 1, "");
+     function testFailMintToZero() public {
+         token.mint(address(0), 1337, 1, "");
     }
 
     function testFailMintToNonERC155Recipient() public {
@@ -867,22 +873,22 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.batchBurn(address(0xBEEF), ids, burnAmounts);
     }
 
-    // function testFailBalanceOfBatchWithArrayMismatch() public view {
-    //     address[] memory tos = new address[](5);
-    //     tos[0] = address(0xBEEF);
-    //     tos[1] = address(0xCAFE);
-    //     tos[2] = address(0xFACE);
-    //     tos[3] = address(0xDEAD);
-    //     tos[4] = address(0xFEED);
+    function testFailBalanceOfBatchWithArrayMismatch() public view {
+        address[] memory tos = new address[](5);
+        tos[0] = address(0xBEEF);
+        tos[1] = address(0xCAFE);
+        tos[2] = address(0xFACE);
+        tos[3] = address(0xDEAD);
+        tos[4] = address(0xFEED);
 
-    //     uint256[] memory ids = new uint256[](4);
-    //     ids[0] = 1337;
-    //     ids[1] = 1338;
-    //     ids[2] = 1339;
-    //     ids[3] = 1340;
+        uint256[] memory ids = new uint256[](4);
+        ids[0] = 1337;
+        ids[1] = 1338;
+        ids[2] = 1339;
+        ids[3] = 1340;
 
-    //     token.balanceOfBatch(tos, ids);
-    // }
+        token.balanceOfBatch(tos, ids);
+    }
 
   function testBatchMintToEOA(
         address to,
@@ -1106,7 +1112,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         assertEq(token.balanceOf(address(this), id), mintAmount - transferAmount);
     }
 
-    function testSafeBatchTransferFromToEOA(
+    function testSafeBatchTransferFromToEOAFuzz(
         address to,
         uint256[] memory ids,
         uint256[] memory mintAmounts,
@@ -1212,39 +1218,39 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         }
     }
 
-    // function testBatchBalanceOf(
-    //     address[] memory tos,
-    //     uint256[] memory ids,
-    //     uint256[] memory amounts,
-    //     bytes memory mintData
-    // ) public {
-    //     uint256 minLength = min3(tos.length, ids.length, amounts.length);
+    function testBatchBalanceOf(
+        address[] memory tos,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory mintData
+    ) public {
+        uint256 minLength = min3(tos.length, ids.length, amounts.length);
 
-    //     address[] memory normalizedTos = new address[](minLength);
-    //     uint256[] memory normalizedIds = new uint256[](minLength);
+        address[] memory normalizedTos = new address[](minLength);
+        uint256[] memory normalizedIds = new uint256[](minLength);
 
-    //     for (uint256 i = 0; i < minLength; i++) {
-    //         uint256 id = ids[i];
-    //         address to = tos[i] == address(0) ? address(0xBEEF) : tos[i];
+        for (uint256 i = 0; i < minLength; i++) {
+            uint256 id = ids[i];
+            address to = tos[i] == address(0) ? address(0xBEEF) : tos[i];
 
-    //         uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[to][id];
+            uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[to][id];
 
-    //         normalizedTos[i] = to;
-    //         normalizedIds[i] = id;
+            normalizedTos[i] = to;
+            normalizedIds[i] = id;
 
-    //         uint256 mintAmount = bound(amounts[i], 0, remainingMintAmountForId);
+            uint256 mintAmount = bound(amounts[i], 0, remainingMintAmountForId);
 
-    //         token.mint(to, id, mintAmount, mintData);
+            token.mint(to, id, mintAmount, mintData);
 
-    //         userMintAmounts[to][id] += mintAmount;
-    //     }
+            userMintAmounts[to][id] += mintAmount;
+        }
 
-    //     uint256[] memory balances = token.balanceOfBatch(normalizedTos, normalizedIds);
+        uint256[] memory balances = token.balanceOfBatch(normalizedTos, normalizedIds);
 
-    //     for (uint256 i = 0; i < normalizedTos.length; i++) {
-    //         assertEq(balances[i], token.balanceOf(normalizedTos[i], normalizedIds[i]));
-    //     }
-    // }
+        for (uint256 i = 0; i < normalizedTos.length; i++) {
+            assertEq(balances[i], token.balanceOf(normalizedTos[i], normalizedIds[i]));
+        }
+    }
 
     function testFailMintToZero(
         uint256 id,
@@ -1787,11 +1793,11 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.batchBurn(to, ids, burnAmounts);
     }
 
-    // function testFailBalanceOfBatchWithArrayMismatch(address[] memory tos, uint256[] memory ids) public view {
-    //     if (tos.length == ids.length) revert();
+    function testFailBalanceOfBatchWithArrayMismatch(address[] memory tos, uint256[] memory ids) public {
+        if (tos.length == ids.length) revert();
 
-    //     token.balanceOfBatch(tos, ids);
-    // }
+        token.balanceOfBatch(tos, ids);
+    }
     
 }
 

@@ -17,7 +17,7 @@
 #define function getApproved(uint256) view returns (address)
 #define function isApprovedForAll(address,address) view returns (bool)
 #define function balanceOf(address,uint256) view returns (uint256)
-#define function balanceOfBatch(address[],uint256[]) view returns (uint256[])
+// #define function balanceOfBatch(address[],uint256[]) view returns (uint256[])
 
 #define function name() view returns (string)
 #define function symbol() view returns (string)
@@ -41,12 +41,16 @@
 #define constant BALANCE_LOCATION = FREE_STORAGE_POINTER()
 #define constant IS_APPROVED_FOR_ALL_LOCATION = FREE_STORAGE_POINTER()
 
+/* Constructor */
+#define macro CONSTRUCTOR() = takes(0) returns (0){
+    
+}
 
 /* View functions */
 #define macro BALANCE_OF() = takes(0) returns(0) {
     0x24 calldataload                               // [tokenId]     // 0x04 ignores function selector
     0x04 calldataload                               // [account, tokenId]
- 
+    
     GET_BALANCE_OF()                                // [balance]
     0x00 mstore                                     // [] load into mem
     0x20 0x00 return                                // [] return 32 bytes
@@ -149,16 +153,16 @@
 #define macro IS_OWNER_OR_APPROVED(error) = takes(0) returns(0){
 
     // check called by owner
-    caller                  // [msg.sender]
-    0x04 calldataload       // [from, msg.sender] 
-    dup2                    // [msg.sender, from, msg.sender]     
-    dup2                    // [from, msg.sender, from, msg.sender]
+    0x04 calldataload       // [from] 
+    caller                  // [msg.sender, from]
+    dup2                    // [from, msg.sender, from]     
+    dup3                    // [from, msg.sender, from, msg.sender]
     eq continue jumpi       // [from, msg.sender]       
     
     // check sender is approved for all
     [IS_APPROVED_FOR_ALL_LOCATION]
     LOAD_ELEMENT_FROM_KEYS_2D(0x00)
-    iszero <error> jumpi 
+    eq iszero <error> jumpi 
 
     continue:
 }
@@ -232,7 +236,7 @@
     0x00 0x40                       // [from, to] log data
     log4                            // [from, to]                           
     
-    // &ids is stored on the stack as it is used to calculate the size of the calldata to be sent in SAFE_CALL to a receiving contract
+    // TODO: explain what the pointer is
     0x24 swap2                      // [to, from, &ids]
     
     // takes: [to, from, &ids]
@@ -285,10 +289,7 @@
     // store from, in the second
     dup4 0x44 mstore                // [selector, cds, to, from, &ids]]
 
-    // This macro is used for both safeMint and for safeTransferFrom, the following section is only required when calling from mint, as and extra address
-    // parameter is needed when calling the onReceive function on the receiving contract, as safeTransferFrom already has an extra address parameter no 
-    // resizing of dynamic data pointers are required.
-    // We can check if this is coming from mint or safeTransferFrom by checking if the from value on the stack is the zero address or not
+    // TODO: explain the skip
     dup4 iszero iszero skipResize jumpi
 
     // update location of the bytes calldata
@@ -427,6 +428,7 @@
 }
 
 
+// TODO: stack counting in this is completely wrong
 #define macro EMIT_BATCH_LOG() = takes(4) returns(0) {
     // takes:                       // [&ids, &data, to, from]
     dup1                            // [&ids, &ids, &data, to, from]
@@ -439,7 +441,7 @@
     calldatacopy                    // [len(ids, amounts), &ids, to, from]
 
     // store the pointers to the ids and amounts in memory
-    0x40 0x20 mstore                // [len(ids, amounts), &ids, to, from]
+    0x40 0x20 mstore                // [len(ids, amounts), &ids, to, from 
     0x40 0x20 dup5 dup2 mul add add 0x40 mstore  //  
 
     dup8                            // [to, len(ids, amounts)]
@@ -473,7 +475,7 @@
     0xbc197c81 0xE0 shl             // [selector, cds, to, from, &ids]
     dup1 0x20 mstore                // [selector, cds, to, from, &ids]
 
-    // Here all dynamic calldata is copied into memory to be forwarded to the onReceive function on the receiving contract
+    // TODO: DOCUMENT THIS
     // Store ENTIRE calldata in memory for batch call 
     dup5 dup3 sub                   // [(cds-4), cds, to, from, &ids]   // sub4 to not overwrite the new selctor
     dup6                            // [&ids, (cds-4), cds, to, from, &ids]
@@ -608,13 +610,11 @@
     eq isTrue jumpi                 // [amounts.length == ids.length, ids.len, &amount, &ids, to, from]
     error jumpi                     // [ids.len, &amount, &ids,to, from]
 
-
     // perform batch transfers
     isTrue:
 
     // check approvals
     IS_OWNER_OR_APPROVED(error)
- 
 
     // loop over the arrays of ids and amounts and increase the balance
     0x00    // [i, ids.length, &amount, &ids, from]
@@ -668,7 +668,7 @@
     0xa4                           // [&ids, &data, i,  ids.len, &amount++, &ids++, to, from] 
     
     // takes:                      // [&ids, &data, to, from]
-    // TODO: stack accounting is wrong
+    // TODO: exit stack is wrong
     EMIT_BATCH_LOG()               // [&ids, i, ids.len, &amount++, &ids++, to, from]
     pop pop
     
@@ -683,25 +683,25 @@
 }
 
 
-#define macro BALANCE_OF_BATCH() = takes(0) returns(0) {
+#define macro BALANCE_OF_BATCH = takes(0) returns(0) {
 
     // store pointer for start of return array now, so that it can be found at the end of the stack
     0x80                           // [&ret]
     
     // Get lengths of dynamic arrays, duplicate in prepare to compare
-    0x24 calldataload 0x4 add dup1 // [&ids, &ids, &owners, &owners, &ret]
-    0x04 calldataload 0x4 add dup1 // [&ids, &ids, &ret] 
+    0x04 calldataload 0x4 add dup1 // [&owners, &owners, &ret] 
+    0x24 calldataload 0x4 add dup1 // [&owners, &owners, &ids, &ids, &ret]
 
     // compare lengths
-    swap2                           // [&owners, &ids, &ids, &owners, &ret]
-    calldataload                    // [ids.length, &ids, &ids, &owners, &ret]
-    swap1 calldataload              // [owners.length, ids.length, &ids, &owners, &ret]
+    swap2                           // [&ids, &owners, &owners, &ids, &ret]
+    calldataload                    // [ids.length, &owners, &owners, &ids, &ret]
+    swap1 calldataload              // [owners.length, ids.length, &owners, &ids, &ret]
     
     // stash legnth value for later use inside upcoming loop
-    dup1 swap2                      // [ids.length, oweners.length, owners.length,&ids, &owners, &ret]
+    dup1 swap2                      // [ids.length, oweners.length, owners.length,&owners, &ids, &ret]
 
     // check lengths
-    eq isTrue jumpi                 // [owners.length, &ids, &owners, &ret]
+    eq isTrue jumpi                 // [owners.length, &owners, &ids, &ret]
     error jumpi
 
     isTrue:
@@ -717,44 +717,41 @@
 
 
     // loop over the arrays of owners and ids
-    0x00                            // [i, &out,owners.length, &ids, &owners, &ret]
+    0x00                            // [i, &out,owners.length, &owners, &ids, &ret]
     loop:
-        dup2 dup2                   // [i, owners.length, i, owners.length, &ids, &owners, &ret]
+        dup2 dup2                   // [i, owners.length, i, owners.length, &owners, &ids, &ret]
         
         // Exit if the loop has finished
-        eq exit jumpi               // [i, owners.length, &ids, &owners, &ret]
+        eq exit jumpi               // [i, owners.length, &owners, &ids, &ret]
 
         // TODO: document
-        swap2                       // [&ids, owners.length, i, &owners, &ret]
-        0x20 add                    // [&ids++, owners.length, i, &owners, &ret]
-        dup1                        // [&ids++, &ids++, owners.length, i, &owners, &ret]
-        swap3                       // [i, &ids++, owners.length, &ids++, &owners, &ret]
-        swap1                       // [&ids++, i, owners.length, &ids++, &owners, &ret]
-        calldataload                // [ids[i], i, owners.length, &ids++, &owners, &ret]
+        swap2
+        0x20 add
+        dup1 
+        swap3 swap1
+        calldataload
 
-        swap1                       // [i, owners[i], owners.length, &ids++, &owners, &ret]
-        swap4                       // [&owners, owners[i], owners.length, &ids++, i, &ret]
-        0x20 add                    // [&owners++, owners[i], owners.length, &ids++, i, &ret]
-        dup1                        // [&owners++, &owners++, owners[i], owners.length, &ids++, i, &ret]
-        swap5 swap1                 // [&owners++, i, owners[i], owners.length, &ids++, &owners++, &ret]
-        calldataload                // [&owners[i], i, owners[i], owners.length, &ids++, &owners++, &ret]
-
-        swap1 swap2                 // [owners[i], ids[i], i, owners.length, &ids++, &owners++, &ret]
+        swap1
+        swap4
+        0x20 add
+        dup1
+        swap5 swap1
+        calldataload
 
         // takes: owner, tokenId
-        GET_BALANCE_OF()            // [balance, i, owners.length, &ids++, &owners++, &ret]
+        GET_BALANCE_OF()            // [balance, i, owners.length, &owners++, &ids++, &ret]
 
         // store balance as next item in the return array
-        dup6                        // [&ret, balance, i, owners.length, &ids++, &owners++, &ret]
-        mstore                      // [i, owners.length, &ids++, &owners++, &ret]
+        dup6                        // [&ret, balance, i, owners.length, &owners++, &ids++, &ret]
+        mstore                      // [i, owners.length, &owners++, &ids++, &ret]
         
         // increment return array pointer
-        swap4                       // [&ret, owners.length, &ids++, &owners++, i]
-        0x20 add                    // [&ret++, owners.length, &ids++, &owners++, i]
-        swap4                       // [i, owners.length, &ids++, &owners++, &ret++]
+        swap5                       // [&ret, owners.length, &owners++, &ids++, i]
+        0x20 add                    // [&ret++, owners.length, &owners++, &ids++, i]
+        swap5                       // [i, owners.length, &owners++, &ids++, &ret++]
         
         // increment loop counter
-        0x1 add                     // [i++, owners.length, &ids++, &owners++, &ret++]
+        0x1 add                     // [i++, owners.length, &owners++, &ids++, &ret++]
 
     // continue loop
     loop jump
@@ -762,8 +759,8 @@
     // end of loop
     exit:
 
-    // size of the return data will be where the &ids pointer is now - 0x4 (function selector size)
-    0x04 dup4 sub
+    // size of the return data will be where the &owners pointer is - 0x20
+    0x20 dup4 sub
     0x40
     return
 
@@ -802,13 +799,13 @@
     dup1 __FUNC_SIG(burn) eq burn jumpi
     dup1 __FUNC_SIG(batchBurn) eq batchBurn jumpi
     dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi 
+    // dup1 __FUNC_SIG(balanceOfBatch) balanceofBatch jumpi
     dup1 __FUNC_SIG(isApprovedForAll) eq isApprovedForAll jumpi
     dup1 __FUNC_SIG(name) eq name jumpi
     dup1 __FUNC_SIG(symbol) eq symbol jumpi
     dup1 __FUNC_SIG(supportsInterface) eq getName jumpi
     dup1 __FUNC_SIG(symbol) eq symbol jumpi
     dup1 __FUNC_SIG(getName) eq getName jumpi
-    dup1 __FUNC_SIG(balanceOfBatch) balanceOfBatch jumpi
 
     // No fallback function
     0x00 dup1 revert
@@ -821,8 +818,8 @@
         MINT()
     balanceOf:
         BALANCE_OF()
-    balanceOfBatch:
-        BALANCE_OF_BATCH()
+    // balanceOfBatch:
+        // BALANCE_OF_BATCH()
     safeTransferFrom:
         SAFE_TRANSFER_FROM()
     batchSafeTransferFrom:
