@@ -9,6 +9,6 @@
     origin              // [tx.origin, msg.sender]
     eq iszero           // [tx.origin != msg.sender]
     continue jumpi      // []
-    0x00 0x00 revert    // []
+    0x00 dup1 revert    // []
     continue:
 }

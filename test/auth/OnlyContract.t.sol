@@ -30,6 +30,7 @@ contract OnlyContractTest is Test {
         vm.startPrank(caller, caller);
         vm.expectRevert();
         (bool fails,) = only_contract.call("");
+        assert(fails);
         vm.stopPrank();
 
         // Only setting the msg.sender and not tx.origin should succeed, so long as caller != address(this)
