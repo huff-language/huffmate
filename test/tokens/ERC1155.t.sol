@@ -171,6 +171,89 @@ contract ERC1155Test is Test {
         assertEq(1, erc1155.balanceOf(to, 1));
         assertEq(1, erc1155.balanceOf(to, 2));
     }
+
+    function testBurn() public {
+        address from = address(0xbeef);
+        uint256 tokenId = 1;
+        uint256 amount = 1;
+
+        erc1155.mint(from, tokenId, amount, "");
+        assertEq(amount, erc1155.balanceOf(from, tokenId));
+
+        erc1155.burn(from, tokenId, amount);
+        assertEq(0, erc1155.balanceOf(from, tokenId));
+    }
+
+    function testBatchBurn() public {
+        // mint the tokens
+        address to = address(0xBeef);
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 1;
+        amounts[1] = 1;
+
+        erc1155.batchMint(to, ids, amounts, hex'00');
+        assertEq(1, erc1155.balanceOf(to, 1));
+        assertEq(1, erc1155.balanceOf(to, 2));
+
+        // burn the same tokens
+        erc1155.batchBurn(to, ids, amounts);
+        assertEq(0, erc1155.balanceOf(to, 1));
+        assertEq(0, erc1155.balanceOf(to, 2));
+    }
+
+    function testSafeBatchTransferFrom1155() public {
+                // mint the tokens
+        address from = address(0xabcd);
+        address to = address(0xBeef);
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 1;
+        amounts[1] = 1;
+
+
+        erc1155.batchMint(from, ids, amounts, hex'00');
+        assertEq(1, erc1155.balanceOf(from, 1));
+        assertEq(1, erc1155.balanceOf(from, 2));
+
+        // transfer the tokens
+        erc1155.safeBatchTransferFrom(from, to, ids, amounts, hex'00');
+        assertEq(0, erc1155.balanceOf(from, 1));
+        assertEq(0, erc1155.balanceOf(from, 2));
+        assertEq(1, erc1155.balanceOf(to, 1));
+        assertEq(1, erc1155.balanceOf(to, 2));
+    }
+
+    function testSafeBatchTransferFrom1155Receiver() public {
+                // mint the tokens
+        address from = address(0xabcd);
+        address to = address(erc1155Recipient);
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 2;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 1;
+        amounts[1] = 1;
+
+
+        erc1155.batchMint(from, ids, amounts, hex'00');
+        // assertEq(1, erc1155.balanceOf(from, 1));
+        // assertEq(1, erc1155.balanceOf(from, 2));
+
+        // transfer the tokens
+        erc1155.safeBatchTransferFrom(from, to, ids, amounts, hex'00');
+        assertEq(0, erc1155.balanceOf(from, 1));
+        assertEq(0, erc1155.balanceOf(from, 2));
+        assertEq(1, erc1155.balanceOf(to, 1));
+        assertEq(1, erc1155.balanceOf(to, 2));
+    }
     
 }
 
@@ -186,7 +269,9 @@ interface ERC1155 {
     function batchMint(address,uint256[] memory, uint256[] memory, bytes memory) external;
     function setApprovalForAll(address,bool) external;
     function safeTransferFrom(address,address,uint256,uint256,bytes calldata) external;
-
+    function safeBatchTransferFrom(address,address,uint256[] memory, uint256[] memory, bytes memory) external;
+    function burn(address,uint256,uint256) external;
+    function batchBurn(address,uint256[] memory, uint256[] memory) external;
 }
 
 /// @notice A generic interface for a contract which properly accepts ERC1155 tokens.
