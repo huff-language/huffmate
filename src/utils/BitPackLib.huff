@@ -1,19 +1,30 @@
 #define macro PACK_VALUE() = takes (4) returns (1) {
     // Input stack:             // [length, index, value, word]
     0x100 sub sub               // [shift, value, word]
-    shl swap1 or                // [newWord]
+    shl swap1 or                // [new_word]
 }
 
 // word >> (~0 << length)
 #define macro UNPACK_FROM_RIGHT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
     0x00 not shl                // [shift, word]
-    shr                         // [newWord]
+    shr                         // [new_word]
 }
 
 // word << (~0 >> length)
 #define macro UNPACK_FROM_LEFT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
     0x00 not shr                // [shift, word]
-    shl                         // [newWord]
+    shl                         // [new_word]
+}
+
+// (word & ((~0 >> length) << (length - index))) >> (length - index)
+// shr((sub(length, index)), and(shl((sub(length, index)), shr(sub(0x100, length), not(0))), word))
+#define macro UNPACK_FROM_CENTER() = takes (3) returns (1) {
+    // Input stack:             // [length, index, word]
+    0x100 sub                   // [offset, index, word]
+    swap1 dup2 sub              // [shift, offset, word]
+    0x00 not swap1 swap2 shr    // [offset_shift, shift, word]
+    dup2 shl swap1 swap2 and    // [left_shifted_word, shift]
+    shr                         // [new_word]
 }
