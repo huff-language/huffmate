@@ -1,9 +1,15 @@
 /// @title OnlyContract
 /// @author asnared <https://github.com/abigger87>
 
-/* Reverts if the caller is not a contract using tx.origin */
-/* WARNING: This is an anti-pattern and prevents interoperability */
-/* WARNING: Will need to change once account abstraction is implemented */
+/*
+Reverts if the caller is not a contract using tx.origin.
+
+WARNING
+This is an anti-pattern and prevents interoperability.
+Additionally, this will become ineffective once either EIP-2938 OR EIP-4337 account abstraction's are implemented.
+EIP-3074 is another concern as it essentially allows users to delegate control of an EOA to a contract.
+Additionally, users of wallets like argent, authereum and gnosis multi-sigs are able to "bypass" this access control.
+*/
 #define macro ONLY_CONTRACT() = takes (0) returns (0) {
     caller              // [msg.sender]
     origin              // [tx.origin, msg.sender]
