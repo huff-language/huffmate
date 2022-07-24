@@ -1,3 +1,5 @@
+#define constant MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
 #define macro PACK_VALUE() = takes (4) returns (1) {
     // Input stack:             // [length, index, value, word]
     0x100 sub sub               // [shift, value, word]
@@ -7,7 +9,7 @@
 // word >> (~0 << length)
 #define macro UNPACK_FROM_RIGHT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
-    0x00 not shl                // [shift, word]
+    [MAX] shl                // [shift, word]
     shr                         // [value]
 }
 
@@ -24,7 +26,7 @@
     // Input stack:             // [length, index, word]
     0x100 sub                   // [offset, index, word]
     swap1 dup2 sub              // [shift, offset, word]
-    0x00 not swap1 swap2 shr    // [offset_shift, shift, word]
+    [MAX] swap1 swap2 shr    // [offset_shift, shift, word]
     dup2 shl swap1 swap2 and    // [left_shifted_word, shift]
     swap1 shr                   // [value]
 }
