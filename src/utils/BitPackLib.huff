@@ -1,0 +1,5 @@
+#define macro PACK_VALUE() = takes (4) returns (1) {
+    // Input stack:             // [length, index, value, word]
+    0x100 sub sub               // [shift, value, word]
+    shl swap1 or                // [newWord]
+}
