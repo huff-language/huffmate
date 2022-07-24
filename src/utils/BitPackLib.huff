@@ -4,9 +4,10 @@
     shl swap1 or                // [newWord]
 }
 
-// ~0 << length
+// word >> (~0 << length)
 #define macro UNPACK_FROM_RIGHT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
     0x00 not shl                // [shift, word]
     shr                         // [newWord]
 }
+
