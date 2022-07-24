@@ -8,6 +8,7 @@ interface IBitPackLib {
     function packValue(bytes32, uint256, uint256, uint256) external pure returns (bytes32);
     function unpackValueFromRight(bytes32, uint256) external pure returns (uint256);
     function unpackValueFromLeft(bytes32, uint256) external pure returns (uint256);
+    function unpackValueFromCenter(bytes32, uint256, uint256) external pure returns (uint256);
 }
 
 contract BitPackLibTest is Test {
@@ -34,6 +35,12 @@ contract BitPackLibTest is Test {
     function testUnpackValueFromLeft() public {
         bytes32 newWord = bitPackLib.packValue(bytes32(0), 0x696969, 0, 24);
         uint256 value = bitPackLib.unpackValueFromLeft(newWord, 24);
+        assertEq(value, 0x696969);
+    }
+
+    function testUnpackValueFromCenter() public {
+        bytes32 newWord = bitPackLib.packValue(bytes32(0), 0x696969, 64, 24);
+        uint256 value = bitPackLib.unpackValueFromCenter(newWord, 64, 24);
         assertEq(value, 0x696969);
     }
 }
