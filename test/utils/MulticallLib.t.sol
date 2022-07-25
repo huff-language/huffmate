@@ -19,14 +19,17 @@ contract MerkleProofLibTest is Test {
     }
 
     function testMulticall() public {
-        bytes[] memory calls = new bytes[](2);
-        calls[0] = abi.encodeWithSignature("call1()");
-        calls[1] = abi.encodeWithSignature("call2()");
-        
-        bytes[] memory result = multicallable.multicall(calls);
-        emit log_named_uint("result length", result.length);
-        for (uint i; i < result.length; i++) {
-            emit log_bytes(result[i]);
-        }
+        bytes[] memory test = new bytes[](3);
+        test[0] = abi.encodeWithSignature("call1()");
+        test[1] = abi.encodeWithSignature("call2()");
+        test[2] = abi.encodeWithSignature("call3()");
+        bytes[] memory test2 = multicallable.multicall(test);
+
+        (uint a) = abi.decode(test2[0], (uint));
+        assertEq(a, 0x11);
+        (uint b) = abi.decode(test2[1], (uint));
+        assertEq(b, 0x22);
+        (uint c) = abi.decode(test2[2], (uint));
+        assertEq(c, 0x33);
     }
 }
