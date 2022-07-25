@@ -18,6 +18,14 @@
     [DATA_LEN]         // [data_len_ptr]
     calldataload       // [data_len]
     
+    // Only continue if data length is > 0
+    dup1 continue jumpi
+
+    // Return blank bytes array
+    0x40 0x00 return
+
+    continue:
+
     dup1               // [data_len, data_len]
     [RES]              // [res_ptr, data_len, data_len]
     mstore             // [data_len]
