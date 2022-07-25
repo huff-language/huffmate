@@ -16,8 +16,9 @@
 /// @dev word >> (~0 << length)
 #define macro UNPACK_FROM_RIGHT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
-    [MAX] shl                   // [shift, word]
-    shr                         // [value]
+    [MAX]                       // [not(0), length, word]
+    swap1 0x100 sub             // [offset, not(0), word]
+    shr and                     // [value]
 }
 
 /// @notice Unpacks value of given length from left of word

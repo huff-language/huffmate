@@ -27,7 +27,7 @@ contract BitPackLibTest is Test {
     }
 
     function testUnpackValueFromRight() public {
-        bytes32 newWord = bitPackLib.packValue(bytes32(0), 0x696969, 232, 24);
+        bytes32 newWord = bitPackLib.packValue(bytes32(0), 0x2323696969, 232, 24);
         uint256 value = bitPackLib.unpackValueFromRight(newWord, 24);
         assertEq(value, 0x696969);
     }
