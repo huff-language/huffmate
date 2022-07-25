@@ -1,3 +1,9 @@
+/// @title Multicallable
+/// @notice Enables a single call to call multiple methods within a contract.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Multicallable.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
+/// @author clabby <https://github.com/clabby>
+
 // Calldata
 #define constant DATA_LEN = 0x24
 #define constant DATA_OFFSET = 0x44
@@ -5,10 +11,14 @@
 #define constant RES = 0x20
 #define constant RES_OFF = 0x40
 
-/// @notice Macro that enables a single call to call multiple methods within its contract.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Multicallable.sol)
-/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
-/// @author clabby <https://github.com/clabby>
+/// @notice Multicall function entry point.
+/// @dev This macro should be placed alone under a function selector's jump label.
+/// 
+///      Expected calldata: `bytes[]` containing valid ABI-encoded function calls
+///      as elements.
+///
+///      Note: this macro only allows for multicalling functions that are within
+///      the contract it is invoked in.
 #define macro MULTICALL() = takes (0) returns (0) {
     // Input stack:       []
 
