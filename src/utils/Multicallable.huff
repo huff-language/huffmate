@@ -11,7 +11,7 @@
 /// @author clabby <https://github.com/clabby>
 #define macro MULTICALL() = takes (0) returns (0) {
     // Input stack:       []
-    
+
     // Store beginning offset
     0x20 0x00 mstore   // []
 
@@ -59,8 +59,8 @@
         // Bubble up the revert if the delegatecall reverts
         iszero fail jumpi // [data_end, mem_ptr, results_offset, data_len]
 
-        // Append the current `results_offset` at `results_offset`.
-        dup2 dup3      // [results_offset, mem_ptr, data_end, mem_ptr, results_offset, data_len]
+        // Append the current `mem_ptr` at `mem_ptr`.
+        dup2 dup3      // [mem_ptr, mem_ptr, data_end, mem_ptr, results_offset, data_len]
         mstore         // [data_end, mem_ptr, results_offset, data_len]
         dup3 0x20 add  // [results_offset + 0x20, data_end, mem_ptr, results_offset, data_len]
         swap3 pop      // [data_end, mem_ptr, results_offset, data_len]
