@@ -1,0 +1,29 @@
+#define function multicall(bytes[] calldata) pure returns (bytes[] memory)
+#define function call1() pure returns (uint256)
+#define function call2() pure returns (uint256)
+
+#define macro CALL_1() = takes (0) returns (0) {
+    0x22 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro CALL_2() = takes (0) returns (0) {
+    0x11 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(multicall) eq multicall jumpi
+    dup1 __FUNC_SIG(call1)     eq call_one  jumpi
+    dup1 __FUNC_SIG(call2)     eq call_two  jumpi
+
+    0x00 dup1 revert
+
+    multicall:
+        MULTICALL()
+    call_one:
+        CALL_1()
+    call_two:
+        CALL_2()
+}

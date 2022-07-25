@@ -1,0 +1,98 @@
+// Calldata
+#define constant DATA_LEN = 0x24
+#define constant DATA_OFFSET = 0x44
+// Memory
+#define constant RES = 0x00
+#define constant RES_OFF = 0x20
+
+/// Original Implementation: https://gist.github.com/Vectorized/b503cbcab367cc5c00eb4f994f328e5c#file-multicallable-sol
+/// @author clabby <https://github.com/clabby>
+#define macro MULTICALL(ret_mem_ptr) = takes (0) returns (0) {
+    // Input stack:      []
+    [DATA_LEN]         // [data_len_ptr]
+    calldataload       // [data_len]
+    
+    dup1               // [data_len, data_len]
+    [RES]              // [ret_mem_ptr, data_len, data_len]
+    mstore             // [data_len]
+
+    [RES_OFF]          // [results_offset, data_len]
+
+    dup2               // [data_len, results_offset, data_len]
+    0x05 shl           // [data_len * 0x20, results_offset, data_len]
+    dup1               // [data_len * 0x20, data_len * 0x20, results_offset, data_len]
+    dup3 add           // [mem_ptr, data_len * 0x20, results_offset, data_len]
+
+    swap1              // [data_len * 0x20, mem_ptr, results_offset, data_len]
+    [DATA_OFFSET] add  // [data_end, mem_ptr, results_offset, data_len]
+
+    [DATA_OFFSET]      // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+    loop:
+        // Check if loop is complete (condition: loop_offset == data_end)
+        dup1 dup3 eq   // [loop_offset == data_end, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        finish jumpi   // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+
+        // The offset of the current bytes in the calldata.
+        [DATA_OFFSET]  // [0x44, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup2           // [loop_offset, 0x44, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        calldataload   // [cd[loop_offset], 0x44, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        add            // [o, loop_offset, data_end, mem_ptr, results_offset, data_len]
+
+        // Copy the current bytes from calldata to the memory.
+        dup1           // [o, o, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        calldataload   // [cur_bytes_len, o, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup2 0x20 add  // [o + 0x20, cur_bytes_len, o, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup6           // [mem_ptr, o + 0x20, cur_bytes_len, o, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        calldatacopy   // [o, loop_offset, data_end, mem_ptr, results_offset, data_len]
+
+        calldataload   // [cur_bytes_len, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        0x00 dup1      // [0x00, 0x00, cur_bytes_len, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        swap2          // [cur_bytes_len, 0x00, 0x00, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup6           // [mem_ptr, cur_bytes_len, 0x00, 0x00, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        address        // [self_addr, mem_ptr, cur_bytes_len, 0x00, 0x00, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        gas            // [gas, self_addr, mem_ptr, cur_bytes_len, 0x00, 0x00, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        delegatecall   // [call_result, loop_offset, data_end, mem_ptr, results_offset, data_len]
+
+        // Bubble up the revert if the delegatecall reverts
+        iszero fail jumpi // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+
+        // Append the current `memPtr` into `resultsOffsets`.
+        dup3 dup5      // [results_offset, mem_ptr, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        mstore         // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup4 0x20 add  // [results_offset + 0x20, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        swap4 pop      // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+        
+        // Append the `returndatasize()`, and the return data.
+        returndatasize // [ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup4           // [mem_ptr, ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        mstore         // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+        returndatasize // [ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        0x00           // [0x00, ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup5 0x20 add  // [mem_ptr + 0x20, 0x00, ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        returndatacopy // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+
+        0xffffffffffffffe0
+        0x3f           // [0x3f, 0xf..e0, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        returndatasize // [ret_data_size, 0x3f, 0xf..e0, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup6 add       // [mem_ptr + ret_data_size, 0x3f, 0xf..e0, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        add and        // [(mem_ptr + ret_data_size + 0x3f) & 0xf..e0, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        swap3 pop      // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+
+        // Increment loop offset & continue loop
+        0x20 add       // [loop_offset + 0x20, data_end, mem_ptr, results_offset, data_len]
+        loop jump      // [loop_offset, data_end, mem_ptr, results_offset, data_len]
+    fail:
+        returndatasize // [ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        dup1           // [ret_data_size, ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        0x00 dup1      // [0x00, 0x00, ret_data_size, ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        returndatacopy // [ret_data_size, loop_offset, data_end, mem_ptr, results_offset, data_len]
+        0x00 revert
+    finish:
+        swap2          // [mem_ptr, data_end, loop_offset, results_offset, data_len]
+        dup1           // [mem_ptr, mem_ptr, data_end, loop_offset, results_offset, data_len]
+        0x40           // [ret_mem_ptr, mem_ptr, mem_ptr, data_end, loop_offset, results_offset, data_len]
+        mstore         // [mem_ptr, data_end, loop_offset, results_offset, data_len]
+
+        0x00           // [ret_mem_ptr, mem_ptr, data_end, loop_offset, results_offset, data_len]
+        return
+}

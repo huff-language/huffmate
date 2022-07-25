@@ -1,4 +1,5 @@
-// TODO: Add function wrappers for macros once #164 is merged in huff-rs
+/// Original implementation: https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol
+/// @author clabby <https://github.com/clabby>
 
 #define constant WAD = 0x0de0b6b3a7640000
 
