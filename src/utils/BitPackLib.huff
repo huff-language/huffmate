@@ -13,7 +13,7 @@
 }
 
 /// @notice Unpacks value of given length from right of word
-/// @dev word >> (~0 << length)
+/// @dev word & (~0 >> (256 - length))
 #define macro UNPACK_FROM_RIGHT() = takes (2) returns (1) {
     // Input stack:             // [length, word]
     [MAX]                       // [not(0), length, word]
