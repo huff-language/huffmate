@@ -76,9 +76,10 @@
     codecopy                    // [symbol, decimals]
     0x00 mload                  // [name, symbol, decimals]
 
-    [NAME_LOCATION] sstore                          // [symbol, decimals]
-    [SYMBOL_LOCATION] sstore                        // [decimals]
-    [DECIMALS_LOCATION] sstore                      // []
+    // TODO: optimize initial domain separator computation by saving metadata on stack
+    [NAME_LOCATION] sstore                     // [name, symbol, decimals]
+    [SYMBOL_LOCATION] sstore                   // [name, symbol, decimals]
+    [DECIMALS_LOCATION] sstore                 // [name, symbol, decimals]
 
     // Store the chain id
     chainid [INITIAL_CHAIN_ID] sstore               // []
@@ -95,28 +96,28 @@
     [DOMAIN_ONE_SEPARATOR_STR] 0x00 mstore          // []
     [DOMAIN_TWO_SEPARATOR_STR] 0x20 mstore          // []
     [DOMAIN_THREE_SEPARATOR_STR] 0x40 mstore        // []
-    0x54 0x00 sha3                                  // [hash]
-    0x00 mstore                                     // []
+    0x54 0x00 sha3                                  // [712_hash]
 
     // Name hash + store in mem slot 1
-    [NAME_LOCATION] sload 0x20 mstore               // []
-    0x20 0x20 sha3                                  // [hash]
-    0x20 mstore                                     // []
+    [NAME_LOCATION] sload 0x00 mstore               // [712_hash]
+    0x20 0x00 sha3                                  // [name_hash, 712_hash]
 
     // Hash "1" + store in mem slot 2
-    0x31 0x40 mstore                                // []
-    0x02 0x40 sha3                                  // [hash]
-    0x20 0x40 mstore                                // []
+    0x31 0x40 mstore                                // [name_hash, 712_hash]
+    0x02 0x00 sha3                                  // [one_hash, name_hash, 712_hash]
+    0xC0 mstore                                     // [name_hash, 712_hash]
+    0xA0 mstore                                     // [712_hash]
+    0x80 mstore                                     // []
 
     // Store chain id in mem slot 3
-    chainid 0x60 mstore                             // []
+    chainid 0xE0 mstore                             // []
 
     // Store address(this) in slot 4
-    address 0x80 mstore                             // []
+    address 0x0100 mstore                           // []
 
     // keccak256 compute out separator
     0xA0                                            // [size]
-    0x00                                            // [offset, size]
+    0x80                                            // [offset, size]
     sha3                                            // [hash]
 }
 
@@ -152,7 +153,7 @@
     0x24 calldataload               // [to]
     0x04 calldataload               // [from, to]
     LOAD_ELEMENT_FROM_KEYS(0x00)    // [value]
-    
+
     0x00 mstore
     0x20 0x00 return
 }
