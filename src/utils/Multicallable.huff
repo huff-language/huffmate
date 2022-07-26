@@ -1,0 +1,116 @@
+/// @title Multicallable
+/// @notice Enables a single call to call multiple methods within a contract.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Multicallable.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
+/// @author clabby <https://github.com/clabby>
+
+// Calldata
+#define constant DATA_LEN = 0x24
+#define constant DATA_OFFSET = 0x44
+// Memory
+#define constant RES = 0x20
+#define constant RES_OFF = 0x40
+
+/// @notice Multicall function entry point.
+/// @dev This macro should be placed alone under a function selector's jump label.
+/// 
+///      Expected calldata: `bytes[]` containing valid ABI-encoded function calls
+///      as elements.
+///
+///      Note: this macro only allows for multicalling functions that are within
+///      the contract it is invoked in.
+#define macro MULTICALL() = takes (0) returns (0) {
+    // Input stack:       []
+
+    // Store pointer to array contents @ 0x00
+    0x20 0x00 mstore   // []
+
+    [DATA_LEN]         // [data_len_ptr]
+    calldataload       // [data_len]
+    
+    // Only continue if data length is > 0
+    dup1 continue jumpi
+
+    // Return blank bytes array
+    0x40 0x00 return
+
+    continue:
+
+    dup1               // [data_len, data_len]
+    [RES]              // [res_ptr, data_len, data_len]
+    mstore             // [data_len]
+
+    [RES_OFF]          // [results_offset, data_len]
+
+    // Copy the offsets from calldata into memory.
+    swap1              // [data_len, results_offset]
+    0x05 shl           // [data_len * 0x20, results_offset]
+    dup1               // [data_len * 0x20, data_len * 0x20, results_offset]
+    [DATA_OFFSET]      // [data_offset, data_len * 0x20, data_len * 0x20, results_offset]
+    dup4               // [results_offset, data_offset, data_len * 0x20, data_len * 0x20, results_offset]
+    calldatacopy       // [data_len * 0x20, results_offset]
+
+    dup2 add           // [mem_ptr, results_offset]
+    dup1               // [data_end, mem_ptr, results_offset]
+    loop:
+        // The offset of the current bytes in the calldata.
+        dup3           // [results_offset, data_end, mem_ptr, results_offset]
+        mload          // [result, data_end, mem_ptr, results_offset]
+        [DATA_OFFSET]  // [0x44, result, data_end, mem_ptr, results_offset]
+        add            // [o, data_end, mem_ptr, results_offset]
+
+        // Copy the current bytes from calldata to the memory.
+        dup1           // [o, o, data_end, mem_ptr, results_offset]
+        calldataload   // [cur_bytes_len, o, data_end, mem_ptr, results_offset]
+        dup2 0x20 add  // [o + 0x20, cur_bytes_len, o, data_end, mem_ptr, results_offset]
+        dup5           // [mem_ptr, o + 0x20, cur_bytes_len, o, data_end, mem_ptr, results_offset]
+        calldatacopy   // [o, data_end, mem_ptr, results_offset]
+
+        calldataload   // [cur_bytes_len, data_end, mem_ptr, results_offset]
+        0x00 dup1      // [0x00, 0x00, cur_bytes_len, data_end, mem_ptr, results_offset]
+        swap2          // [cur_bytes_len, 0x00, 0x00, data_end, mem_ptr, results_offset]
+        dup5           // [mem_ptr, cur_bytes_len, 0x00, 0x00, data_end, mem_ptr, results_offset]
+        address        // [self_addr, mem_ptr, cur_bytes_len, 0x00, 0x00, data_end, mem_ptr, results_offset]
+        gas            // [gas, self_addr, mem_ptr, cur_bytes_len, 0x00, 0x00, data_end, mem_ptr, results_offset]
+        delegatecall   // [call_result, data_end, mem_ptr, results_offset]
+
+        // Bubble up the revert if the delegatecall reverts
+        iszero fail jumpi // [data_end, mem_ptr, results_offset]
+
+        // Increment `results_offset` by 0x20
+        0x40 dup3 sub  // [mem_ptr - 0x40, data_end, mem_ptr, results_offset]
+        dup4 mstore    // [data_end, mem_ptr, results_offset]
+        dup3 0x20 add  // [results_offset + 0x20, data_end, mem_ptr, results_offset]
+        swap3 pop      // [data_end, mem_ptr, results_offset]
+        
+        // Append the `returndatasize()`, and the return data.
+        returndatasize // [ret_data_size, data_end, mem_ptr, results_offset]
+        dup3           // [mem_ptr, ret_data_size, data_end, mem_ptr, results_offset]
+        mstore         // [data_end, mem_ptr, results_offset]
+        returndatasize // [ret_data_size, data_end, mem_ptr, results_offset]
+        0x00           // [0x00, ret_data_size, data_end, mem_ptr, results_offset]
+        dup4 0x20 add  // [mem_ptr + 0x20, 0x00, ret_data_size, data_end, mem_ptr, results_offset]
+        returndatacopy // [data_end, mem_ptr, results_offset]
+
+        // Advance the `memPtr` by `returndatasize() + 0x20`,
+        // rounded up to the next multiple of 32.
+        0xffffffffffffffe0
+        0x3f           // [0x3f, 0xf..e0, data_end, mem_ptr, results_offset]
+        returndatasize // [ret_data_size, 0x3f, 0xf..e0, data_end, mem_ptr, results_offset]
+        dup5 add       // [mem_ptr + ret_data_size, 0x3f, 0xf..e0, data_end, mem_ptr, results_offset]
+        add and        // [(mem_ptr + ret_data_size + 0x3f) & 0xf..e0, data_end, mem_ptr, results_offset]
+        swap2 pop      // [data_end, mem_ptr, results_offset]
+
+        // Continue loop if results_offset < data_end
+        dup1 dup4 lt   // [results_offset < data_end, data_end, mem_ptr, results_offset]
+        loop jumpi     // [data_end, mem_ptr, results_offset]
+
+        swap1          // [mem_ptr, data_end, results_offset]
+        0x00           // [ret_mem_ptr, mem_ptr, data_end, results_offset]
+        return
+    fail:
+        returndatasize // [ret_data_size, data_end, mem_ptr, results_offset]
+        0x00 dup1      // [0x00, 0x00, ret_data_size, data_end, mem_ptr, results_offset]
+        returndatacopy // [ret_data_size, data_end, mem_ptr, results_offset]
+        returndatasize 0x00 revert
+}

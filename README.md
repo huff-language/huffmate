@@ -49,6 +49,7 @@ utils
 ├─ Calls - TODO
 ├─ Data — TODO
 ├─ MerkleProofLib — "Gas optimized merkle proof verification library"
+├─ Multicallable — "Enables a single call to call multiple methods within a contract."
 ├─ ReentrancyGuard — TODO
 ├─ SSTORE2 — TODO
 ```
