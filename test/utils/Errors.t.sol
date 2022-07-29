@@ -51,16 +51,14 @@ contract ErrorsTest is Test {
 
     /// @dev Hack because `vm.expectRevert(bytes)` is bugged.
     function testRequire() public {
-        (bool success, bytes memory returnData) = address(eLib).call(
-            abi.encodeCall(eLib.simulateRequire, ())
-        );
+        // (bool success, bytes memory returnData) = address(eLib).call(
+        //     abi.encodeCall(eLib.simulateRequire, ())
+        // );
 
-        if (success) revert("call did not fail as expected");
+        // if (success) revert("call did not fail as expected");
 
-        assertEq(
-            keccak256(returnData),
-            keccak256(hex"08c379a000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000006726576657274")
-        );
+        vm.expectRevert("revert");
+        eLib.simulateRequire();
     }
 
     function testAssert() public {

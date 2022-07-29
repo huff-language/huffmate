@@ -38,26 +38,29 @@
 Solidity Require. Error `string` MUST be no greater than 32 bytes.
 
 MEMORY LAYOUT WHEN THROWN
-| sig    || message offset                                          || message "revert"                                        |
-0x08c379a  000000000000000000000000000000000000000000000000000000020  000000000000000000000000000000000000000000006726576657274
+| sig    || message offset                                                 || message length                                                 || message "revert"                                               |
+0x08c379a  0000000000000000000000000000000000000000000000000000000000000020  0000000000000000000000000000000000000000000000000000000000000006  7265766572740000000000000000000000000000000000000000000000000000
 
 */
-#define macro REQUIRE() = takes (2) returns (0) {
-    // takes:       // [condition, message]
-    do_not_throw    // [do_not_throw_jumpdest, condition, message]
-    jumpi           // [message]
-    [ERROR_SIG]     // [error_sig, message]
-    0x00            // [mem_ptr, error_sig, message]
+#define macro REQUIRE() = takes (3) returns (0) {
+    // takes:       // [condition, message_length, message]
+    do_not_throw    // [do_not_throw_jumpdest, condition, message_length, message]
+    jumpi           // [message_length, message]
+    [ERROR_SIG]     // [error_sig, , message_length, message]
+    0x00            // [mem_ptr, error_sig, message_length, message]
+    mstore          // [message_length, message]
+    0x20            // [message_offset, message_length, message]
+    0x04            // [message_offset_ptr, message_offset, message_length, message]
+    mstore          // [message_length, message]
+    0x24            // [message_length_ptr, message_length, message]
     mstore          // [message]
-    0x20            // [message_offset, message]
-    0x04            // [message_offset_ptr, message_offset, message]
-    mstore          // [message]
-    0x24            // [message_ptr, message]
+    0x44            // [message_ptr, message]
     mstore          // []
-    0x44            // [size]
+    0x80            // [size]
     0x00            // [offset, size]
     revert          // []
-    do_not_throw:   // [message]
+    do_not_throw:   // [message_length, message]
+        pop         // [message]
         pop         // []
 }
 
@@ -66,8 +69,8 @@ MEMORY LAYOUT WHEN THROWN
 Solidity Panic.
 
 MEMORY LAYOUT WHEN THROWN
-| sig     || panic code                                              |
-0x4e487b71  000000000000000000000000000000000000000000000000000000001
+| sig     || panic code                                                     |
+0x4e487b71  0000000000000000000000000000000000000000000000000000000000000001
 
 */
 #define macro PANIC() = takes (1) returns (0) {
@@ -78,7 +81,7 @@ MEMORY LAYOUT WHEN THROWN
     0x04            // [panic_code_offset, panic_code]
     mstore          // []
     0x24            // [revert_size]
-    0x00            // [revert_offset,, revert_size]
+    0x00            // [revert_offset, revert_size]
     revert          // []
 }
 
@@ -86,8 +89,8 @@ MEMORY LAYOUT WHEN THROWN
 Solidity Assert.
 
 MEMORY LAYOUT WHEN THROWN
-| sig     || assert failed panic code                                |
-0x4e487b71  000000000000000000000000000000000000000000000000000000001
+| sig     || assert failed panic code                                       |
+0x4e487b71  0000000000000000000000000000000000000000000000000000000000000001
 
 */
 #define macro ASSERT() = takes (1) returns (0) {
@@ -107,7 +110,7 @@ MEMORY LAYOUT WHEN THROWN
     returndatasize  // [returndatasize]
     0x00            // [memory_offset, returndatasize]
     returndatasize  // [returndatasize, memory_offset, returndatasize]
-    dup2            // [returndata_offset, returndatasize, memory_offset]
+    dup2            // [returndata_offset, returndatasize, memory_offset, returndatasize]
     dup3            // [memory_offset, returndata_offset, returndatasize, memory_offset, returndatasize]
     returndatacopy  // [memory_offset, returndatasize]
     revert          // []
