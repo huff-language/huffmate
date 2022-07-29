@@ -1,4 +1,9 @@
-// TODO: Add function wrappers for macros once #164 is merged in huff-rs
+/// @title FixedPointMath
+/// @notice Fixed-point number arithmetic
+///         Original implementation:
+///         https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol
+/// @author solmate <https://github.com/transmissions11/solmate>
+/// @author clabby <https://github.com/clabby>
 
 #define constant WAD = 0x0de0b6b3a7640000
 
@@ -6,40 +11,40 @@
 //             SIMPLIFIED FIXED POINT OPERATIONS              //
 ////////////////////////////////////////////////////////////////
 
-// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L13
-#define macro MUL_WAD_DOWN(fail) = takes (2) returns (1) {
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L13
+#define macro MUL_WAD_DOWN() = takes (2) returns (1) {
     // Input stack:            [x, y]
     [WAD]                   // [WAD, x, y]
     ARRANGE_STACK_MULWAD()  // [x, y, WAD]
     MUL_DIV_DOWN(fail)      // [result]
 }
 
-// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L17
-#define macro MUL_WAD_UP(fail) = takes (2) returns (1) {
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L17
+#define macro MUL_WAD_UP() = takes (2) returns (1) {
     // Input stack:            [x, y]
     [WAD]                   // [WAD, x, y]
     ARRANGE_STACK_MULWAD()  // [x, y, WAD]
     MUL_DIV_UP(fail)        // [result]
 }
 
-// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L21
-#define macro DIV_WAD_DOWN(fail) = takes (2) returns (1) {
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L21
+#define macro DIV_WAD_DOWN() = takes (2) returns (1) {
     // Input stack:            [x, y]
     [WAD]                   // [WAD, x, y]
     ARRANGE_STACK_DIVWAD()  // [x, WAD, y]
     MUL_DIV_DOWN(fail)
 }
 
-// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L25
-#define macro DIV_WAD_UP(fail) = takes (2) returns (1) {
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L25
+#define macro DIV_WAD_UP() = takes (2) returns (1) {
     // Input stack:            [x, y]
     [WAD]                   // [WAD, x, y]
     ARRANGE_STACK_DIVWAD()  // [x, WAD, y]
     MUL_DIV_UP(fail)        // [result]
 }
 
-// https://github.com/Rari-Capital/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L34
-#define macro EXP_WAD(fail) = takes (1) returns (1) {
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L34
+#define macro EXP_WAD() = takes (1) returns (1) {
     // Input stack:            [x]
 
     // When the result is < 0.5 we return zero. This happens when
@@ -173,7 +178,8 @@
     // Return stack:           [result]
 }
 
-#define macro LN_WAD(fail) = takes (1) returns (1) {
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L92
+#define macro LN_WAD() = takes (1) returns (1) {
     // Input stack:            [x]
     0x00 dup2 sgt           // [x > 0, x]
     iszero                  // [x <= 0, x]
@@ -305,7 +311,8 @@
     // Return stack:           [result]
 }
 
-#define macro POW_WAD(fail) = takes (2) returns (1) {
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L29
+#define macro POW_WAD() = takes (2) returns (1) {
     // Input Stack:            [x, y]
     LN_WAD(fail)                // [lnWad(x), y]
     mul                     // [lnWad(x) * y]
@@ -318,8 +325,8 @@
 //              LOW LEVEL FIXED POINT OPERATIONS              //
 ////////////////////////////////////////////////////////////////
 
-// https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L34
-#define macro MUL_DIV_DOWN(fail) = takes (3) returns (1) {
+// https://github.com/transmissions11/solmate/blob/main/src/utils/FixedPointMathLib.sol#L34
+#define macro MUL_DIV_DOWN() = takes (3) returns (1) {
     // Input stack:      [x, y, denominator]
     dup1 dup3 mul     // [x * y, x, y, denominator]
     dup1              // [x * y, x * y, x, y, denominator]
@@ -341,8 +348,8 @@
     // Return stack:     [(x * y) / denominator]
 }
 
-// https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L53
-#define macro MUL_DIV_UP(fail) = takes (3) returns (1) {
+// https://github.com/transmissions11/solmate/blob/main/src/utils/FixedPointMathLib.sol#L53
+#define macro MUL_DIV_UP() = takes (3) returns (1) {
     // Input stack:      [x, y, denominator]
     dup1 dup3 mul     // [x * y, x, y, denominator]
     dup1              // [x * y, x * y, x, y, denominator]
@@ -379,9 +386,9 @@
     // Return stack:     [((x * y - 1 / denominator) + 1) * (x * y != 0)]
 }
 
-// https://github.com/Rari-Capital/solmate/blob/main/src/utils/FixedPointMathLib.sol#L74
-// TODO: Optimize
-#define macro RPOW(fail) = takes (3) returns (1) {
+// https://github.com/transmissions11/solmate/blob/main/src/utils/FixedPointMathLib.sol#L74
+// TODO: Optimize, works but not great
+#define macro RPOW() = takes (3) returns (1) {
     // Input stack:                [x, n, scalar]
     dup1                        // [x, x, n, scalar]
     default jumpi               // Jump to "default" if x != 0
@@ -498,6 +505,7 @@
 //                  GENERAL NUMBER UTILITIES                  //
 ////////////////////////////////////////////////////////////////
 
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L288
 #define macro SQRT() = takes (1) returns (1) {
     // Input stack:                [x]
 
@@ -625,7 +633,8 @@
     swap1 sub                   // [z - (x / z) < z]
 }
 
-#define macro LOG_2(fail) = takes (1) returns (1) {
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L352
+#define macro LOG_2() = takes (1) returns (1) {
     // Input stack:                [x]
 
     dup1 iszero                 // [x == 0, x]
@@ -694,4 +703,3 @@
 #define macro ARRANGE_STACK_DIVWAD() = takes (3) returns (3) {
     // Input stack: [WAD, x, y]
     swap1        // [x, WAD, y]
-}

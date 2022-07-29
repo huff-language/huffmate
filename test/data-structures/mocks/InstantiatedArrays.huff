@@ -1,0 +1,38 @@
+// Sets an array from calldata.
+// sig: 0x226ce6b7
+#define function setArrayFromCalldata(uint256[]) view returns ()
+
+// Returns an array.
+// sig: 0xde9ee75c
+#define function loadArray() view returns (uint256[] memory)
+
+#define constant LOCATION = FREE_STORAGE_POINTER()
+
+#define macro SET_FROM_CALLDATA() = takes(0) returns(0) {
+    [LOCATION] 0x04
+    SET_ARRAY_FROM_CALLDATA()
+    stop
+}
+
+
+// Store the value for the given key.
+#define macro RETURN() = takes(0) returns(0) {
+    [LOCATION]
+    RETURN_ARRAY(0x80)
+}
+
+/* Main Macro - The contract entrypoint */
+#define macro MAIN() = takes(0) returns (0) {
+    // Identify which function is being called using the 4 byte function signature
+    0x00 calldataload 0xE0 shr
+    dup1 __FUNC_SIG(setArrayFromCalldata) eq set_from_calldata jumpi
+    dup1 __FUNC_SIG(loadArray) eq load jumpi
+
+    // Revert if otherwise
+    0x00 0x00 revert
+
+    set_from_calldata:
+        SET_FROM_CALLDATA()
+    load:
+        RETURN()
+}

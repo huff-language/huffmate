@@ -13,7 +13,7 @@
     pc calldataload 0xE0 shr
     dup1 __FUNC_SIG(verifyProof) eq verifyProof jumpi
 
-    0x00 0x00 revert
+    0x00 dup1 revert
 
     verifyProof:
         VERIFY_PROOF_WRAPPER()
