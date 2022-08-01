@@ -9,14 +9,14 @@
 /// @param index The index of the jumpdest within the jumptable
 /// @param table_start The offset of the jumptable in the contract's bytecode
 #define macro LOAD_FROM_JT(mem_ptr) = takes (2) returns (1) {
-    // Input stack:    [index, table_start]
+    // Input stack:       [index, table_start]
 
-    0x20 mul add    // [table_start + index * 0x20]
-    0x20 swap1      // [table_start + index * 0x20, 0x20]
-    <mem_ptr>       // [mem_ptr, table_start + index * 0x20, 0x20]
-    codecopy        // []
+    0x20 mul add       // [table_start + index * 0x20]
+    0x20 swap1         // [table_start + index * 0x20, 0x20]
+    <mem_ptr>          // [mem_ptr, table_start + index * 0x20, 0x20]
+    codecopy           // []
 
-    // Return stack:   []
+    // Return stack:      []
 }
 
 /// @notice Retrieves a jumpdest stored in a jumptable and puts it on the stack
@@ -24,12 +24,12 @@
 /// @param index The index of the jumpdest within the jumptable
 /// @param table_start The offset of the jumptable in the contract's bytecode
 #define macro RETRIEVE_FROM_JT() = takes (2) returns (1) {
-    // Input stack:              [index, table_start]
+    // Input stack:       [index, table_start]
 
-    LOAD_FROM_JT(0x00)        // []
-    0x00 mload                // [res]
+    LOAD_FROM_JT(0x00) // []
+    0x00 mload         // [res]
 
-    // Return stack:             [res]
+    // Return stack:      [res]
 }
 
 /// @notice Loads a jumpdest stored in a packed jumptable into memory at `mem_ptr`
@@ -41,14 +41,14 @@
 /// @param index The index of the jumpdest within the packed jumptable
 /// @param table_start The offset of the packed jumptable in the contract's bytecode
 #define macro LOAD_FROM_PACKED_JT(mem_ptr) = takes (2) returns (1) {
-    // Input stack:    [index, table_start]
+    // Input stack:       [index, table_start]
 
-    0x02 mul add    // [table_start + index * 0x02]
-    0x02 swap1      // [table_start + index * 0x02, 0x02]
-    <mem_ptr>       // [mem_ptr, table_start + index * 0x02, 0x02]
-    codecopy        // []
+    0x02 mul add       // [table_start + index * 0x02]
+    0x02 swap1         // [table_start + index * 0x02, 0x02]
+    <mem_ptr>          // [mem_ptr, table_start + index * 0x02, 0x02]
+    codecopy           // []
 
-    // Return stack:   []
+    // Return stack:      []
 }
 
 /// @notice Retrieves a jumpdest stored in a packed jumptable and puts it on the stack
@@ -56,10 +56,11 @@
 /// @param index The index of the jumpdest within the packed jumptable
 /// @param table_start The offset of the packed jumptable in the contract's bytecode
 #define macro RETRIEVE_FROM_PACKED_JT() = takes (2) returns (1) {
-    // Input stack:              [index, table_start]
+    // Input stack:       [index, table_start]
 
-    LOAD_FROM_PACKED_JT(0x1e) // []
-    0x00 mload                // [res]
-    
-    // Return stack:             [res]
+    LOAD_FROM_PACKED_JT(0x1e)
+    //                    []
+    0x00 mload         // [res]
+
+    // Return stack:      [res]
 }
