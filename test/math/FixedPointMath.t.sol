@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity 0.8.13;
 
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
@@ -243,6 +243,8 @@ contract FixedPointMathTest is Test {
         assertEq(math.rpow(2e18, 2, 1e18), 4e18);
         assertEq(math.rpow(2e8, 2, 1e8), 4e8);
         assertEq(math.rpow(8, 3, 1), 512);
+        assertEq(math.rpow(0, 0, 1e18), 1e18);
+        assertEq(math.rpow(0, 1, 1), 0);
     }
 
     function testSqrt() public {
