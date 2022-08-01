@@ -54,39 +54,37 @@
 #define constant DOMAIN_THREE_SEPARATOR_STR = 0x766572696679696e67436f6e747261637429 // 18 bytes
 
 /* Constructor */
-#define macro CONSTRUCTOR() = takes(0) returns (0) {
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
     // Copy the decimals into memory
     0x20                        // [size] - byte size to copy
     0x20 codesize sub           // [offset, size] - offset in the code to copy from
     0x00                        // [mem, offset, size] - offset in memory to copy to
     codecopy                    // []
     0x00 mload                  // [decimals]
+    [DECIMALS_LOCATION] sstore  // []
 
     // Copy the symbol into memory
-    0x20                        // [size, decimals] - byte size to copy
-    0x40 codesize sub           // [offset, size, decimals] - offset in the code to copy from
-    0x00                        // [mem, offset, size, decimals] - offset in memory to copy to
-    codecopy                    // [decimals]
-    0x00 mload                  // [symbol, decimals]
+    0x20                        // [size] - byte size to copy
+    0x40 codesize sub           // [offset, size] - offset in the code to copy from
+    0x00                        // [mem, offset, size] - offset in memory to copy to
+    codecopy                    // []
+    0x00 mload                  // [symbol]
+    [SYMBOL_LOCATION] sstore    // []
 
     // Copy the name into memory
-    0x20                        // [size, symbol, decimals] - byte size to copy
-    0x60 codesize sub           // [offset, size, symbol, decimals] - offset in the code to copy from
-    0x00                        // [mem, offset, size, symbol, decimals] - offset in memory to copy to
-    codecopy                    // [symbol, decimals]
-    0x00 mload                  // [name, symbol, decimals]
-
-    // TODO: optimize initial domain separator computation by saving metadata on stack
-    [NAME_LOCATION] sstore                     // [name, symbol, decimals]
-    [SYMBOL_LOCATION] sstore                   // [name, symbol, decimals]
-    [DECIMALS_LOCATION] sstore                 // [name, symbol, decimals]
+    0x20                        // [size] - byte size to copy
+    0x60 codesize sub           // [offset, size] - offset in the code to copy from
+    0x00                        // [mem, offset, size] - offset in memory to copy to
+    codecopy                    // []
+    0x00 mload                  // [name]
+    [NAME_LOCATION] sstore      // []
 
     // Store the chain id
     chainid [INITIAL_CHAIN_ID] sstore               // []
 
     // Compute the domain separator
-    COMPUTE_DOMAIN_SEPARATOR()                      // [domainSeparator]
-    [INITIAL_DOMAIN_SEPARATOR] sstore               // []
+    // COMPUTE_DOMAIN_SEPARATOR()                      // [domainSeparator]
+    // [INITIAL_DOMAIN_SEPARATOR] sstore               // []
 }
 
 /* Compute the domain separator */
@@ -199,8 +197,7 @@
 
     // Emit the approval event.
     dup2 dup2                                   // [from, to, from, to, value]
-    [APPROVAL_EVENT_SIGNATURE]
-   // __EVENT_HASH(APPROVAL_EVENT_SIGNATURE)      // [sig, from, to, from, to, value]
+    __EVENT_HASH(APPROVAL_EVENT_SIGNATURE)      // [sig, from, to, from, to, value]
     0x20 0x00                                   // [0, 32, sig, from, to, from, to, value]
     log3                                        // [from, to, value]
 
@@ -286,15 +283,19 @@
 }
 
 #define macro NAME() = takes(0) returns(0) {
+    0x00 0x40 mstore                   // []
+    0x40 0x20 mstore                   // []
     [NAME_LOCATION] sload              // [name]
-    0x00 mstore                        // []
-    0x20 0x00 return                   // []
+    0x20 mstore                        // []
+    0x40 0x00 return                   // []
 }
 
 #define macro SYMBOL() = takes(0) returns(0) {
+    0x00 0x40 mstore                   // []
+    0x40 0x20 mstore                   // []
     [SYMBOL_LOCATION] sload            // [symbol]
-    0x00 mstore                        // []
-    0x20 0x00 return                   // []
+    0x20 mstore                        // []
+    0x40 0x00 return                   // []
 }
 
 #define macro DECIMALS() = takes(0) returns(0) {

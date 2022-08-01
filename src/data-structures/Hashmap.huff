@@ -1,7 +1,6 @@
 /// @title HashMap
 /// @author Andreas Bigger
 /// @notice A Minimal HashMap based off <https://github.com/huff-language/huff-examples/blob/main/erc20/contracts/utils/HashMap.huff>
-/// @license Apache License, Version 2.0
 
 // Given a piece of data (ie an address), hash it, generating the storage slot for a hashmap.
 #define macro GET_SLOT_FROM_KEY(mem_ptr) = takes(1) returns (1) {

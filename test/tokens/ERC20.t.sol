@@ -19,13 +19,13 @@ interface ERC20 {
   function allowance(address, address) external view returns (uint256);
 
   /* EIP-2612 */
-  function nonces(address) external view returns (uint256);
+  // function nonces(address) external view returns (uint256);
 
   /* Mutators */
   function transfer(address, uint256) external;
-  function transferFrom(address, address, uint256) external;
+  // function transferFrom(address, address, uint256) external;
   function approve(address, uint256) external;
-  function permit(address, address, uint256, uint256, uint8, bytes32, bytes32) external;
+  // function permit(address, address, uint256, uint256, uint8, bytes32, bytes32) external;
   function mint(address, uint256) external;
 }
 
@@ -40,17 +40,13 @@ contract ERC20Test is Test {
   function setUp() public {
     bytes memory name = bytes("coin");
     bytes memory symbol = bytes("COIN");
-    console.logString(string.concat("Deploying ERC20 with name, symbol: \"", string(name), "\", \"", string(symbol), "\"..."));
-    console.logString(string(name));
-    console.logString(string(symbol));
-
     bytes memory args = bytes.concat(bytes32(name), bytes32(symbol), abi.encode(8));
-    coin = ERC20(HuffDeployer.config().with_args(args).deploy("tokens/ERC20Mintable"));
+    string memory wrapper_code = vm.readFile("test/tokens/mocks/ERC20Mintable.huff");
+    coin = ERC20(HuffDeployer.config().with_code(wrapper_code).with_args(args).deploy("tokens/ERC20"));
   }
 
   /// @notice Test name metadata
   function testName() public {
-    console.logString("Getting Name...");
     string memory name = coin.name();
     console.logString(name);
     assertEq("coin", name);
