@@ -1,0 +1,42 @@
+/// @title BitPackLib
+/// @author https://github.com/kadenzipfel
+/// @notice Efficient bit packing lib
+
+#define constant MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+/// @notice Packs value of given length at index of given word
+/// @dev Assumes index < 256 - length
+#define macro PACK_VALUE() = takes (4) returns (1) {
+    // Input stack:             // [length, index, value, word]
+    0x100 sub sub               // [shift, value, word]
+    shl swap1 or                // [new_word]
+}
+
+/// @notice Unpacks value of given length from right of word
+/// @dev word & (~0 >> (256 - length))
+#define macro UNPACK_FROM_RIGHT() = takes (2) returns (1) {
+    // Input stack:             // [length, word]
+    [MAX]                       // [not(0), length, word]
+    swap1 0x100 sub             // [offset, not(0), word]
+    shr and                     // [value]
+}
+
+/// @notice Unpacks value of given length from left of word
+/// @dev word >> (256 - length)
+#define macro UNPACK_FROM_LEFT() = takes (2) returns (1) {
+    // Input stack:             // [length, word]
+    0x100 sub                   // [shift, word]
+    shr                         // [value]
+}
+
+/// @notice Unpcks value of given length from index of word
+/// @dev Assume index < 256 - length
+///      (word & ((~0 >> 256 - length) << (256 - length - index))) >> (256 - length - index)
+#define macro UNPACK_FROM_CENTER() = takes (3) returns (1) {
+    // Input stack:             // [length, index, word]
+    0x100 sub                   // [offset, index, word]
+    swap1 dup2 sub              // [shift, offset, word]
+    [MAX] swap1 swap2 shr       // [offset_shift, shift, word]
+    dup2 shl swap1 swap2 and    // [left_shifted_word, shift]
+    swap1 shr                   // [value]
+}

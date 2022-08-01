@@ -1,0 +1,59 @@
+#define function packValue(bytes32, uint256, uint256, uint256) pure returns (bytes32)
+#define function unpackValueFromRight(bytes32, uint256) pure returns (uint256)
+#define function unpackValueFromLeft(bytes32, uint256) pure returns (uint256)
+#define function unpackValueFromCenter(bytes32, uint256, uint256) pure returns (uint256)
+
+#define macro PACK_VALUE_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [value, word]
+    0x44 calldataload           // [index, value, word]
+    0x64 calldataload           // [length, index, value, word]
+    PACK_VALUE()                // [new_word]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro UNPACK_FROM_RIGHT_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [length, word]
+    UNPACK_FROM_RIGHT()         // [value]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro UNPACK_FROM_LEFT_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [length, word]
+    UNPACK_FROM_LEFT()          // [value]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro UNPACK_FROM_CENTER_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [length, word]
+    0x44 calldataload           // [length, index, word]
+    UNPACK_FROM_CENTER()        // [value]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    // Identify which function is being called using the 4 byte function signature
+    0x00 calldataload 0xE0 shr
+    dup1 0x20cf269e eq packValue jumpi
+    dup1 0x0ec88d16 eq unpackValueFromRight jumpi
+    dup1 0xf59c8b86 eq unpackValueFromLeft jumpi
+    dup1 0xe6022afd eq unpackValueFromCenter jumpi
+
+    0x00 0x00 revert
+
+    packValue:
+        PACK_VALUE_WRAPPER()
+    unpackValueFromRight:
+        UNPACK_FROM_RIGHT_WRAPPER()
+    unpackValueFromLeft:
+        UNPACK_FROM_LEFT_WRAPPER()
+    unpackValueFromCenter:
+        UNPACK_FROM_CENTER_WRAPPER()
+}
