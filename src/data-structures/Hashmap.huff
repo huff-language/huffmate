@@ -15,7 +15,7 @@
     sha3                // [slot]
 }
 
-// Given two keys (ie an address and a number), hash them together, generating a for a secondary hashmap.
+// Given two keys (ie an address and a number), hash them together, generating a  for a secondary hashmap.
 // This should only be used if you have multiple maps in your contract.
 #define macro GET_SLOT_FROM_KEYS(mem_ptr) = takes(2) returns (1) {
     // Input stack: [key1, key2]
@@ -43,13 +43,35 @@
     sload                       // [value]
 }
 
+#define macro LOAD_ELEMENT_FROM_SLOT_AND_KEYS(mem_ptr) = takes(3) returns(1) {
+    //                                                                         // [slot, key1, key2]           ___memory layout_______
+    <mem_ptr> 0x20 add mstore                                                  // [key1, key2]                 0x00         0x20 slot
+    <mem_ptr> mstore                                                           // [key2]                       0x00 key1    0x20 slot
+    0x40 <mem_ptr> sha3                                                        // [hash1, key2]                0x00 key1    0x20 slot
+    <mem_ptr> 0x20 add mstore                                                  // [key2]                       0x00 key1    0x20 hash1
+    <mem_ptr> mstore                                                           // []                           0x00 key2    0x20 hash1
+    0x40 <mem_ptr> sha3                                                        // [hash2]                      0x00 key2    0x20 hash1
+    sload                                                                      // [value]
+}
+
+#define macro STORE_ELEMENT_FROM_SLOT_AND_KEYS(mem_ptr) = takes(4) returns(0) {
+    //                              // [slot, key1, key2, value]    ___memory layout_______
+    <mem_ptr> 0x20 add mstore       // [key1, key2, value]          0x00         0x20 slot
+    <mem_ptr> mstore                // [key2, value]                0x00 key1    0x20 slot
+    0x40 <mem_ptr> sha3             // [hash1, key2, value]         0x00 key1    0x20 slot
+    <mem_ptr> 0x20 add mstore       // [key2, value]                0x00 key1    0x20 hash1
+    <mem_ptr> mstore                // [value]                      0x00 key2    0x20 hash1
+    0x40 <mem_ptr> sha3             // [hash2, value]               0x00 key2    0x20 hash1
+    sstore                          // []
+}
+
 #define macro STORE_ELEMENT(mem_ptr) = takes(2) returns(0) {
     // Input stack: [key, value]
     GET_SLOT_FROM_KEY(<mem_ptr>)  // [slot, value]
     sstore                      // []
 }
 
-#define macro STORE_ELEMENT_FROM_KEYS(mem_ptr) = takes(3) returns (0) {
+#define macro STORE_ELEMENT_FROM_KEYS(mem_ptr) = takes(2) returns (0) {
     // Input stack: [key1, key2, value]
     GET_SLOT_FROM_KEYS(<mem_ptr>) // [slot, value]
     sstore                      // []
