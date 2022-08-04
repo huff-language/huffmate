@@ -1,0 +1,53 @@
+/* Imports */
+#include "./ERC20.huff"
+#include "../utils/TSOwnable.huff"
+
+/* Interface */
+#define function burn(address,uint256) nonpayable returns ()
+#define function mint(address,uint256) nonpayable returns ()
+
+/* Constructor */
+#define macro CONSTRUCTOR() = takes(0) returns (0) {
+    CONSTRUCTOR_TSOWNABLE()                                                    // []
+    CONSTRUCTOR_ERC20()                                                        // []
+}
+
+#define macro BURN() = takes(0) returns (0) {
+    NON_PAYABLE()
+    // Setup the stack for the burn function.
+    0x00                                                                       // [to (0x00)]
+    0x04 calldataload                                                          // [from, to]
+    0x24 calldataload                                                          // [value, from, to]
+    _BURN()
+    0x00 0x00 return
+}
+#define macro MINT() = takes(0) returns (0) {
+    NON_PAYABLE()
+
+    // Setup the stack for the mint function.
+    0x04 calldataload                                                          // [to]
+    0x00                                                                       // [from (0x00), to]
+    0x24 calldataload                                                          // [value, from, to]
+    _MINT()                                                                    // [value, from, to]
+    0x00 0x00 return
+}
+
+
+// Main Macro
+#define macro MAIN() = takes(0) returns (0) {
+    0x00 calldataload 0xE0 shr                                                 // [func sig]
+    MAIN_ERC20()
+    MAIN_TSOWNABLE()
+
+    dup1 __FUNC_SIG(mint)               eq mintJump             jumpi
+    dup1 __FUNC_SIG(burn)               eq burnJump             jumpi
+
+    burnJump:
+        BURN()
+
+    mintJump:
+        MINT()
+
+    0x00 0x00 revert
+
+}
