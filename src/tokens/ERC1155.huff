@@ -1,5 +1,10 @@
+/// @title ERC1155
+/// @author cheethas <https://github.com/cheethas>
+/// @notice Minimal, gas efficient ERC 1155 implementation
+
 #include "../data-structures/Hashmap.huff"
 #include "../math/SafeMath.huff"
+#include "../utils/ERC1155Receiver.huff"
 
 /* Interface */
 /* Stateful functions */
