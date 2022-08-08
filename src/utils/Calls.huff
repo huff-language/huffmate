@@ -1,0 +1,29 @@
+/// @title Calls
+/// @author franfran https://github.com/iFrostizz
+
+// Interface
+// #define function simpleCall(address,uint256,uint256,uint256,uint256) payable returns (bool,bytes)
+#define function simpleCall(address) payable returns (bool)
+
+// Methods - Use these macros directly
+#define macro SIMPLE_CALL() = takes (0) returns (1) {
+    0x00                    // [retSize]
+		dup1                    // [retOffset, retSize]
+		dup1                    // [argsSize, retOffset, retSize]
+		dup1                    // [argsOffset, argsSize, retOffset, retSize]
+		dup1                    // [value, argsOffset, argsSize, retOffset, retSize]
+		0x04 calldataload       // [address, value, argsOffset, argsSize, retOffset, retSize]
+		gas                     // [gas, address, value, argsOffset, argsSize, retOffset, retSize]
+		call                    // [success]
+}
+
+// Main
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xE0 shr
+    dup1 0x84ea73e7 eq simp jumpi
+
+    0x00 0x00 revert
+
+    simp:
+        SIMPLE_CALL()
+}
