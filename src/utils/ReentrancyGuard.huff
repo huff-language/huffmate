@@ -28,5 +28,5 @@
 }
 
 #define fn UNLOCK() = takes(0) returns (0) {
-    [_UNLOCKED] [LOCKED_SLOT] sstore   
+    [_UNLOCKED] [LOCKED_SLOT] sstore
 }
