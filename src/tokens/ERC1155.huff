@@ -30,14 +30,10 @@
 
 /* Events */
 #define event TransferSingle(address,address,address,uint256,uint256)
+#define event TransferBatch(address,address,address,uint256[],uint256[])
 #define event ApprovalForAll(address,address,bool)
 #define event URI(string,uint256)
 
-/* Event Signatures */
-#define constant TRANSFER_SINGLE_SIGNATURE = 0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62
-#define constant TRANSFER_BATCH_SIGNATURE = 0x13eb9248a9ef11cb06c98b58bfdc389b461152c8668d155983ad4e9d249a02a0
-#define constant APPROVAL_FOR_ALL_EVENT_SIGNATURE = 0x2ce3f86be9eea89ec6cccd2733d6b5d5cbf20f592201255984d0178f76d55757
-#define constant URI_EVENT_SIGNATURE = 0x6bb7ff708619ba0610cba295a58592e0451dee2622938c8755667688daf3529b
 
 /* Storage Slots */
 #define constant NAME_LOCATION = FREE_STORAGE_POINTER()
@@ -108,13 +104,11 @@
     dup1 0xd9b67a26 eq isTrue jumpi
     dup1 0x0e89341c eq isTrue jumpi
 
-    0x00 0x00 mstore ret jump 
+    0x00 dup1 mstore
+    0x20 0x00 return
 
     isTrue:
         0x01 0x20 mstore
-
-    ret:
-        0x00 0x20 return
 }
 
 
@@ -141,8 +135,8 @@
     dup2 dup2                           // [msg.sender, operator, msg.sender, operator, approved]
 
     // emit ApprovalForAll(msg.sender, operator, approved)
-    [APPROVAL_FOR_ALL_EVENT_SIGNATURE]  // [sig, msg.sender, operator, msg.sender, operator, approved]
-    0x20 0x00                           // [dataSize, dataOffset, sig, msg.sender, operator, msg.sender, operator, approved]
+__EVENT_HASH(ApprovalForAll)     // [sig, msg.sender, operator, msg.sender, operator, approved]
+    0x20 0x00                           // [offset, size, sig, msg.sender, operator, msg.sender, operator, approved]
     log3                                // [msg.sender, operator, approved]
 
     [IS_APPROVED_FOR_ALL_LOCATION]      // [slot, msg.sender, operator, approved] 
@@ -197,8 +191,9 @@
     0x04 calldataload dup1  // [to]
     0x00                    // [zero_address, to, to]
     caller                  // [msg.sender, zero_address, to, to]
-    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender, zero_address, to, to] 
-    0x40 0x40               // TODO
+__EVENT_HASH(TransferSingle)     // [sig, msg.sender, zero_address, to, to] 
+
+    0x40 0x40               // [offset, size, TransferSingle, msg.sender, address(0), to, to]
     log4                    // [to]
 
     0x00                    // [from, to]
@@ -241,11 +236,11 @@
     0x00 mstore                     // store tokenId in memory for log can store in 0x00 as scratch space is no longer in use
     0x20 mstore                     // store amount in memory for log           
 
-    0x24 calldataload dup1          // [from, from]
-    0x04 calldataload dup1          // [from, from, to, to]
-    swap2                           // [from, to, from, to]
+    0x24 calldataload          // [to]
+    0x04 calldataload          // [from, to]
+    dup2 dup2                  // [from, to, from, to]
     caller                          // [msg.sender, from, to, from, to]
-    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender, from, to, from, to] 
+__EVENT_HASH(TransferSingle)     // [sig, msg.sender, from, to, from, to] 
     0x00 0x40                       // [from, to] log data
     log4                            // [from, to]                           
     
@@ -268,7 +263,7 @@
  * @param {calldata} [address from, uint256 tokenId, uint256 amount] 
  * @return []
 */
-#define macro BURN_TOKEN() = takes(0) returns(0){
+#define macro BURN() = takes(0) returns(0) {
     0x44 calldataload               // [amount]
     0x24 calldataload               // [tokenId, amount]
     dup2 dup2                       // [tokenId, amount, tokenId, amount]
@@ -283,7 +278,7 @@
     0x00                            // [zero_address]
     0x04 calldataload               // [from, zero_address]
     caller                          // [msg.sender, from,zero_address]
-    [TRANSFER_SINGLE_SIGNATURE]     // [TransferSingle, msg.sender,from, zero_address] 
+__EVENT_HASH(TransferSingle)     // [sig, msg.sender, from, zero_address] 
     0x00 0x40                       // log data
     log4
 
@@ -319,10 +314,10 @@
     // get length of the ids array - stash arr pointers at end of stack
     0x44 calldataload 0x4 add dup1  // [&amount, &amount, to, from]
     0x24 calldataload 0x4 add dup1  // [&ids, &ids, &amount, &amount, to, from] 
-    swap2                           // [&amount, &ids, &amount, &amount, to, from]
-    calldataload swap1              // [&ids, amounts.length, &amount, &ids, to, from] 
-    calldataload dup1               // [ids.length, ids.length, amounts.length, &amount, &ids, to, from]
-    swap2                           // [amounts.len, ids.len, ids.len, &amount, &ids, to, from]
+    swap2                           // [&amount, &ids, &ids, &amount, to, from]
+    calldataload swap1              // [&ids, amounts.length, &ids, &amount, to, from] 
+    calldataload dup1               // [ids.length, ids.length, amounts.length, &ids, &amount, to, from]
+    swap2                           // [amounts.len, ids.len, ids.len, &ids, &amount, to, from]
 
     eq isTrue                       // [amounts.length == ids.length, ids.len, &amount, &ids, to, from]
     jumpi                           // [ids.len, &amount, &ids, to, from]
@@ -333,7 +328,7 @@
         // loop over the arrays of ids and amounts and increase the balance
     0x00    // [i, ids.length, &amount, &ids, to, from]
     loop:
-        dup2 dup2           //[i, ids.length, i, ids.length, &amount, &ids, to, from]
+        dup2 dup2           // [i, ids.length, i, ids.length, &amount, &ids, to, from]
         eq exit jumpi       // [i, ids.length, &amount, &ids, to, from]
 
 
@@ -406,7 +401,7 @@
     dup8                            // [to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     dup8                            // [from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     caller                          // [caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    [TRANSFER_BATCH_SIGNATURE]
+__EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from] 
     dup5 0x40 add                   // [len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     0x20                            // [offset, len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     log4                            // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
@@ -428,19 +423,18 @@
     // get length of the ids array - stash arr pointers at end of stack
     0x44 calldataload 0x4 add dup1  // [&amount, &amount, to, to, from]
     0x24 calldataload 0x4 add dup1  // [&ids, &ids, &amount, &amount, to, from] 
-    swap2                           // [&amount, &ids, &amount, &amount, to, from]
-    calldataload swap1              // [&ids, amounts.length, &amount, &ids, to, from] 
-    calldataload dup1               // [ids.length, ids.length, amounts.length, &amount, &ids, to, from] ]
-    swap2                           // [amounts.len, ids.len, ids.len, &amount, &ids, to, from]
+    swap2                           // [&amount, &ids, &ids, &amount, to, from]
+    calldataload swap1              // [&ids, amounts.length, &ids, &amount, to, from] 
+    calldataload dup1               // [ids.length, ids.length, amounts.length, &ids, &amount, to, from]
+    swap2                           // [amounts.len, ids.len, ids.len, &ids, &amount, to, from]
 
-    eq isTrue                       // [amounts.length == ids.length, ids.len, &amount, &ids, to, from]
-    jumpi                           // [ids.len, &amount, &ids, to, from]
-    0x00 dup1 revert
+    0x00               // [0, ids.len, &ids, &amount, to, from]
+    eq                              // [amounts.length == ids.length, 0, ids.len, &ids, &amount, to, from]
+    loop jumpi                    // [0, ids.len, &ids, &amount, to, from]
+    dup1 revert
 
-    isTrue:
 
     // loop over the arrays of ids and amounts and increase the balance
-    0x00    // [i, ids.length, &amount, &ids, to, from]
     loop:
         dup2 dup2           //[i, ids.length, i, ids.length, &amount, &ids, to, from]
         eq exit jumpi       // [i, ids.length, &amount, &ids, to, from]
@@ -486,7 +480,6 @@
  * @return []
 */
 #define macro BATCH_SAFE_TRANSFER_FROM() = takes(0) returns(0) {
-    
     // check lengths
     0x04 calldataload               // [from]
     0x24 calldataload               // [to, from]
@@ -494,24 +487,16 @@
     // get length of the ids array - stash arr pointers at end of stack
     0x64 calldataload 0x4 add dup1  // [&amount, &amount, to, from]
     0x44 calldataload 0x4 add dup1  // [&ids, &ids, &amount, &amount, to, from] 
-    swap2                           // [&amount, &ids, &amount, &amount, to, from]
-    calldataload swap1              // [&ids, amounts.length, &amount, &ids, to, from] 
-    calldataload dup1               // [ids.length, ids.length, amounts.length, &amount, &ids, to, from ]
-    swap2                           // [amounts.len, ids.len, ids.len, &amount, &ids, to, from]
+    swap2                           // [&amount, &ids, &ids, &amount, to, from]
+    calldataload swap1              // [&ids, amounts.length, &ids, &amount, to, from] 
+    calldataload dup1               // [ids.length, ids.length, amounts.length, &ids, &amount, to, from ]
+    swap2                           // [amounts.len, ids.len, ids.len, &ids, &amount, to, from]
 
-    eq isTrue jumpi                 // [amounts.length == ids.length, ids.len, &amount, &ids, to, from]
-    error jumpi                     // [ids.len, &amount, &ids,to, from]
-
-
-    // perform batch transfers
-    isTrue:
+    0x00 eq iszero error jumpi           // [0, ids.len, &amount, &ids, to, from]
 
     // check approvals
     IS_OWNER_OR_APPROVED(error)
- 
 
-    // loop over the arrays of ids and amounts and increase the balance
-    0x00    // [i, ids.length, &amount, &ids, from]
     loop:
         dup2 dup2           //[i, ids.length, i, ids.length, &amount, &ids, to, from]
         
@@ -928,21 +913,17 @@ skipResize:
  * @param {argument} [(jump_label) error]
  * @return []
 */
-#define macro IS_OWNER_OR_APPROVED(error) = takes(0) returns(0){
+#define macro IS_OWNER_OR_APPROVED(error) = takes(1) returns(0){
+    // takes: [from]
+    caller  swap1                      // [from, msg.sender]
+    dup2  dup2                         // [from, msg.sender, from, msg.sender]
+    eq continue jumpi                  // [from, msg.sender]       
 
-    // check called by owner
-    caller                  // [msg.sender]
-    0x04 calldataload       // [from, msg.sender] 
-    dup2                    // [msg.sender, from, msg.sender]     
-    dup2                    // [from, msg.sender, from, msg.sender]
-    eq continue jumpi       // [from, msg.sender]       
-    
-    // check sender is approved for all
-    [IS_APPROVED_FOR_ALL_LOCATION]
-    LOAD_ELEMENT_FROM_KEYS_2D(0x00)
-    iszero <error> jumpi 
+    [IS_APPROVED_FOR_ALL_LOCATION]     // [sig, from, msg.sender]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)    // [approved]
+    iszero <error> jumpi               // []
 
-continue:
+    continue:
 }
 
 
