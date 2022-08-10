@@ -1,0 +1,34 @@
+/// @title Reentrancy Guard
+/// @author rayquaza7
+/// @notice A Reentrancy Guard based off <https://github.com/Rari-Capital/solmate/blob/main/src/utils/ReentrancyGuard.sol>
+/// @license Apache License, Version 2.0
+
+/* Errors */
+#define error REENTRANCY()
+
+/* Constants */
+#define constant _UNLOCKED = 0x01
+#define constant _LOCKED = 0x02
+#define constant LOCKED_SLOT = FREE_STORAGE_POINTER() 
+
+/* Modifiers */
+#define fn LOCK() = takes(0) returns(0) {
+    [_LOCKED]                // [0x02]
+    dup1                     // [0x02, 0x02]
+    [LOCKED_SLOT]            // [locked_slot, 0x02, 0x02]
+    sload                    // [locked_slot_value, 0x02, 0x02]
+    eq                       // [0x02 == locked_slot_value, 0x02]
+    reentrancy jumpi
+    [LOCKED_SLOT] sstore
+    
+    reentrancy:
+        __ERROR(REENTRANCY)
+        0x00 mstore 
+        0x04 0x00 revert
+}
+
+#define fn UNLOCK() = takes(0) returns (0) {
+    [_UNLOCKED] [LOCKED_SLOT] sstore   
+}
+
+#define macro MAIN() = takes (0) returns (0) {}
