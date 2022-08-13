@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.13;
 
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
@@ -8,6 +8,12 @@ import "forge-std/Test.sol";
 interface IErrorsMock {
     function simulateRequire() external pure;
     function simulateAssert() external pure;
+    function simulateAssertEq() external pure;
+    function simulateAssertNotEq() external pure;
+    function simulateAssertMemEq() external pure;
+    function simulateAssertMemNotEq() external pure;
+    function simulateAssertStorageEq() external;
+    function simulateAssertStorageNotEq() external;
     function simulateCompilerPanic() external pure;
     function simulateArithmeticOverflow() external pure;
     function simulateDivideByZero() external pure;
@@ -63,6 +69,54 @@ contract ErrorsTest is Test {
 
     function testAssert() public {
         try eLib.simulateAssert() {
+            revert("did not fail");
+        } catch Panic(uint256 panicCode) {
+            assertEq(panicCode, ASSERT_FALSE);
+        }
+    }
+
+    function testAssertEq() public {
+        try eLib.simulateAssertEq() {
+            revert("did not fail");
+        } catch Panic(uint256 panicCode) {
+            assertEq(panicCode, ASSERT_FALSE);
+        }
+    }
+
+    function testAssertNotEq() public {
+        try eLib.simulateAssertNotEq() {
+            revert("did not fail");
+        } catch Panic(uint256 panicCode) {
+            assertEq(panicCode, ASSERT_FALSE);
+        }
+    }
+
+    function testAssertMemEq() public {
+        try eLib.simulateAssertMemEq() {
+            revert("did not fail");
+        } catch Panic(uint256 panicCode) {
+            assertEq(panicCode, ASSERT_FALSE);
+        }
+    }
+
+    function testAssertMemNotEq() public {
+        try eLib.simulateAssertMemNotEq() {
+            revert("did not fail");
+        } catch Panic(uint256 panicCode) {
+            assertEq(panicCode, ASSERT_FALSE);
+        }
+    }
+
+    function testAssertStorageEq() public {
+        try eLib.simulateAssertStorageEq() {
+            revert("did not fail");
+        } catch Panic(uint256 panicCode) {
+            assertEq(panicCode, ASSERT_FALSE);
+        }
+    }
+
+    function testAssertStorageNotEq() public {
+        try eLib.simulateAssertStorageNotEq() {
             revert("did not fail");
         } catch Panic(uint256 panicCode) {
             assertEq(panicCode, ASSERT_FALSE);

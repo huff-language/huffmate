@@ -1,5 +1,11 @@
 #define function simulateRequire() pure returns ()
 #define function simulateAssert() pure returns ()
+#define function simulateAssertEq() pure returns ()
+#define function simulateAssertNotEq() pure returns ()
+#define function simulateAssertMemEq() pure returns ()
+#define function simulateAssertMemNotEq() pure returns ()
+#define function simulateAssertStorageEq() nonpayable returns ()
+#define function simulateAssertStorageNotEq() nonpayable returns ()
 #define function simulateCompilerPanic() pure returns ()
 #define function simulateArithmeticOverflow() pure returns ()
 #define function simulateDivideByZero() pure returns ()
@@ -18,6 +24,12 @@
     pc calldataload 0xe0 shr
     dup1 __FUNC_SIG(simulateRequire) eq simulate_require jumpi
     dup1 __FUNC_SIG(simulateAssert) eq simulate_assert jumpi
+    dup1 __FUNC_SIG(simulateAssertEq) eq simulate_assert_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertNotEq) eq simulate_assert_not_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertMemEq) eq simulate_assert_mem_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertMemNotEq) eq simulate_assert_mem_not_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertStorageEq) eq simulate_assert_storage_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertStorageNotEq) eq simulate_assert_storage_not_eq jumpi
     dup1 __FUNC_SIG(simulateCompilerPanic) eq simulate_compiler_panic jumpi
     dup1 __FUNC_SIG(simulateArithmeticOverflow) eq simulateArithmeticOverflow jumpi
     dup1 __FUNC_SIG(simulateDivideByZero) eq simulateDivideByZero jumpi
@@ -40,6 +52,34 @@
     simulate_assert:
         0x00        // [false]
         ASSERT()    // []
+
+    simulate_assert_eq:
+        0x01 0x00   // [0x00, 0x01]
+        ASSERT_EQ()
+
+    simulate_assert_not_eq:
+        0x00 0x00   // [0x00, 0x00]
+        ASSERT_NOT_EQ()
+
+    simulate_assert_mem_eq:
+        0x00 dup1 mstore
+        0x01 0x20 mstore
+        ASSERT_MEM_EQ(0x00, 0x20)
+
+    simulate_assert_mem_not_eq:
+        0x00 dup1 mstore
+        0x00 0x20 mstore
+        ASSERT_MEM_NOT_EQ(0x00, 0x20)
+
+    simulate_assert_storage_eq:
+        0x00 dup1 sstore
+        0x01 dup1 sstore
+        ASSERT_STORAGE_EQ(0x00, 0x01)
+
+    simulate_assert_storage_not_eq:
+        0x00 dup1 sstore
+        0x00 0x01 sstore
+        ASSERT_STORAGE_NOT_EQ(0x00, 0x01)
 
     simulate_compiler_panic:
         [COMPILER_PANIC]
