@@ -1,25 +1,16 @@
 /// @title Errors
-/// @author jtriley.eth
+/// @author jtriley.eth, clabby <https://github.com/clabby>
 /// @notice Custom error utilities.
-/// The `Errors` section may be un-commented if Huff-rs supports Errors in the ABI in the future.
 /// @license Apache License, Version 2.0
 
 // https://docs.soliditylang.org/en/latest/control-structures.html?highlight=panic#panic-via-assert-and-error-via-require
 
 /* Errors */
 
-// #define error Error(string)
-// #define error Panic(uint256)
+#define error Error(string)
+#define error Panic(uint256)
 
 /* Constants */
-
-// error Error(string);
-// Used in `require` statements
-#define constant ERROR_SIG = 0x08c379a000000000000000000000000000000000000000000000000000000000
-
-// error Panic(uint256);
-// Used in Solidity
-#define constant PANIC_SIG = 0x4e487b7100000000000000000000000000000000000000000000000000000000
 
 // Solidity Panic Codes
 #define constant COMPILER_PANIC = 0x00
@@ -46,7 +37,7 @@ MEMORY LAYOUT WHEN THROWN
     // takes:       // [condition, message_length, message]
     do_not_throw    // [do_not_throw_jumpdest, condition, message_length, message]
     jumpi           // [message_length, message]
-    [ERROR_SIG]     // [error_sig, , message_length, message]
+    __ERROR(Error)  // [error_sig, , message_length, message]
     0x00            // [mem_ptr, error_sig, message_length, message]
     mstore          // [message_length, message]
     0x20            // [message_offset, message_length, message]
@@ -75,7 +66,7 @@ MEMORY LAYOUT WHEN THROWN
 */
 #define macro PANIC() = takes (1) returns (0) {
     // takes:       // [panic_code]
-    [PANIC_SIG]     // [panic_sig, panic_code]
+    __ERROR(Panic)  // [panic_sig, panic_code]
     0x00            // [panic_sig_offset, panic_sig, panic_code]
     mstore          // [panic_code]
     0x04            // [panic_code_offset, panic_code]
@@ -100,6 +91,56 @@ MEMORY LAYOUT WHEN THROWN
     [ASSERT_FALSE]          // [assert_false]
     PANIC()                 // []
     do_not_panic:           // []
+}
+
+// Assert that two stack elements are equal
+#define macro ASSERT_EQ() = {
+    // takes:             [a, b]
+    eq                 // [a == b]
+    ASSERT()           // []
+}
+
+// Assert that two stack elements are not equal
+#define macro ASSERT_NOT_EQ() = {
+    // takes:             [a, b]
+    eq iszero          // [a == b]
+    ASSERT()           // []
+}
+
+// Assert that two memory offsets contain equal words
+#define macro ASSERT_MEM_EQ(ptr_a, ptr_b) = {
+    // takes:             []
+    <ptr_b> mload      // [b]
+    <ptr_a> mload      // [a, b]
+    eq                 // [a == b]
+    ASSERT()           // []
+}
+
+// Assert that two memory offsets do not contain equal words
+#define macro ASSERT_MEM_NOT_EQ(ptr_a, ptr_b) = {
+    // takes:             []
+    <ptr_b> mload      // [b]
+    <ptr_a> mload      // [a, b]
+    eq iszero          // [a != b]
+    ASSERT()           // []
+}
+
+// Assert that two storage slots contain equal words
+#define macro ASSERT_STORAGE_EQ(slot_a, slot_b) = {
+    // takes:             []
+    <slot_b> sload     // [b]
+    <slot_a> sload     // [a, b]
+    eq                 // [a == b]
+    ASSERT()           // []
+}
+
+// Assert that two storage slots do not contain equal words
+#define macro ASSERT_STORAGE_NOT_EQ(slot_a, slot_b) = {
+    // takes:             []
+    <slot_b> sload     // [b]
+    <slot_a> sload     // [a, b]
+    eq iszero          // [a != b]
+    ASSERT()           // []
 }
 
 /* Bubbles up revert data if call failed. Call directly after `call`, `staticcall`, `delegatecall`. */
