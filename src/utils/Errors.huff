@@ -103,7 +103,7 @@ MEMORY LAYOUT WHEN THROWN
 // Assert that two stack elements are not equal
 #define macro ASSERT_NOT_EQ() = {
     // takes:             [a, b]
-    eq iszero          // [a == b]
+    eq iszero          // [a != b]
     ASSERT()           // []
 }
 
