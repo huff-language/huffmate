@@ -24,11 +24,8 @@ contract Dummy is Test {
     }
 
     fallback() external payable {
-        emit log("1");
-        // triggered = true;
-        emit log("2");
-        // withVal = msg.value;
-        emit log("3");
+        triggered = true;
+        withVal = msg.value;
     }
 }
 
