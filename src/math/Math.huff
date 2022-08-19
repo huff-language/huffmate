@@ -199,12 +199,12 @@
     div 0x01 add        // [((num1 - 1) / num2) + 1]
     dest jump
 
+    divide_by_zero:
+    0x00 0x00 revert
+
     if_zero:
     swap1               // [num2, num1]
     pop                 // [num1]
-
-    divide_by_zero:
-    0x00 0x00 revert
 
     dest:
 }
