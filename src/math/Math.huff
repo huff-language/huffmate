@@ -190,6 +190,9 @@
     dup1 iszero         // [is_zero, num1, num2]
     if_zero jumpi
 
+    dup2 iszero         // [is_zero, num1, num2]
+    divide_by_zero jumpi
+
     0x01                // [1, num1, num2]
     swap1               // [num1, 1, num1]
     sub                 // [num1 - 1, num2]
@@ -199,6 +202,9 @@
     if_zero:
     swap1               // [num2, num1]
     pop                 // [num1]
+
+    divide_by_zero:
+    0x00 0x00 revert
 
     dest:
 }
