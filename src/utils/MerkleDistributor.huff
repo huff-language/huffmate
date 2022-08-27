@@ -20,8 +20,8 @@
 
 /* Storage Slots */
 #define constant CLAIMED_BIT_MAP_SLOT = FREE_STORAGE_POINTER()  // 0x00
-#define constant TOKEN_ADDR_SLOT = FREE_STORAGE_POINTER()       // 0x20
-#define constant MERKLE_ROOT_SLOT = FREE_STORAGE_POINTER()      // 0x40
+#define constant TOKEN_ADDR_SLOT = FREE_STORAGE_POINTER()       // 0x01
+#define constant MERKLE_ROOT_SLOT = FREE_STORAGE_POINTER()      // 0x02
 
 /* Errors */
 #define error TransferError(string)
@@ -82,13 +82,13 @@
     __UTIL_IS_CLAIMED()         // [isEqual]
 
     // store result in memory
-    0x0 mstore                  // []
+    0x00 mstore                 // []
     0x20 0x00 return
 }
 
 #define macro SET_CLAIMED() = takes (0) returns (0) {
     __UTIL_SET_CLAIMED()
-    0x0 0x0 return
+    0x00 dup1 return
 }
 
 #define macro __UTIL_ADDRESS_MASK() = takes (1) returns(1) {
@@ -150,10 +150,10 @@
 
     // make call. return size is zero because we can fetch it after the call
     0x00                        // [ret_size]
-    0x00                        // [ret_offset, ret_size]
+    dup1                        // [ret_offset, ret_size]
     0x44                        // [args_size, ret_offset, ret_size]
     0x1c                        // [args_offset, args_size, ret_offset, ret_size]
-    0x00                        // [value, args_offset, args_size, ret_offset, ret_size]
+    dup3                        // [value, args_offset, args_size, ret_offset, ret_size]
     [TOKEN_ADDR_SLOT] sload     // [getter_addr, value, args_offset, args_size, ret_offset, ret_size]
     gas                         // [gas, getter_addr, value, args_offset, args_size, ret_offset, ret_size]
     call                        // [successs]
@@ -161,7 +161,7 @@
     // store returndata in memory
     returndatasize              // [returndatasize, success]
     0x00                        // [mem_offset, returndatasize, success]
-    0x00                        // [destOffset, mem_offset, returndatasize, success]
+    dup1                        // [destOffset, mem_offset, returndatasize, success]
     returndatacopy              // [success] // this stores the return data in memory
 
     // return the returndata from memory to the msg.sender
@@ -301,7 +301,7 @@ MEMORY LAYOUT WHEN THROWN
 }
 
 #define macro MAIN() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr
+    pc calldataload 0xE0 shr
 
     dup1 __FUNC_SIG(getTokenAddress) eq getTokenAddress jumpi
     dup1 __FUNC_SIG(getMerkleRoot) eq getMerkleRoot jumpi
@@ -317,5 +317,5 @@ MEMORY LAYOUT WHEN THROWN
     claim:
         CLAIM()
 
-    0x00 0x00 revert
+    0x00 dup1 revert
 }
