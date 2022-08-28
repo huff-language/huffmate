@@ -78,6 +78,7 @@ contract MerkleDistributorTest is Test {
         assert(balanceBeforeUser3 + amount3 == balanceAfterUser3);
     }
 
+    /// @dev Ensure claim mechanism works
     function testClaimOnce() public {
         bytes32[] memory proof1 = new bytes32[](2);
         proof1[0] = 0x3fdbb9ff8c87c843885788bfb3023d1351a05efb9a5a4dfd5332081fe8be4c31;

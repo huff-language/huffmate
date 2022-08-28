@@ -5,6 +5,8 @@
 
 /* Imports */
 #include "./MerkleProofLib.huff"
+#include "./Address.huff"
+#include "./ERC20Helper.huff"
 
 /* Interface */
 /* Stateful Functions */
@@ -14,9 +16,6 @@
 #define function getMerkleRoot() view returns (bytes32)
 #define function getTokenAddress() view returns (address)
 #define function isClaimed(uint256) view returns (bool)
-
-/* External Interface */
-#define function transfer(address,uint256) nonpayable returns (bool)
 
 /* Storage Slots */
 #define constant CLAIMED_BIT_MAP_SLOT = FREE_STORAGE_POINTER()  // 0x00
@@ -48,11 +47,10 @@
  */
 #define macro GET_MERKLE_ROOT() = takes (0) returns (0) {
     // Load value from storage.
-    [MERKLE_ROOT_SLOT]          // [ptr]
-    sload                       // [value]
+    [MERKLE_ROOT_SLOT] sload    // [merkle_root]
 
     // Store value in memory.
-    0x00 mstore
+    0x00 mstore                 // []
 
     // Return value
     0x20 0x00 return
@@ -76,7 +74,8 @@
  */
 #define macro IS_CLAIMED() = takes (0) returns (0) {
     // Load first argument from calldata
-    __UTIL_LOAD_ARG_0()
+    0x04                        // [0x04]
+    calldataload                // [arg0]
     
     // Utility macro
     __UTIL_IS_CLAIMED()         // [isEqual]
@@ -86,19 +85,9 @@
     0x20 0x00 return
 }
 
-#define macro SET_CLAIMED() = takes (0) returns (0) {
-    __UTIL_SET_CLAIMED()
-    0x00 dup1 return
-}
-
-#define macro __UTIL_ADDRESS_MASK() = takes (1) returns(1) {
-    0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff
-    and
-}
-
-// Input stack:                 // [arg0]
-// Output stack:                // [isEqual]
-// @dev stores result in 0x00 to 0x20 memory slot
+/// Input stack:                 // [arg0]
+/// Output stack:                // [isEqual]
+/// @dev stores result in 0x00 to 0x20 memory slot
 #define macro __UTIL_IS_CLAIMED() = takes (1) returns (1) {
     // index / 256
     0x100 dup2 div               // [index]
@@ -117,7 +106,8 @@
 
 
 #define macro __UTIL_SET_CLAIMED() = takes (0) returns (0) {
-    __UTIL_LOAD_ARG_0()
+    0x04                        // [0x04]
+    calldataload                // [arg0]
 
     // index / 256
     0x100 dup2 div              // [index, arg0]
@@ -138,38 +128,6 @@
     pop
 }
 
-/// input stack:                [acct_addr, amount]
-#define macro __UTIL_TRANSFER() = takes (2) returns (0) {
-    // STATICCALL transfer()
-    __FUNC_SIG(transfer) 0x0 mstore
-
-    // store args in memory
-    // address, uint256
-    0x20 mstore                 // [amount]
-    0x40 mstore                 // []
-
-    // make call. return size is zero because we can fetch it after the call
-    0x00                        // [ret_size]
-    dup1                        // [ret_offset, ret_size]
-    0x44                        // [args_size, ret_offset, ret_size]
-    0x1c                        // [args_offset, args_size, ret_offset, ret_size]
-    dup3                        // [value, args_offset, args_size, ret_offset, ret_size]
-    [TOKEN_ADDR_SLOT] sload     // [getter_addr, value, args_offset, args_size, ret_offset, ret_size]
-    gas                         // [gas, getter_addr, value, args_offset, args_size, ret_offset, ret_size]
-    call                        // [successs]
-
-    // store returndata in memory
-    returndatasize              // [returndatasize, success]
-    0x00                        // [mem_offset, returndatasize, success]
-    dup1                        // [destOffset, mem_offset, returndatasize, success]
-    returndatacopy              // [success] // this stores the return data in memory
-
-    // return the returndata from memory to the msg.sender
-    returndatasize              // [returndatasize, success]
-    0x00                        // [mem_offset, returndatasize, success]
-    return
-}
-
 // Input stack:         [index]
 // Output stack:        [key(claimed[index])]
 #define macro __UTIL_GENERATE_MAPPING_KEY() = takes (1) returns (1) {
@@ -177,13 +135,6 @@
     [CLAIMED_BIT_MAP_SLOT] 0x20 mstore
     0x40 0x00 sha3              // [key(claimed[index])]
 }
-
-// Load first argument from calldata
-#define macro __UTIL_LOAD_ARG_0() = takes (0) returns (1) {
-    0x04                        // [0x04]
-    calldataload                // [arg0]
-}
-
 
 /** Claim
  * @notice Entry point for: claim(uint256,address,uint256,bytes[])
@@ -197,7 +148,7 @@
 
     // Load arguments from calldata
     0x44 calldataload                       // [amount, root]
-    0x24 calldataload __UTIL_ADDRESS_MASK() // [account, amount, root]
+    0x24 calldataload MASK_ADDRESS()        // [account, amount, root]
     0x04 calldataload                       // [index, account, amount, root]
 
     // Revert error msg
@@ -229,16 +180,18 @@
     REQUIRE()                   // []
 
     // Mark it claimed
-    __UTIL_LOAD_ARG_0()
+    0x04                        // [0x04]
+    calldataload                // [arg0]
     __UTIL_SET_CLAIMED()
 
     // Load other calldata arguments
-    0x44 calldataload           // [amount]
-    0x24 calldataload           // [address_raw, amount]
-    __UTIL_ADDRESS_MASK()       // [address, amount]
+    [TOKEN_ADDR_SLOT] sload     // [getter_addr]
+    0x44 calldataload           // [amount, getter_addr]
+    0x24 calldataload           // [address_raw, amount, getter_addr]
+    MASK_ADDRESS()              // [address, amount, getter_addr]
 
     // Send the token
-    __UTIL_TRANSFER()
+    ERC20_TRANSFER()
 
     0x0 0x0 return
 }
