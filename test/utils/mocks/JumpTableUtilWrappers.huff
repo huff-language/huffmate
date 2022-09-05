@@ -1,0 +1,81 @@
+#define function getJumpdestMem(uint256) view returns (uint256)
+#define function getJumpdestStack(uint256) view returns (uint256)
+#define function getJumpdestMemPacked(uint256) view returns (uint256)
+#define function getJumpdestStackPacked(uint256) view returns (uint256)
+
+#define jumptable TEST_TABLE {
+    test_label_a test_label_b test_label_c test_label_d
+}
+
+#define jumptable__packed TEST_TABLE_PACKED {
+    test_label_a test_label_b test_label_c test_label_d
+}
+
+#define macro GET_JUMPDEST_MEM_WRAPPER() = takes (0) returns (0) {
+    __tablestart(TEST_TABLE)        // [table_start]
+    0x04 calldataload               // [n, table_start]
+
+    // Load a jumpdest inside of `TEST_TABLE` at index `n` into
+    // memory at 0x00.
+    LOAD_FROM_JT(0x00)              // []
+    0x20 0x00 return
+}
+
+#define macro GET_JUMPDEST_STACK_WRAPPER() = takes (0) returns (0) {
+    __tablestart(TEST_TABLE)        // [table_start]
+    0x04 calldataload               // [n, table_start]
+    RETRIEVE_FROM_JT()              // [jumpdest_pc]
+
+    // Store our jumpdest_pc in memory & return it
+    0x00 mstore                     // []
+    0x20 0x00 return
+}
+
+#define macro GET_JUMPDEST_MEM_PACKED_WRAPPER() = takes (0) returns (0) {
+    __tablestart(TEST_TABLE_PACKED) // [table_start]
+    0x04 calldataload               // [n, table_start]
+
+    // Store the retrieved jumpdest at 0x00 in memory.
+    // Since `LOAD_FROM_PACKED_JT` only retrieves 2 bytes
+    // from the contract's code in the `codecopy` op, we 
+    // need to pass our desired memory pointer + 0x1e (30 bytes)
+    LOAD_FROM_PACKED_JT(0x1e)       // []
+    0x20 0x00 return
+}
+
+#define macro GET_JUMPDEST_STACK_PACKED_WRAPPER() = takes (0) returns (0) {
+    __tablestart(TEST_TABLE_PACKED) // [table_start]
+    0x04 calldataload               // [n, table_start]
+    RETRIEVE_FROM_PACKED_JT()       // [jumpdest_pc]
+
+    // Store our jumpdest_pc in memory & return it
+    0x00 mstore                     // []
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(getJumpdestMem)         eq get_jumpdest_mem          jumpi
+    dup1 __FUNC_SIG(getJumpdestStack)       eq get_jumpdest_stack        jumpi
+    dup1 __FUNC_SIG(getJumpdestMemPacked)   eq get_jumpdest_mem_packed   jumpi
+    dup1 __FUNC_SIG(getJumpdestStackPacked) eq get_jumpdest_stack_packed jumpi
+
+    // Revert if no function signature matched
+    test_label_d jump
+
+    get_jumpdest_mem:
+        GET_JUMPDEST_MEM_WRAPPER()
+    get_jumpdest_stack:
+        GET_JUMPDEST_MEM_WRAPPER()
+    get_jumpdest_mem_packed:
+        GET_JUMPDEST_MEM_PACKED_WRAPPER()
+    get_jumpdest_stack_packed:
+        GET_JUMPDEST_STACK_PACKED_WRAPPER()
+
+    // Test labels included in `TEST_TABLE`
+    test_label_a:
+    test_label_b:
+    test_label_c:
+    test_label_d:
+        0x00 dup1 revert
+}

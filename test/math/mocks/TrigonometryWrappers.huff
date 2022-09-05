@@ -1,0 +1,29 @@
+#define function sin(uint256) pure returns (int256)
+#define function cos(uint256) pure returns (int256)
+
+#define macro SIN_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload // [angle]
+    SIN()             // [sin(angle)]
+    0x00 mstore       // []
+    0x20 0x00 return
+}
+
+#define macro COS_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload // [angle]
+    COS()             // [cos(angle)]
+    0x00 mstore       // []
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(sin) eq sin jumpi
+    dup1 __FUNC_SIG(cos) eq cos jumpi
+
+    0x00 dup1 revert
+
+    sin:
+        SIN_WRAPPER()
+    cos:
+        COS_WRAPPER()
+}
