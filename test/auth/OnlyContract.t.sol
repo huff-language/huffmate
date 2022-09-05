@@ -23,7 +23,8 @@ contract OnlyContractTest is Test {
 
     /// @notice Tests that ONLY_CONTRACT macro reverts when tx.origin == msg.sender
     function testOnlyContract(address caller) public {
-        vm.assume(caller != address(this));
+        // foundry's tx.origin = 0x00a329c0648769A73afAc7F9381E08FB43dBEA72
+        vm.assume(caller != tx.origin);
 
         // Should revert when tx.origin == msg.sender
         // vm.startPrank(address,address) sets msg.sender and tx.origin
@@ -32,7 +33,8 @@ contract OnlyContractTest is Test {
         only_contract.call("");
         vm.stopPrank();
 
-        // Only setting the msg.sender and not tx.origin should succeed, so long as caller != address(this)
+        // Only setting the msg.sender and not tx.origin should succeed, so long as
+        // caller != 0x00a329c0648769A73afAc7F9381E08FB43dBEA72, which is the default tx.origin
         vm.startPrank(caller);
         (bool success,) = only_contract.call("");
         assert(success);
