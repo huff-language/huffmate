@@ -61,47 +61,6 @@
 // TODO: consider making EIP-2612 it's own separate module
 #define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
 #define constant INITIAL_DOMAIN_SEPARATOR = FREE_STORAGE_POINTER()
-<<<<<<< HEAD
-
-/* Domain Separater Byte String */
-/* total - 86 bytes = 0x54 */
-#define constant DOMAIN_ONE_SEPARATOR_STR = 0x454950373132446f6d61696e28737472696e67206e616d652c737472696e6720 // 32 bytes
-#define constant DOMAIN_TWO_SEPARATOR_STR = 0x76657273696f6e2c75696e7432353620636861696e49642c6164647265737320 // 32 bytes
-#define constant DOMAIN_THREE_SEPARATOR_STR = 0x766572696679696e67436f6e747261637429 // 18 bytes
-
-/* Constructor */
-#define macro CONSTRUCTOR() = takes (0) returns (0) {
-    // Copy the decimals into memory
-    0x20                        // [size] - byte size to copy
-    0x20 codesize sub           // [offset, size] - offset in the code to copy from
-    0x00                        // [mem, offset, size] - offset in memory to copy to
-    codecopy                    // []
-    0x00 mload                  // [decimals]
-    [DECIMALS_LOCATION] sstore  // []
-
-    // Copy the symbol into memory
-    0x20                        // [size] - byte size to copy
-    0x40 codesize sub           // [offset, size] - offset in the code to copy from
-    0x00                        // [mem, offset, size] - offset in memory to copy to
-    codecopy                    // []
-    0x00 mload                  // [symbol]
-    [SYMBOL_LOCATION] sstore    // []
-
-    // Copy the name into memory
-    0x20                        // [size] - byte size to copy
-    0x60 codesize sub           // [offset, size] - offset in the code to copy from
-    0x00                        // [mem, offset, size] - offset in memory to copy to
-    codecopy                    // []
-    0x00 mload                  // [name]
-    [NAME_LOCATION] sstore      // []
-
-    // Store the chain id
-    chainid [INITIAL_CHAIN_ID] sstore               // []
-
-    // Compute the domain separator
-    // COMPUTE_DOMAIN_SEPARATOR()                      // [domainSeparator]
-    // [INITIAL_DOMAIN_SEPARATOR] sstore               // []
-=======
 #define constant NONCE_SLOT = FREE_STORAGE_POINTER()
 #define constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9 // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 #define constant X_1901 = 0x1901000000000000000000000000000000000000000000000000000000000000
@@ -120,7 +79,6 @@
     chainid [INITIAL_CHAIN_ID] sstore                                          // []
     COMPUTE_DOMAIN_SEPARATOR()                                                 // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore                                          // []
->>>>>>> 59eb66a9e2304083871c7a1e9b0f6f80e591f2ac
 }
 
 /*//////////////////////////////////////////////////////////////////
@@ -267,7 +225,6 @@
     [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)                           // [value, from, to]
 }
 
-<<<<<<< HEAD
 #define macro APPROVE() = takes (0) returns (0) {
     0x24 calldataload       // [value]
     dup1 0x00 mstore        // [value]
@@ -282,7 +239,6 @@
 
     // Store the value at slot = keccak256(from . to)
     STORE_ELEMENT_FROM_KEYS(0x00)
-=======
 /*//////////////////////////////////////////////////////////////////
 //                              EIP-2612 LOGIC
 //////////////////////////////////////////////////////////////////*/
@@ -303,7 +259,6 @@
     0x80 mstore                                                                // []
     0xA0 0x00                                                                  // [loc, len]
     sha3                                                                       // [hash]
->>>>>>> 59eb66a9e2304083871c7a1e9b0f6f80e591f2ac
 }
 
 #define macro DOMAIN_SEPARATOR() = takes (0) returns (0) {
@@ -536,22 +491,6 @@
     log3                                                                       // []
 }
 
-<<<<<<< HEAD
-#define macro NAME() = takes(0) returns(0) {
-    0x00 0x40 mstore                   // []
-    0x40 0x20 mstore                   // []
-    [NAME_LOCATION] sload              // [name]
-    0x20 mstore                        // []
-    0x40 0x00 return                   // []
-}
-
-#define macro SYMBOL() = takes(0) returns(0) {
-    0x00 0x40 mstore                   // []
-    0x40 0x20 mstore                   // []
-    [SYMBOL_LOCATION] sload            // [symbol]
-    0x20 mstore                        // []
-    0x40 0x00 return                   // []
-=======
 /* Utility Functions */
 #define macro NON_PAYABLE() = takes(0) returns (0) {
     callvalue iszero                                                           // [msg.value == 0]
@@ -571,7 +510,6 @@
     <mem_ptr> 0x24 add mstore                                                  // ["str"]        0x00 error sig  0x04 offset  0x24 len
     <mem_ptr> 0x44 add mstore                                                  // []             0x00 error sig  0x04 offset  0x24 len  0x44: "string"
     0x64 0x00 revert
->>>>>>> 59eb66a9e2304083871c7a1e9b0f6f80e591f2ac
 }
 
 

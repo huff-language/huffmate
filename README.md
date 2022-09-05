@@ -4,6 +4,10 @@
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
+## Warning: Be cautious
+Huffmate is still a work in progress and the majority of contracts have yet to be completed and audited. We do not give any warranties and will not be liable for any loss incurred through any use of this codebase.
+
+Use these contracts at your own risk!
 
 ## Usage
 
@@ -24,8 +28,10 @@ npm install @pentagonxyz/huffmate
 
 ```ml
 auth
-├─ Owned — "Simple single owner authorization"
 ├─ Auth — "Flexible and updatable auth pattern"
+├─ NonPayable — "Modifier Macro that reverts the tx when msg.value > 0"
+├─ OnlyContract — "Basic Macro that reverts when the sender is an EOA"
+├─ Owned — "Simple single owner authorization"
 ├─ RolesAuthority — "Role based Authority that supports up to 256 roles"
 data-structures
 ├─ Arrays - "Memory translation handlers for arrays"
@@ -47,6 +53,7 @@ utils
 ├─ Calls - TODO
 ├─ Data — TODO
 ├─ MerkleProofLib — "Gas optimized merkle proof verification library"
+├─ Multicallable — "Enables a single call to call multiple methods within a contract."
 ├─ ReentrancyGuard — TODO
 ├─ SSTORE2 — TODO
 ```

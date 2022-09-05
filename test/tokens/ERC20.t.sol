@@ -6,6 +6,8 @@ import "forge-std/Test.sol";
 import {HuffConfig} from "foundry-huff/HuffConfig.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 
+import {IERC20Ownable} from "../../src/tokens/interfaces/IERC20.sol";
+
 interface ERC20 {
     /* Metadata */
     function name() external view returns (string memory);
