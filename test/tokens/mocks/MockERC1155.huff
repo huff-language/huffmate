@@ -1,4 +1,25 @@
 
+/* Interface */
+/* Stateful functions */
+#define function mint(address,uint256,uint256,bytes) nonpayable returns ()
+#define function batchMint(address,uint256[],uint256[],bytes) nonpayable returns ()
+
+#define function burn(address,uint256,uint256) nonpayable returns ()
+#define function batchBurn(address,uint256[],uint256[]) nonpayable returns ()
+
+#define function safeTransferFrom(address,address,uint256,uint256,bytes) nonpayable returns ()
+#define function safeBatchTransferFrom(address,address,uint256[],uint256[],bytes) nonpayable returns()
+#define function setApprovalForAll(address,bool) nonpayable returns ()
+
+/* View functions */
+#define function getApproved(uint256) view returns (address)
+#define function isApprovedForAll(address,address) view returns (bool)
+#define function balanceOf(address,uint256) view returns (uint256)
+#define function balanceOfBatch(address[],uint256[]) view returns (uint256[])
+
+#define function name() view returns (string)
+#define function symbol() view returns (string)
+#define function supportsInterface(bytes4) view returns (bool)
 
 #define macro MAIN() {
     0x00 calldataload 0xE0 shr      // [function selector on stack]
