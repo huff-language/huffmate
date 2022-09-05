@@ -14,3 +14,8 @@ fs_permissions = [
     { access = "read", path = "./test/utils/mocks/MerkleProofLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/MulticallableWrappers.huff" }
 ]
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "foundry-huff/=lib/foundry-huff/src/",
+    "solmate/=lib/solmate/src/"
+]
