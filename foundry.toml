@@ -1,5 +1,22 @@
-[default]
+[profile.default]
 out = 'out'
 libs = ['lib']
 ffi = true
 fuzz_runs = 1000
+fs_permissions = [
+    { access = "read", path = "./test/data-structures/mocks/InstantiatedArrays.huff" },
+    { access = "read", path = "./test/data-structures/mocks/InstantiatedHashmap.huff" },
+    { access = "read", path = "./test/math/mocks/FixedPointMathWrappers.huff" },
+    { access = "read", path = "./test/math/mocks/TrigonometryWrappers.huff" },
+    { access = "read", path = "./test/tokens/mocks/MockERC1155.huff" },
+    { access = "read", path = "./test/utils/mocks/BitPackLibWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/ErrorsMock.huff" },
+    { access = "read", path = "./test/utils/mocks/JumpTableUtilWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/MerkleProofLibWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/MulticallableWrappers.huff" }
+]
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "foundry-huff/=lib/foundry-huff/src/",
+    "solmate/=lib/solmate/src/"
+]

@@ -1,5 +1,6 @@
 /// @title ERC1155
 /// @author cheethas <https://github.com/cheethas>
+/// @author asnared <https://github.com/abigger87>
 /// @notice Minimal, gas efficient ERC 1155 implementation
 
 #include "../data-structures/Hashmap.huff"
@@ -53,7 +54,7 @@
 #define macro BALANCE_OF() = takes(0) returns(0) {
     0x24 calldataload                               // [tokenId]
     0x04 calldataload                               // [account, tokenId]
- 
+
     GET_BALANCE_OF()                                // [balance]
     0x00 mstore                                     // [] load into mem
     0x20 0x00 return                                // [] return 32 bytes
@@ -61,19 +62,19 @@
 
 
 /**Name
- * 
- * @notice Gets the name of the contract 
+ *
+ * @notice Gets the name of the contract
  * @dev Hardcoded as "hufferc1155"
  * @param []
- * @return {return}[string] 
+ * @return {return}[string]
 */
 #define macro NAME() = takes (0) returns (0) {
     // length 0b
     0x0b4855464645524331313535          // [`${len}${hufferc1155}`]
     0x2b mstore                         // [] load into mem
-    
+
     0x20 returndatasize mstore          // store dynamic offset
-    0x60 returndatasize return          // return abi encoded string                     
+    0x60 returndatasize return          // return abi encoded string
 }
 
 
@@ -116,15 +117,15 @@
 
 
 /** Set Approval for All
- * 
- * @notice Set Approval for All tokens for the provided accuont 
+ *
+ * @notice Set Approval for All tokens for the provided accuont
  * @dev Modifies mapping(adddress => mapping(address => bool)) for a given account
  * @param {calldata} [address operator, bool approved]
  * @return []
 */
 #define macro SET_APPROVAL_FOR_ALL() = takes(0) returns(0){
     0x24 calldataload                   // [approved]
-    
+
     // store approved in memory for the log
     dup1 0x00 mstore                    // [approved]
 
@@ -135,28 +136,28 @@
     dup2 dup2                           // [msg.sender, operator, msg.sender, operator, approved]
 
     // emit ApprovalForAll(msg.sender, operator, approved)
-__EVENT_HASH(ApprovalForAll)     // [sig, msg.sender, operator, msg.sender, operator, approved]
+    __EVENT_HASH(ApprovalForAll)        // [sig, msg.sender, operator, msg.sender, operator, approved]
     0x20 0x00                           // [offset, size, sig, msg.sender, operator, msg.sender, operator, approved]
     log3                                // [msg.sender, operator, approved]
 
-    [IS_APPROVED_FOR_ALL_LOCATION]      // [slot, msg.sender, operator, approved] 
+    [IS_APPROVED_FOR_ALL_LOCATION]      // [slot, msg.sender, operator, approved]
     STORE_ELEMENT_FROM_KEYS_2D(0x00)    // []
     stop
 }
 
 /**Is Approved For All
- * 
+ *
  * @notice Getter method for approval mapping
- * @param {calldata} [address owner, address operator] 
+ * @param {calldata} [address owner, address operator]
  * @return []
 */
 #define macro IS_APPROVED_FOR_ALL() = takes(0) returns(0) {
     0x24 calldataload                 // [operator]
     0x04 calldataload                 // [owner, operator]
-    
-    [IS_APPROVED_FOR_ALL_LOCATION]    // [slot, owner, operator] 
+
+    [IS_APPROVED_FOR_ALL_LOCATION]    // [slot, owner, operator]
     LOAD_ELEMENT_FROM_KEYS_2D(0x00)   // [val]
-    
+
     0x00 mstore
     0x20 0x00 return
 }
@@ -924,60 +925,4 @@ skipResize:
     iszero <error> jumpi               // []
 
     continue:
-}
-
-
-
-/* Main */
-#define macro MAIN() = takes(0) returns(0) {
-    0x00 calldataload 0xE0 shr      // [function selector on stack]
-    
-    dup1 __FUNC_SIG(mint) eq mint jumpi //__FUNC_SIG(mint)
-    dup1 __FUNC_SIG(batchMint) eq batchMint jumpi 
-    dup1 __FUNC_SIG(safeTransferFrom) eq safeTransferFrom jumpi
-    dup1 __FUNC_SIG(safeBatchTransferFrom) eq batchSafeTransferFrom jumpi
-    dup1 __FUNC_SIG(setApprovalForAll) eq setApprovalForAll jumpi
-    dup1 __FUNC_SIG(burn) eq burn jumpi
-    dup1 __FUNC_SIG(batchBurn) eq batchBurn jumpi
-    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi 
-    dup1 __FUNC_SIG(isApprovedForAll) eq isApprovedForAll jumpi
-    dup1 __FUNC_SIG(name) eq name jumpi
-    dup1 __FUNC_SIG(symbol) eq symbol jumpi
-    dup1 __FUNC_SIG(supportsInterface) eq getName jumpi
-    dup1 __FUNC_SIG(symbol) eq symbol jumpi
-    dup1 __FUNC_SIG(getName) eq getName jumpi
-    dup1 __FUNC_SIG(balanceOfBatch) balanceOfBatch jumpi
-
-    // No fallback function
-    0x00 dup1 revert
-
-    supportsInterface:
-        SUPPORTS_INTERFACE()
-    getName:
-        NAME()
-    mint:
-        MINT()
-    balanceOf:
-        BALANCE_OF()
-    balanceOfBatch:
-        BALANCE_OF_BATCH()
-    safeTransferFrom:
-        SAFE_TRANSFER_FROM()
-    batchSafeTransferFrom:
-        BATCH_SAFE_TRANSFER_FROM()
-    burn:
-        BURN_TOKEN()
-    batchMint:
-        BATCH_MINT()
-    name:
-        NAME()
-    symbol:
-        SYMBOL()
-    isApprovedForAll:
-        IS_APPROVED_FOR_ALL()
-    setApprovalForAll:
-        SET_APPROVAL_FOR_ALL()
-    batchBurn:
-        BATCH_BURN()
-
 }

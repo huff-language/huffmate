@@ -1,0 +1,115 @@
+#define function multicall(bytes[] calldata) payable returns (bytes[] memory)
+#define function call1() view returns (uint256)
+#define function call2() view returns (uint256)
+#define function call3() view returns (uint256)
+#define function returnsTuple(uint256, uint256) view returns (uint256, uint256)
+#define function returnsStr(string) view returns (string)
+#define function returnsSender() view returns (address)
+#define function pay() payable returns (uint256)
+#define function paid() view returns (uint256)
+#define function revertsNoMsg() view returns ()
+#define function revertsMsg() view returns ()
+
+#define constant PAID_SLOT = FREE_STORAGE_POINTER()
+
+#define macro CALL_1() = takes (0) returns (0) {
+    0x11 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro CALL_2() = takes (0) returns (0) {
+    0x22 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro CALL_3() = takes (0) returns (0) {
+    0x33 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro RETURNS_TUPLE() = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    0x00 mstore       // []
+    0x24 calldataload // [y]
+    0x20 mstore       // []
+    0x40 0x00 return
+}
+
+#define macro RETURNS_STR() = takes (0) returns (0) {
+    0x24 calldataload // [str_len]
+    0x40 add          // [str_len + 0x40]
+    dup1              // [str_len + 0x40, str_len + 0x40]
+    0x04              // [0x04, str_len + 0x40, str_len + 0x40]
+    0x00              // [0x00, 0x04, str_len + 0x40, str_len + 0x40]
+    calldatacopy      // [str_len + 0x40]
+    0x00 return
+}
+
+#define macro RETURNS_SENDER() = takes (0) returns (0) {
+    caller            // [msg.sender]
+    0x00 mstore       // []
+    0x20 0x00 return
+}
+
+#define macro PAY() = takes (0) returns (0) {
+    [PAID_SLOT] sload  // [paid]
+    callvalue add      // [paid + callvalue]
+    [PAID_SLOT] sstore // []
+    0x00 dup1 return
+}
+
+#define macro PAID() = takes (0) returns (0) {
+    [PAID_SLOT] sload  // [paid]
+    0x00 mstore        // []
+    0x20 0x00 return 
+}
+
+#define macro REVERTS_NO_MSG() = takes (0) returns (0) {
+    0x00 dup1 revert
+}
+
+#define macro REVERTS_MSG() = takes (0) returns (0) {
+    0x5465737420526576657274000000000000000000000000000000000000000000 
+    0x00 mstore
+    0x0B 0x00 revert
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(multicall)     eq multicall      jumpi
+    dup1 __FUNC_SIG(call1)         eq call_one       jumpi
+    dup1 __FUNC_SIG(call2)         eq call_two       jumpi
+    dup1 __FUNC_SIG(call3)         eq call_three     jumpi
+    dup1 __FUNC_SIG(returnsTuple)  eq returns_tuple  jumpi
+    dup1 __FUNC_SIG(returnsStr)    eq returns_str    jumpi
+    dup1 __FUNC_SIG(returnsSender) eq returns_sender jumpi
+    dup1 __FUNC_SIG(pay)           eq pay            jumpi
+    dup1 __FUNC_SIG(paid)          eq paid           jumpi
+    dup1 __FUNC_SIG(revertsNoMsg)  eq revert_no_msg  jumpi
+    dup1 __FUNC_SIG(revertsMsg)    eq revert_msg     jumpi
+
+    0x00 dup1 revert
+
+    multicall:
+        MULTICALL()
+    call_one:
+        CALL_1()
+    call_two:
+        CALL_2()
+    call_three:
+        CALL_3()
+    returns_tuple:
+        RETURNS_TUPLE()
+    returns_str:
+        RETURNS_STR()
+    returns_sender:
+        RETURNS_SENDER()
+    pay:
+        PAY()
+    paid:
+        PAID()
+    revert_no_msg:
+        REVERTS_NO_MSG()
+    revert_msg:
+        REVERTS_MSG()
+}

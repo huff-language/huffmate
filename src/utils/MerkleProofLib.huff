@@ -1,0 +1,65 @@
+/// @title MerkleProofLib
+/// @notice Gas optimized merkle proof verification library
+///         Original implementation:
+///         https://github.com/Rari-Capital/solmate/blob/v7/src/utils/MerkleProofLib.sol
+/// @dev The `proof_cd_ptr` passed via the stack to this macro should point to the offset
+///      of the proof array's length in the calldata. This macro assumes that the proof
+///      array contains 32 byte values.
+/// @author solmate <https://github.com/Rari-Capital/solmate>
+/// @author clabby <https://github.com/clabby>
+
+/// @notice Verifies a merkle proof.
+/// @param proof_cd_ptr Pointer to the length of the proof array.
+/// @param leaf Leaf to prove inclusion of
+/// @param root Root of the merkle tree
+/// @return is_valid True if the inclusion of `leaf` in the merkle tree represented by 
+///         `root` was able to be proven, false if not.
+#define macro VERIFY_PROOF() = takes (3) returns (1) {
+    // Input Stack:        [proof_cd_ptr, leaf, root]
+
+    // Get ending offset (ptr + 1 + proof_len * 0x20) of proof array
+    // and its starting offset (ptr + 0x20)
+    dup1
+    0x20 add
+    swap1               // [proof_cd_ptr, proof_cd_ptr + 0x20, leaf, root]
+    calldataload        // [proof_arr_len, proof_cd_ptr + 0x20, leaf, root]
+    0x05 shl            // [proof_arr_len << 5, proof_cd_ptr + 0x20, leaf, root]
+    dup2 add            // [proof_arr_len << 5 + proof_cd_ptr + 0x20, proof_cd_ptr + 0x20, leaf, root]
+
+    // Stack description changed to reflect the vars' respective purposes in the loop
+    swap1               // [loop_offset, proof_arr_end, computed_hash, root]
+
+    loop:
+        dup2 dup2       // [loop_offset, proof_arr_end, loop_offset, proof_arr_end, computed_hash, root]
+        lt              // [loop_offset < proof_arr_end, loop_offset, proof_arr_end, computed_hash, root]
+        // If loop index is >= the proof arr end offset, finish the loop
+        iszero finish jumpi
+
+        // Load data at proof_arr[loop_offset]
+        dup1            // [loop_offset, loop_offset, proof_arr_end, computed_hash, root]
+        calldataload    // [proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+
+        dup1            // [proof_arr[loop_offset], proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+        dup5            // [computed_hash, proof_arr[loop_offset], proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+        gt              // [computed_hash > proof_arr[loop_offset], proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+        0x05 shl        // [(computed_hash > proof_arr[loop_offset]) << 5, proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+
+        dup5            // [computed_hash, (computed_hash > proof_arr[loop_offset]) << 5, proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+        dup2            // [(computed_hash > proof_arr[loop_offset]) << 5, computed_hash, (computed_hash > proof_arr[loop_offset]) << 5, proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+        mstore          // [(computed_hash > proof_arr[loop_offset]) << 5, proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+
+        0x20 xor        // [((computed_hash > proof_arr[loop_offset]) << 5) ^ 0x20, proof_arr[loop_offset], loop_offset, proof_arr_end, computed_hash, root]
+        mstore          // [loop_offset, proof_arr_end, computed_hash, root]
+
+        // Compute new hash
+        0x40 0x00 sha3  // [computed_hash_new, loop_offset, proof_arr_end, computed_hash, root]
+        swap3 pop       // [loop_offset, proof_arr_end, computed_hash, root]
+
+        // Increment loop offset by 0x20
+        0x20 add        // [loop_offset + 0x20, proof_arr_end, computed_hash, root]
+
+        loop jump
+    finish:
+        pop pop         // [root, computed_hash]
+        eq              // [root == computed_hash]
+}

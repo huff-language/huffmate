@@ -1,4 +1,4 @@
-name: Huff Tests
+name: ci
 
 on:
   # manual trigger
@@ -30,7 +30,7 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-      
+
       - name: Install Huff
         uses: huff-language/huff-toolchain@v2
         with:

@@ -1,0 +1,20 @@
+#define function verifyProof(bytes32, bytes32, bytes32[] calldata) pure returns (bool)
+
+#define macro VERIFY_PROOF_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload   // [root]
+    0x24 calldataload   // [leaf, root]
+    0x64                // [proof_cd_ptr, leaf, root]
+    VERIFY_PROOF()      // [is_valid]
+    0x00 mstore         // []
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(verifyProof) eq verifyProof jumpi
+
+    0x00 dup1 revert
+
+    verifyProof:
+        VERIFY_PROOF_WRAPPER()
+} 

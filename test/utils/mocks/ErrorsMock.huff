@@ -1,0 +1,143 @@
+#define function simulateRequire() pure returns ()
+#define function simulateAssert() pure returns ()
+#define function simulateAssertEq() pure returns ()
+#define function simulateAssertNotEq() pure returns ()
+#define function simulateAssertMemEq() pure returns ()
+#define function simulateAssertMemNotEq() pure returns ()
+#define function simulateAssertStorageEq() nonpayable returns ()
+#define function simulateAssertStorageNotEq() nonpayable returns ()
+#define function simulateCompilerPanic() pure returns ()
+#define function simulateArithmeticOverflow() pure returns ()
+#define function simulateDivideByZero() pure returns ()
+#define function simulateInvalidEnumValue() pure returns ()
+#define function simulateInvalidStorageByteArray() pure returns ()
+#define function simulateEmptyArrayPop() pure returns ()
+#define function simulateArrayOutOfBounds() pure returns ()
+#define function simulateMemoryTooLarge() pure returns ()
+#define function simulateUninitializedFunctionPointer() pure returns ()
+#define function simulateBubbleUpIfFailed(address) view returns ()
+
+#define constant REQUIRE_LENGTH = 0x06
+#define constant REQUIRE_STRING = 0x7265766572740000000000000000000000000000000000000000000000000000
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xe0 shr
+    dup1 __FUNC_SIG(simulateRequire) eq simulate_require jumpi
+    dup1 __FUNC_SIG(simulateAssert) eq simulate_assert jumpi
+    dup1 __FUNC_SIG(simulateAssertEq) eq simulate_assert_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertNotEq) eq simulate_assert_not_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertMemEq) eq simulate_assert_mem_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertMemNotEq) eq simulate_assert_mem_not_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertStorageEq) eq simulate_assert_storage_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertStorageNotEq) eq simulate_assert_storage_not_eq jumpi
+    dup1 __FUNC_SIG(simulateCompilerPanic) eq simulate_compiler_panic jumpi
+    dup1 __FUNC_SIG(simulateArithmeticOverflow) eq simulateArithmeticOverflow jumpi
+    dup1 __FUNC_SIG(simulateDivideByZero) eq simulateDivideByZero jumpi
+    dup1 __FUNC_SIG(simulateInvalidEnumValue) eq simulateInvalidEnumValue jumpi
+    dup1 __FUNC_SIG(simulateInvalidStorageByteArray) eq simulateInvalidStorageByteArray jumpi
+    dup1 __FUNC_SIG(simulateEmptyArrayPop) eq simulateEmptyArrayPop jumpi
+    dup1 __FUNC_SIG(simulateArrayOutOfBounds) eq simulateArrayOutOfBounds jumpi
+    dup1 __FUNC_SIG(simulateMemoryTooLarge) eq simulateMemoryTooLarge jumpi
+    dup1 __FUNC_SIG(simulateUninitializedFunctionPointer) eq simulateUninitializedFunctionPointer jumpi
+    dup1 __FUNC_SIG(simulateBubbleUpIfFailed) eq simulateBubbleUpIfFailed jumpi
+
+    0x00 0x00 revert
+
+    simulate_require:
+        [REQUIRE_STRING]    // [message]
+        [REQUIRE_LENGTH]    // [message_length, message]
+        0x00                // [false, message_length, message]
+        REQUIRE()           // []
+
+    simulate_assert:
+        0x00        // [false]
+        ASSERT()    // []
+
+    simulate_assert_eq:
+        0x01 0x00   // [0x00, 0x01]
+        ASSERT_EQ()
+
+    simulate_assert_not_eq:
+        0x00 0x00   // [0x00, 0x00]
+        ASSERT_NOT_EQ()
+
+    simulate_assert_mem_eq:
+        0x00 dup1 mstore
+        0x01 0x20 mstore
+        ASSERT_MEM_EQ(0x00, 0x20)
+
+    simulate_assert_mem_not_eq:
+        0x00 dup1 mstore
+        0x00 0x20 mstore
+        ASSERT_MEM_NOT_EQ(0x00, 0x20)
+
+    simulate_assert_storage_eq:
+        0x00 dup1 sstore
+        0x01 dup1 sstore
+        ASSERT_STORAGE_EQ(0x00, 0x01)
+
+    simulate_assert_storage_not_eq:
+        0x00 dup1 sstore
+        0x00 0x01 sstore
+        ASSERT_STORAGE_NOT_EQ(0x00, 0x01)
+
+    simulate_compiler_panic:
+        [COMPILER_PANIC]
+        do_panic
+        jump
+
+    simulateArithmeticOverflow:
+        [ARITHMETIC_OVERFLOW]
+        do_panic
+        jump
+
+    simulateDivideByZero:
+        [DIVIDE_BY_ZERO]
+        do_panic
+        jump
+
+    simulateInvalidEnumValue:
+        [INVALID_ENUM_VALUE]
+        do_panic
+        jump
+
+    simulateInvalidStorageByteArray:
+        [INVALID_STORAGE_BYTE_ARRAY]
+        do_panic
+        jump
+
+    simulateEmptyArrayPop:
+        [EMPTY_ARRAY_POP]
+        do_panic
+        jump
+
+    simulateArrayOutOfBounds:
+        [ARRAY_OUT_OF_BOUNDS]
+        do_panic
+        jump
+
+    simulateMemoryTooLarge:
+        [MEMORY_TOO_LARGE]
+        do_panic
+        jump
+
+    simulateUninitializedFunctionPointer:
+        [UNINITIALIZED_FUNCTION_POINTER]
+        do_panic
+        jump
+
+    simulateBubbleUpIfFailed:
+        0x00                    // [ret_size]
+        dup1                    // [ret_offset, ret_size]
+        dup1                    // [args_size, ret_offset, ret_size]
+        dup1                    // [args_offset, args_size, ret_offst, ret_size]
+        dup1                    // [value, args_offset, args_size, ret_offst, ret_size]
+        0x04                    // [addr_offset, value, args_offset, args_size, ret_offst, ret_size]
+        calldataload            // [addr, value, args_offset, args_size, ret_offst, ret_size]
+        gas                     // [gas, addr, value, args_offset, args_size, ret_offst, ret_size]
+        call                    // [success]
+        BUBBLE_UP_IF_FAILED()   // []
+
+    do_panic:
+        PANIC()
+}

@@ -1,0 +1,150 @@
+#define function mulDivDown(uint256,uint256,uint256) pure returns(uint256)
+#define function mulDivUp(uint256,uint256,uint256) pure returns(uint256)
+#define function mulWadDown(uint256,uint256) pure returns(uint256)
+#define function mulWadUp(uint256,uint256) pure returns(uint256)
+#define function divWadDown(uint256,uint256) pure returns(uint256)
+#define function divWadUp(uint256,uint256) pure returns(uint256)
+#define function rpow(uint256,uint256,uint256) pure returns(uint256)
+#define function expWad(int256) pure returns(int256)
+#define function powWad(int256,int256) pure returns(int256)
+#define function lnWad(int256) pure returns(int256)
+#define function sqrt(uint256) pure returns(uint256)
+#define function log2(uint256) pure returns(uint256)
+
+#define macro MUL_DIV_DOWN_WRAPPER(fail) = takes (0) returns (0) {
+    0x44 calldataload    // [denominator]
+    0x24 calldataload    // [y, denominator]
+    0x04 calldataload    // [x, y, denominator]
+    MUL_DIV_DOWN(fail)   // [result]
+    0x00 mstore          // []
+    0x20 0x00 return
+}
+
+#define macro MUL_DIV_UP_WRAPPER(fail) = takes (0) returns (0) {
+    0x44 calldataload  // [denominator]
+    0x24 calldataload  // [y, denominator]
+    0x04 calldataload  // [x, y, denominator]
+    MUL_DIV_UP(fail)   // [result]
+    0x00 mstore        // []
+    0x20 0x00 return
+}
+
+#define macro MUL_WAD_DOWN_WRAPPER(fail) = takes (0) returns (0) {
+    0x24 calldataload    // [y]
+    0x04 calldataload    // [x, y]
+    MUL_WAD_DOWN(fail)   // [result]
+    0x00 mstore          // []
+    0x20 0x00 return
+}
+
+#define macro MUL_WAD_UP_WRAPPER(fail) = takes (0) returns (0) {
+    0x24 calldataload  // [y]
+    0x04 calldataload  // [x, y]
+    MUL_WAD_UP(fail)   // [result]
+    0x00 mstore        // []
+    0x20 0x00 return
+}
+
+#define macro DIV_WAD_DOWN_WRAPPER(fail) = takes (0) returns (0) {
+    0x24 calldataload    // [y]
+    0x04 calldataload    // [x, y]
+    DIV_WAD_DOWN(fail)   // [result]
+    0x00 mstore          // []
+    0x20 0x00 return
+}
+
+#define macro DIV_WAD_UP_WRAPPER(fail) = takes (0) returns (0) {
+    0x24 calldataload  // [y]
+    0x04 calldataload  // [x, y]
+    DIV_WAD_UP(fail)   // [result]
+    0x00 mstore        // []
+    0x20 0x00 return
+}
+
+#define macro RPOW_WRAPPER(fail) = takes (0) returns (0) {
+    0x44 calldataload // [scalar]
+    0x24 calldataload // [n, scalar]
+    0x04 calldataload // [x, n, scalar]
+    RPOW(fail)        // [result]
+    0x00 mstore       // []
+    0x20 0x00 return
+}
+
+#define macro EXP_WAD_WRAPPER(fail) = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    EXP_WAD(fail)     // [result]
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro LN_WAD_WRAPPER(fail) = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    LN_WAD(fail)      // [result]
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro POW_WAD_WRAPPER(fail) = takes (0) returns (0) {
+    0x24 calldataload // [y]
+    0x04 calldataload // [x, y]
+    POW_WAD(fail)     // [result]
+    0x00 mstore       // []
+    0x20 0x00 return
+}
+
+#define macro SQRT_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    SQRT()            // [result]
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro LOG_2_WRAPPER(fail) = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    LOG_2(fail)       // [result]
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(mulDivDown) eq mulDivDown jumpi
+    dup1 __FUNC_SIG(mulDivUp)   eq mulDivUp   jumpi
+    dup1 __FUNC_SIG(mulWadDown) eq mulWadDown jumpi
+    dup1 __FUNC_SIG(mulWadUp)   eq mulWadUp   jumpi
+    dup1 __FUNC_SIG(divWadDown) eq divWadDown jumpi
+    dup1 __FUNC_SIG(divWadUp)   eq divWadUp   jumpi
+    dup1 __FUNC_SIG(rpow)       eq rpow       jumpi
+    dup1 __FUNC_SIG(expWad)     eq expWad     jumpi
+    dup1 __FUNC_SIG(lnWad)      eq lnWad      jumpi
+    dup1 __FUNC_SIG(powWad)     eq powWad     jumpi
+    dup1 __FUNC_SIG(sqrt)       eq sqrt       jumpi
+    dup1 __FUNC_SIG(log2)       eq logTwo     jumpi
+
+    fail:
+        0x00 0x00 revert
+    mulDivDown:
+        MUL_DIV_DOWN_WRAPPER(fail)
+    mulDivUp:
+        MUL_DIV_UP_WRAPPER(fail)
+    mulWadDown:
+        MUL_WAD_DOWN_WRAPPER(fail)
+    mulWadUp:
+        MUL_WAD_UP_WRAPPER(fail)
+    divWadDown:
+        DIV_WAD_DOWN_WRAPPER(fail)
+    divWadUp:
+        DIV_WAD_UP_WRAPPER(fail)
+    rpow:
+        RPOW_WRAPPER(fail)
+    expWad:
+        EXP_WAD_WRAPPER(fail)
+    lnWad:
+        LN_WAD_WRAPPER(fail)
+    powWad:
+        POW_WAD_WRAPPER(fail)
+    sqrt:
+        SQRT_WRAPPER()
+    logTwo:
+        LOG_2_WRAPPER(fail)
+}

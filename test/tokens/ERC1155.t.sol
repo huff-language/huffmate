@@ -16,7 +16,7 @@ interface ERC1155 {
     function symbol() view external returns(string memory);
     function isApprovedForAll(address,address) view external returns(bool);
 
-    // stateful 
+    // stateful
     function mint(address,uint256,uint256,bytes calldata) external;
     function batchMint(address,uint256[] memory, uint256[] memory, bytes memory) external;
     function setApprovalForAll(address,bool) external;
@@ -153,7 +153,7 @@ contract NonERC1155Recipient {}
 
 // Tests modified from https://github.com/transmissions11/solmate/blob/main/src/test/ERC1155.t.sol
 contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
-    /// @dev Address of the SimpleStore contract.  
+    /// @dev Address of the SimpleStore contract.
     ERC1155 public token;
 
     // for fuzzing
@@ -162,7 +162,8 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
 
     /// @dev Setup the testing environment.
     function setUp() public {
-        token = ERC1155(HuffDeployer.deploy("tokens/ERC1155"));
+        string memory main_code = vm.readFile("test/tokens/mocks/MockERC1155.huff");
+        token = ERC1155(HuffDeployer.deploy_with_code("tokens/ERC1155", main_code));
     }
 
     function testMintToEOA() public {
@@ -286,7 +287,6 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
 
     function testApproveAll() public {
         token.setApprovalForAll(address(0xBEEF), true);
-
         assertTrue(token.isApprovedForAll(address(this), address(0xBEEF)));
     }
 
@@ -460,7 +460,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.mint(address(0xFEED), 1341, 500, "");
 
         uint256[] memory balances = token.balanceOfBatch(tos, ids);
-        
+
         console.log(balances[0]);
         console.log(balances[1]);
         console.log(balances[2]);
@@ -473,8 +473,8 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         assertEq(balances[4], 500);
     }
 
-     function testFailMintToZero() public {
-         token.mint(address(0), 1337, 1, "");
+    function testFailMintToZero() public {
+        token.mint(address(0), 1337, 1, "");
     }
 
     function testFailMintToNonERC155Recipient() public {
@@ -530,7 +530,6 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.safeTransferFrom(address(this), address(new WrongReturnDataERC1155Recipient()), 1337, 70, "");
     }
 
- 
     function testFailSafeBatchTransferInsufficientBalance() public {
         address from = address(0xABCD);
 
@@ -661,7 +660,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
     }
 
 
-  function testFailSafeBatchTransferFromToWrongReturnDataERC1155Recipient() public {
+    function testFailSafeBatchTransferFromToWrongReturnDataERC1155Recipient() public {
         address from = address(0xABCD);
 
         uint256[] memory ids = new uint256[](5);
@@ -693,7 +692,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.safeBatchTransferFrom(from, address(new WrongReturnDataERC1155Recipient()), ids, transferAmounts, "");
     }
 
-      function testFailSafeBatchTransferFromWithArrayLengthMismatch() public {
+    function testFailSafeBatchTransferFromWithArrayLengthMismatch() public {
         address from = address(0xABCD);
 
         uint256[] memory ids = new uint256[](5);
@@ -724,7 +723,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.safeBatchTransferFrom(from, address(0xBEEF), ids, transferAmounts, "");
     }
 
-     function testFailBatchMintToZero() public {
+    function testFailBatchMintToZero() public {
         uint256[] memory ids = new uint256[](5);
         ids[0] = 1337;
         ids[1] = 1338;
@@ -846,7 +845,6 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.batchBurn(address(0xBEEF), ids, burnAmounts);
     }
 
-     
     function testFailBatchBurnWithArrayLengthMismatch() public {
         uint256[] memory ids = new uint256[](5);
         ids[0] = 1337;
@@ -890,7 +888,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.balanceOfBatch(tos, ids);
     }
 
-  function testBatchMintToEOA(
+    function testBatchMintToEOA(
         address to,
         uint256[] memory ids,
         uint256[] memory amounts,
@@ -1798,6 +1796,5 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
 
         token.balanceOfBatch(tos, ids);
     }
-    
 }
 

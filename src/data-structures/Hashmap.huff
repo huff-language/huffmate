@@ -11,7 +11,7 @@
     sha3                // [slot]
 }
 
-// Given two keys (ie an address and a number), hash them together, generating a  for a secondary hashmap.
+// Given two keys (ie an address and a number), hash them together, generating a for a secondary hashmap.
 // This should only be used if you have multiple maps in your contract.
 #define macro GET_SLOT_FROM_KEYS(mem_ptr) = takes(2) returns (1) {
     // Input stack: [key1, key2]
