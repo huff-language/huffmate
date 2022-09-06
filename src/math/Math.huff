@@ -1,3 +1,7 @@
+/// @title SafeMath
+/// @author https://github.com/kadenzipfel
+/// @notice Math module based off https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol
+
 #define function sqrt(uint256) pure returns(uint256)
 #define function max(uint256, uint256) pure returns(uint256)
 #define function min(uint256, uint256) pure returns(uint256)
@@ -9,7 +13,7 @@
     // if num == 0 return 0
     dup1                    // [number, number]
     iszero                  // [is_zero, number]
-    is_zero jumpi 
+    is_zero jumpi
 
     // assign stack vars
     dup1                    // [x, num]
@@ -23,7 +27,7 @@
     0x80 shr                // [x >> 128, result, x, num]
     dup1                    // [x >> 128, x >> 128, result, x, num]
     iszero                  // [x >> 128 == 0, x >> 128, result, x, num]
-    sh_128_0 jumpi          
+    sh_128_0 jumpi
     swap1 0x40 shl          // [result, x >> 128, x, num]
     swap1 swap2             // [x, result, x >> 128, num]
     sh_128_0:
@@ -37,7 +41,7 @@
     0x40 shr                // [x >> 64, result, x, num]
     dup1                    // [x >> 64, x >> 64, result, x, num]
     iszero                  // [x >> 64 == 0, x >> 64, result, x, num]
-    sh_64_0 jumpi          
+    sh_64_0 jumpi
     swap1 0x20 shl          // [result, x >> 64, x, num]
     swap1 swap2             // [x, result, x >> 64, num]
     sh_64_0:
@@ -51,7 +55,7 @@
     0x20 shr                // [x >> 32, result, x, num]
     dup1                    // [x >> 32, x >> 32, result, x, num]
     iszero                  // [x >> 32 == 0, x >> 32, result, x, num]
-    sh_32_0 jumpi          
+    sh_32_0 jumpi
     swap1 0x10 shl          // [result, x >> 32, x, num]
     swap1 swap2             // [x, result, x >> 32, num]
     sh_32_0:
@@ -65,7 +69,7 @@
     0x10 shr                // [x >> 16, result, x, num]
     dup1                    // [x >> 16, x >> 16, result, x, num]
     iszero                  // [x >> 16 == 0, x >> 16, result, x, num]
-    sh_16_0 jumpi          
+    sh_16_0 jumpi
     swap1 0x08 shl          // [result, x >> 16, x, num]
     swap1 swap2             // [x, result, x >> 16, num]
     sh_16_0:
@@ -79,7 +83,7 @@
     0x08 shr                // [x >> 8, result, x, num]
     dup1                    // [x >> 8, x >> 8, result, x, num]
     iszero                  // [x >> 8 == 0, x >> 8, result, x, num]
-    sh_8_0 jumpi          
+    sh_8_0 jumpi
     swap1 0x04 shl          // [result, x >> 8, x, num]
     swap1 swap2             // [x, result, x >> 8, num]
     sh_8_0:
@@ -93,7 +97,7 @@
     0x04 shr                // [x >> 4, result, x, num]
     dup1                    // [x >> 4, x >> 4, result, x, num]
     iszero                  // [x >> 4 == 0, x >> 4, result, x, num]
-    sh_4_0 jumpi          
+    sh_4_0 jumpi
     swap1 0x02 shl          // [result, x >> 4, x, num]
     swap1 swap2             // [x, result, x >> 4, num]
     sh_4_0:
@@ -107,7 +111,7 @@
     0x02 shr                // [x >> 2, result, x, num]
     dup1                    // [x >> 2, x >> 2, result, x, num]
     iszero                  // [x >> 2 == 0, x >> 2, result, x, num]
-    sh_2_0 jumpi          
+    sh_2_0 jumpi
     swap1 0x01 shl          // [result, x >> 2, x, num]
     swap1 swap2             // [x, result, x >> 2, num]
     sh_2_0:
@@ -217,7 +221,7 @@
     swap1               // [num2, num1]
 
     greater_than:
-    pop                 // [max(num1, num2)]
+        pop                 // [max(num1, num2)]
 }
 
 #define macro AVG() = takes (2) returns (1) {
@@ -227,65 +231,4 @@
     xor                 // [num2 ^ num1, num1 & num2]
     0x02 swap1 div      // [num2 ^ num1 / 2, num1 & num2]
     add                 // [sum]
-}
-
-#define macro SQRT_WRAPPER() = takes (0) returns (0) {
-    0x04 calldataload
-    SQRT()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro MAX_WRAPPER() = takes (0) returns (0) {
-    0x04 calldataload
-    0x24 calldataload
-    MAX()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro MIN_WRAPPER() = takes (0) returns (0) {
-    0x04 calldataload
-    0x24 calldataload
-    MIN()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro AVG_WRAPPER() = takes (0) returns (0) {
-    0x04 calldataload
-    0x24 calldataload
-    AVG()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro CEIL_DIV_WRAPPER() = takes (0) returns (0) {
-    0x24 calldataload
-    0x04 calldataload
-    CEIL_DIV()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro MAIN() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr
-    dup1 0x677342ce eq sqrt jumpi
-    dup1 0x6d5433e6 eq max jumpi
-    dup1 0x7ae2b5c7 eq min jumpi
-    dup1 0x2b7423ab eq average jumpi
-    dup1 0x9cb35327 eq ceilDiv jumpi
-
-    0x00 0x00 revert
-
-    sqrt:
-        SQRT_WRAPPER()
-    max:
-        MAX_WRAPPER()
-    min:
-        MIN_WRAPPER()
-    average:
-        AVG_WRAPPER()
-    ceilDiv:
-        CEIL_DIV_WRAPPER()
 }

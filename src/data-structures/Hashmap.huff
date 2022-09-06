@@ -32,7 +32,7 @@
     // Load the data into memory
     <mem_ptr>           // [<mem_ptr>, slot, key1, key2]
     mstore              // [key1, key2]
-    
+
     // next byte
     <mem_ptr> 0x20 add  // [<mem_ptr> + 32, key1, key2]
     mstore              // [key2]
