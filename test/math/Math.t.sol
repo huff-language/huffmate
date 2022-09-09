@@ -16,7 +16,8 @@ contract MathTest is Test {
     Math math;
 
     function setUp() public {
-        math = Math(HuffDeployer.deploy("math/Math"));
+        string memory wrappers = vm.readFile("test/math/mocks/MathWrappers.huff");
+        math = Math(HuffDeployer.deploy_with_code("math/Math", wrappers));
     }
 
     // Source: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/e7397844f8dd9b54fb4227b91b20f3bd2e82dab2/contracts/utils/math/Math.sol#L158
@@ -79,8 +80,8 @@ contract MathTest is Test {
     }
 
     function testSqrt() public {
-       uint256 result = math.sqrt(69); 
-       assertEq(result, 8);
+        uint256 result = math.sqrt(69);
+        assertEq(result, 8);
     }
 
     function testSqrt(uint256 num) public {
@@ -102,7 +103,7 @@ contract MathTest is Test {
         if (b > a) {
             assertEq(result, b);
         }
-    } 
+    }
 
     function testMin() public {
         uint256 result = math.min(420, 69);
@@ -118,7 +119,7 @@ contract MathTest is Test {
         if (b < a) {
             assertEq(result, b);
         }
-    } 
+    }
 
     // Source: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/e7397844f8dd9b54fb4227b91b20f3bd2e82dab2/contracts/utils/math/Math.sol#L34
     function average(uint256 a, uint256 b) internal pure returns (uint256) {
