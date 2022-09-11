@@ -1,17 +1,15 @@
-/* Imports */
-#include "../data-structures/Hashmap.huff"
-
-/// @author asnared <https://github.com/abigger87>, devtooligan <https://github.com/devtooligan>
-/// @title ERC20.huff
+/// @title ERC20
+/// @author asnared <https://github.com/abigger87>
+/// @author devtooligan <https://github.com/devtooligan>
 /// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
 /// @notice Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol)
+
+#include "../data-structures/Hashmap.huff"
 
 // TODO: Add revert strings (and related tests)
 // TODO: Use Jtriley's error utils
 
-/*//////////////////////////////////////////////////////////////////
-//                            INTERFACE
-//////////////////////////////////////////////////////////////////*/
+// Interface
 #define function allowance(address,address) view returns (uint256)
 #define function approve(address,uint256) nonpayable returns () // these returns sb updated
 #define function balanceOf(address) view returns (uint256)
@@ -22,19 +20,11 @@
 #define function transfer(address,uint256) nonpayable returns ()
 #define function transferFrom(address,address,uint256) nonpayable returns ()
 
-/*//////////////////////////////////////////////////////////////////
-//                              EVENTS
-//////////////////////////////////////////////////////////////////*/
-
+// Events
 #define event Approval(address,address,uint256)
 #define event Transfer(address,address,uint256)
 
-// todo: use __EVENT_HASH fn
-
-/*//////////////////////////////////////////////////////////////////
-//                             METADATA
-//////////////////////////////////////////////////////////////////*/
-
+// Metadata
 #define function name() nonpayable returns (string)
 #define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000 // "Token"
 #define constant META_NAME_LENGTH = 0x05
@@ -46,46 +36,33 @@
 #define function decimals() nonpayable returns (uint256)
 #define constant META_DECIMALS = 0x12 // 18
 
-/*//////////////////////////////////////////////////////////////////
-//                          ERC20 STORAGE
-//////////////////////////////////////////////////////////////////*/
-
+// ERC20 Storage
 #define constant TOTAL_SUPPLY_SLOT = FREE_STORAGE_POINTER()
 #define constant BALANCE_SLOT = FREE_STORAGE_POINTER()
 #define constant APPROVAL_SLOT = FREE_STORAGE_POINTER()
 
-/*//////////////////////////////////////////////////////////////////
-//                        EIP-2612 STORAGE
-//////////////////////////////////////////////////////////////////*/
-
-// TODO: consider making EIP-2612 it's own separate module
+// EIP-2612 STORAGE
 #define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
 #define constant INITIAL_DOMAIN_SEPARATOR = FREE_STORAGE_POINTER()
 #define constant NONCE_SLOT = FREE_STORAGE_POINTER()
 #define constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9 // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 #define constant X_1901 = 0x1901000000000000000000000000000000000000000000000000000000000000
 
-/*//////////////////////////////////////////////////////////////////
-//                        UTILITY CONSTANTS
-//////////////////////////////////////////////////////////////////*/
+// Utility Constants
 #define constant UINT_256_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 #define constant ERROR_SIG = 0x08c379a000000000000000000000000000000000000000000000000000000000
+#define constant ZERO_ADDRESS = 0x0000000000000000000000000000000000000000
 
-/*//////////////////////////////////////////////////////////////////
-//                              CONSTRUCTOR
-//////////////////////////////////////////////////////////////////*/
-
+/// @notice Constructor
 #define macro CONSTRUCTOR_ERC20() = takes(0) returns (0) {
     chainid [INITIAL_CHAIN_ID] sstore                                          // []
     COMPUTE_DOMAIN_SEPARATOR()                                                 // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore                                          // []
 }
 
-/*//////////////////////////////////////////////////////////////////
-//                              ERC20 LOGIC
-//////////////////////////////////////////////////////////////////*/
-
-#define macro APPROVE() = takes (0) returns (0) {
+/// @notice Approve
+/// @notice Grants approval to an operator to transfer tokens on behalf of the sender.
+#define macro APPROVE() {
     NON_PAYABLE()
     0x24 calldataload                                                          // [value]
     0x04 calldataload                                                          // [to, value]
@@ -98,7 +75,7 @@
     0x00 mstore                                                                // []
     0x04 calldataload                                                          // [to]
     caller                                                                     // [from, to]
-    __EVENT_HASH(Approval)                                                 // [sig, from, to]
+    __EVENT_HASH(Approval)                                                     // [sig, from, to]
     0x20 0x00                                                                  // [0, 32, sig, from, to]
     log3                                                                       // []
 
@@ -106,9 +83,11 @@
     0x20 0x00 return
 }
 
-/* Transfer Functions */
-#define macro TRANSFER() = takes(0) returns(1) {
+/// @notice Transfer
+/// @notice Non-Payable function that transfers an amount of tokens from the sender to a recipient.
+#define macro TRANSFER() = takes (0) returns (1) {
     NON_PAYABLE()
+
     // Setup the stack for the transfer function.
     0x04 calldataload                                                          // [to]
     caller                                                                     // [from, to]
@@ -120,7 +99,7 @@
 
     // Emit the transfer event. // TODO consider macro
     0x00 mstore                                                                // [from, to]
-    __EVENT_HASH(Transfer)                                                 // [sig, from, to]
+    __EVENT_HASH(Transfer)                                                     // [sig, from, to]
     0x20 0x00                                                                  // [0, 32, sig, from, to]
     log3                                                                       // []
 
@@ -129,36 +108,40 @@
     0x20 0x00 return
 }
 
-#define macro TRANSFER_FROM() = takes(0) returns(1) { // TODO: is self?
+/// @notice Transfer From
+/// @notice Non-Payable function that transfers an amount of tokens from an address to a recipient.
+#define macro TRANSFER_FROM() = takes (0) returns (1) {
     NON_PAYABLE()
+
     // Setup the stack for the transfer function.
     0x24 calldataload                                                          // [to]
     0x04 calldataload                                                          // [from, to]
     caller                                                                     // [msg.sender, from, to]
     dup2                                                                       // [from, msg.sender, from, to]
     [APPROVAL_SLOT]                                                            // [slot, from, msg.sender, from, to]
-    // check for max approval
+
+    // Check for max approval
     LOAD_ELEMENT_FROM_SLOT_AND_KEYS(0x00)                                      // [approved, from, to]
     dup1                                                                       // [approved, approved, from, to]
     0x44 calldataload                                                          // [value, approved, approved, from, to]
 
-    // check isOwner
+    // Check isOwner
     dup4                                                                       // [from, value, approved, approved, from, to]
     caller                                                                     // [msg.sender, from, value, approved, approved, from, to]
     eq                                                                         // [msg.sender == from, value, approved, approved, from, to]
     approved1 jumpi                                                            // [value, approved, approved, from, to]
 
-    // check max approval
+    // Check max approval
     dup2                                                                       // [approved, value, approved, approved, from, to]
     [UINT_256_MAX]                                                             // [type(uint).max, approved, value, approved, approved, from, to]
     eq                                                                         // [type(uint).max == approved, value, approved, approved, from, to]
     approved1 jumpi                                                            // [value, approved, approved, from, to]
 
-    // check has approval
+    // Check has approval
     gt                                                                         // [value > approved, approved, from, to]
     insufficientApproval jumpi                                                 // [approved, from, to]
 
-    // adjust approval
+    // Adjust approval
     0x44 calldataload                                                          // [value, approved, from, to]
     swap1                                                                      // [approved, value, from, to]
     sub                                                                        // [approved - value => newApprovalValue, from, to]
@@ -213,16 +196,16 @@
         [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)                           // [value, from, to]
 }
 
-// TODO: OVERFLOW CHECK?
-#define macro _TRANSFER_GIVE_TO() = takes(3) returns (0) {
+/// @notice Transfers an amount of tokens from one address to another.
+#define macro _TRANSFER_GIVE_TO() = takes(3) returns (3) {
     // input stack: [value, from, to]
-    dup3                                                                       // [to, value, from, to]
-    dup2                                                                       // [value, to, value, from, to]
-    swap1                                                                      // [to, value, value, from, to]
-    [BALANCE_SLOT] LOAD_ELEMENT_FROM_KEYS(0x00)                            // [balance, value, value, from, to]
-    add                                                                        // [balance+value, value, from, to]
-    dup4                                                                       // [to, balance+value, value, from, to]
-    [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)                           // [value, from, to]
+    dup3                                                // [to, value, from, to]
+    dup2                                                // [value, to, value, from, to]
+    swap1                                               // [to, value, value, from, to]
+    [BALANCE_SLOT] LOAD_ELEMENT_FROM_KEYS(0x00)         // [balance, value, value, from, to]
+    add                                                 // [balance + value, value, from, to]
+    dup4                                                // [to, balance + value, value, from, to]
+    [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)        // [value, from, to]
 }
 
 #define macro APPROVE() = takes (0) returns (0) {
@@ -242,9 +225,8 @@
 
 }
 
-/*//////////////////////////////////////////////////////////////////
-//                              EIP-2612 LOGIC
-//////////////////////////////////////////////////////////////////*/
+// EIP-2612 LOGIC
+
 
 #define macro COMPUTE_DOMAIN_SEPARATOR() = takes (0) returns (1) {
     [PERMIT_TYPEHASH]                                                          // [DOMAIN_SEPARATOR_3
@@ -327,7 +309,8 @@
     0x22 mstore                                                                // []
     0x42 0x00                                                                  // [loc, len]
     sha3                                                                       // [outer hash]
-                                                                               //                   memory layout:
+
+    //                                                                                              memory layout:
     0x00 mstore                                                                // []                0x00 outer hash
     0x84 calldataload                                                          // [v]
     0x20 mstore                                                                // []                0x00 outerhash 0x20 v
@@ -409,7 +392,7 @@
     0x20 0x00 return                                                           // []
 }
 
-/* Metadata */
+// Metadata
 #define macro NAME() = takes (0) returns (0) {
     NON_PAYABLE()
     0x20 0x00 mstore
@@ -432,7 +415,7 @@
     0x20 0x00 return
 }
 
-/* Accounting Functions */
+// Accounting Functions
 #define macro BALANCE_OF() = takes (0) returns (0) {
     NON_PAYABLE()
     0x04 calldataload                                                          // [account]
@@ -448,7 +431,7 @@
     0x20 0x00 return                                                           // []
 }
 
-/* Approval Functions */
+// Approval Functions
 #define macro ALLOWANCE() = takes (0) returns (0) {
     NON_PAYABLE()
     0x24 calldataload                                                          // [to]
@@ -459,12 +442,10 @@
     0x20 0x00 return
 }
 
-/*//////////////////////////////////////////////////////////////////
-//                      MINT/BURN LOGIC
-//////////////////////////////////////////////////////////////////*/
+// MINT/BURN LOGIC
 
 #define macro _BURN() = takes(3) returns (0) {
-    //                                                                         [value, from, to]
+    // stack input: [value, from, to]
     _TRANSFER_TAKE_FROM()                                                      // [value, from, to]
     dup1                                                                       // [value, value, from, to]
     [TOTAL_SUPPLY_SLOT] sload                                                  // [supply,value,value,from,to]
@@ -478,23 +459,30 @@
     log3                                                                       // []
 }
 
-#define macro _MINT() = takes(0) returns (0) {
-    _TRANSFER_GIVE_TO()                                                         // [value, from, to]
+/// @notice Mints tokens to a specified address
+#define macro _MINT() = takes(2) returns (0) {
+    // Input stack: [value, to]
+    dup2                            // [to, value, to]
+    swap1                           // [value, to, to]
+    _TRANSFER_GIVE_TO()             // [value, to, to]
 
     // Update totalSupply
-    dup1                                                                       // [value, value, from, to]
-    [TOTAL_SUPPLY_SLOT] sload                                              // [supply,value,value,from,to]
-    add                                                                        // [supply+value,value,from,to]
-    [TOTAL_SUPPLY_SLOT] sstore                                             // [value,from,to]
+    dup1                            // [value, value, to, to]
+    [TOTAL_SUPPLY_SLOT] sload       // [supply, value, value, to, to]
+    add                             // [supply + value, value, to, to]
+    [TOTAL_SUPPLY_SLOT] sstore      // [value, to, to]
 
     // Emit the transfer event.
-    0x00 mstore                                                                // [from, to]
-    __EVENT_HASH(Transfer)                                                 // [sig, from, to]
-    0x20 0x00                                                                  // [0, 32, sig, from, to]
-    log3                                                                       // []
+    0x00 mstore                     // [to, to]
+    [ZERO_ADDRESS]                  // [address(0), to, to]
+    __EVENT_HASH(Transfer)          // [sig, from, to]
+    0x20 0x00                       // [0, 32, sig, from, to]
+    log3                            // []
 }
 
-/* Utility Functions */
+// Utility Functions
+
+/// @notice Reverts if the call has a non-zero value.
 #define macro NON_PAYABLE() = takes(0) returns (0) {
     callvalue iszero                                                           // [msg.value == 0]
     novalue jumpi                                                              // []
@@ -504,7 +492,7 @@
     novalue:
 }
 
-
+/// @notice Revert with a string reason
 #define macro REVERT_WITH_REASON(mem_ptr) = takes(2) returns(0) {
     // NOTE: String must be < 32 bytes
     // [len, "str"]
@@ -523,7 +511,6 @@
     dup1 __FUNC_SIG(transfer)           eq transferJump         jumpi
     dup1 __FUNC_SIG(transferFrom)       eq transferFromJump     jumpi
     dup1 __FUNC_SIG(balanceOf)          eq balanceOfJump        jumpi
-    dup1 __FUNC_SIG(balanceOf)          eq balanceOfJump        jumpi
     dup1 __FUNC_SIG(totalSupply)        eq totalSupplyJump      jumpi
     dup1 __FUNC_SIG(approve)            eq approveJump          jumpi
     dup1 __FUNC_SIG(allowance)          eq allowanceJump        jumpi
@@ -534,7 +521,8 @@
     dup1 __FUNC_SIG(decimals)           eq decimalsJump         jumpi
     dup1 __FUNC_SIG(DOMAIN_SEPARATOR)   eq domainSeparatorJump  jumpi
 
-    unknown jump
+    // Revert if function selector is not recognized.
+    0x00 dup1 revert
 
     allowanceJump:
         ALLOWANCE()
@@ -571,6 +559,4 @@
 
     transferJump:
         TRANSFER()
-
-    unknown:
 }

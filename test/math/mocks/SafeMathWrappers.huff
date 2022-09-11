@@ -1,0 +1,67 @@
+
+// Wrapper methods (for testing)
+#define macro SAFE_ADD_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    SAFE_ADD()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_SUB_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_SUB()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_MUL_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    SAFE_MUL()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_DIV_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_DIV()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_MOD_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_MOD()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+// Main
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xE0 shr
+    dup1 __FUNC_SIG(safeAdd) eq safe_add jumpi
+    dup1 __FUNC_SIG(safeSub) eq safe_sub jumpi
+    dup1 __FUNC_SIG(safeMul) eq safe_mul jumpi
+    dup1 __FUNC_SIG(safeDiv) eq safe_div jumpi
+    dup1 __FUNC_SIG(safeMod) eq safe_mod jumpi
+
+    0x00 0x00 revert
+
+    safe_add:
+        SAFE_ADD_WRAPPER()
+    safe_sub:
+        SAFE_SUB_WRAPPER()
+    safe_mul:
+        SAFE_MUL_WRAPPER()
+    safe_div:
+        SAFE_DIV_WRAPPER()
+    safe_mod:
+        SAFE_MOD_WRAPPER()
+}

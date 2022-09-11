@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.15;
 
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
 
 import "forge-std/console.sol";
 
-import { IERC20Ownable } from "../../src/tokens/interfaces/IERC20.sol";
+import { IERC20 } from "../../src/tokens/interfaces/IERC20.sol";
 
 /// @author These tests have been adapted from Solmate and include additional coverage.
 contract ERC20Test is Test {
@@ -21,7 +21,9 @@ contract ERC20Test is Test {
     event NewOwner(address indexed oldOwner,address indexed newOwner);
     event NewPendingOwner(address indexed oldOwner, address indexed newOwner);
 
-    IERC20Ownable token;
+    // Tokens
+    IERC20 mockToken;
+    IERC20 token;
 
     address public bob = address(0xB0B);
     address public deployer = address(0xC0DE60D);
@@ -45,19 +47,50 @@ contract ERC20Test is Test {
     uint256 public constant DECIMALS = uint(0x12);
 
     function setUp() public {
+        // Read our wrappers
+        string memory mintable_wrapper = vm.readFile("test/tokens/mocks/ERC20Mintable.huff");
+        string memory mock_wrapper = vm.readFile("test/tokens/mocks/MockERC20.huff");
+
+        // Deploy the Mintable ERC20
         vm.startPrank(deployer);
-        address tokenAddress = HuffDeployer.config()
+        address mintableTokenAddress = HuffDeployer.config()
             .with_bytes32_constant("META_NAME", META_NAME)
             .with_uint_constant("META_NAME_LENGTH", META_NAME_LENGTH)
             .with_bytes32_constant("META_SYMBOL", META_SYMBOL)
             .with_uint_constant("META_SYMBOL_LENGTH", META_SYMBOL_LENGTH)
             .with_uint_constant("META_DECIMALS", DECIMALS)
-            .deploy("test/tokens/mocks/ERC20.mock");
-        token = IERC20Ownable(tokenAddress);
+            .with_code(mintable_wrapper)
+            .deploy("tokens/ERC20");
+        console2.log("Deployed ERC20");
+        console2.log(mintableTokenAddress);
+        token = IERC20(mintableTokenAddress);
+        console2.log("Interface match :D");
+        vm.stopPrank();
+
+        // Deploy the Mock ERC20
+        vm.startPrank(deployer);
+        address mockTokenAddress = HuffDeployer.config()
+            .with_bytes32_constant("META_NAME", META_NAME)
+            .with_uint_constant("META_NAME_LENGTH", META_NAME_LENGTH)
+            .with_bytes32_constant("META_SYMBOL", META_SYMBOL)
+            .with_uint_constant("META_SYMBOL_LENGTH", META_SYMBOL_LENGTH)
+            .with_uint_constant("META_DECIMALS", DECIMALS)
+            .with_code(mock_wrapper)
+            .deploy("tokens/ERC20");
+        mockToken = IERC20(mockTokenAddress);
         vm.stopPrank();
     }
 
-    // SOLMATE ERC20 and OWNABLE tests below.  These are additional tests.
+    function testMockERC20Metadata() public {
+        console2.log(address(mockToken));
+        console2.log("Getting mock token name...");
+        string memory mockTokenName = mockToken.name();
+        console2.log(mockTokenName);
+
+        // assertEq(token.name(), NAME);
+        // assertEq(token.symbol(), SYMBOL);
+        // assertEq(token.decimals(), DECIMALS);
+    }
 
     function testNonPayable() public {
         vm.deal(address(this), 10 ether);
@@ -552,47 +585,47 @@ contract ERC20Test is Test {
     // SOLMATE OWNED tests
     // https://github.com/transmissions11/solmate/blob/main/src/test/Owned.t.sol
 
-    function testSetPendingOwner() public {
-        // assertEq(token.pendingOwner(), address(0x0));
-        address owner = token.owner(); // TODO: Update when bug is fixed with HuffDeployer address
-        address newOwner = address(0xBADBABE);
+    // function testSetPendingOwner() public {
+    //     // assertEq(token.pendingOwner(), address(0x0));
+    //     address owner = token.owner(); // TODO: Update when bug is fixed with HuffDeployer address
+    //     address newOwner = address(0xBADBABE);
 
-        vm.expectEmit(true, true, false, false);
-        emit NewPendingOwner(owner, newOwner);
+    //     vm.expectEmit(true, true, false, false);
+    //     emit NewPendingOwner(owner, newOwner);
 
-        vm.prank(owner);
-        token.setPendingOwner(newOwner);
-        assertEq(token.pendingOwner(), newOwner);
-        vm.stopPrank();
-    }
+    //     vm.prank(owner);
+    //     token.setPendingOwner(newOwner);
+    //     assertEq(token.pendingOwner(), newOwner);
+    //     vm.stopPrank();
+    // }
 
-    function testAcceptOwnership() public {
-        address owner = token.owner(); // TODO: Update when bug is fixed with HuffDeployer address
-        address newOwner = address(0xBADBABE);
+    // function testAcceptOwnership() public {
+    //     address owner = token.owner(); // TODO: Update when bug is fixed with HuffDeployer address
+    //     address newOwner = address(0xBADBABE);
 
-        vm.prank(owner);
-        token.setPendingOwner(newOwner);
-        assertEq(token.pendingOwner(), newOwner);
-        vm.stopPrank();
+    //     vm.prank(owner);
+    //     token.setPendingOwner(newOwner);
+    //     assertEq(token.pendingOwner(), newOwner);
+    //     vm.stopPrank();
 
-        // calling acceptOwnership from unknown address reverts
-        vm.expectRevert();
-        token.acceptOwnership();
+    //     // calling acceptOwnership from unknown address reverts
+    //     vm.expectRevert();
+    //     token.acceptOwnership();
 
-        // calling acceptOwnership emits event
-        vm.prank(newOwner);
-        vm.expectEmit(true, true, false, false);
-        emit NewOwner(owner, newOwner);
-        token.acceptOwnership();
+    //     // calling acceptOwnership emits event
+    //     vm.prank(newOwner);
+    //     vm.expectEmit(true, true, false, false);
+    //     emit NewOwner(owner, newOwner);
+    //     token.acceptOwnership();
 
-        assertEq(token.owner(), newOwner);
-        vm.stopPrank();
-    }
+    //     assertEq(token.owner(), newOwner);
+    //     vm.stopPrank();
+    // }
 
-    function testCallFunctionAsNonOwner(address owner) public {
-        vm.assume(owner != token.owner());
+    // function testCallFunctionAsNonOwner(address owner) public {
+    //     vm.assume(owner != token.owner());
 
-        vm.expectRevert();
-        token.setPendingOwner(owner);
-    }
+    //     vm.expectRevert();
+    //     token.setPendingOwner(owner);
+    // }
 }

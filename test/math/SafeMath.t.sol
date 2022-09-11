@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
@@ -16,7 +16,8 @@ contract SafeMathTest is Test {
     SafeMath safeMath;
 
     function setUp() public {
-        safeMath = SafeMath(HuffDeployer.deploy("math/SafeMath"));
+        string memory wrappers = vm.readFile("test/math/mocks/SafeMathWrappers.huff");
+        safeMath = SafeMath(HuffDeployer.deploy_with_code("math/SafeMath", wrappers));
     }
 
     function testSafeAdd() public {
@@ -27,13 +28,13 @@ contract SafeMathTest is Test {
     function testSafeAdd(uint256 a, uint256 b) public {
         unchecked {
             uint256 c = a + b;
-            
+
             if (a > c) {
                 vm.expectRevert();
                 safeMath.safeAdd(a, b);
                 return;
             }
-            
+
             uint256 result = safeMath.safeAdd(a, b);
             assertEq(result, a + b);
         }
@@ -51,7 +52,7 @@ contract SafeMathTest is Test {
                 safeMath.safeSub(a, b);
                 return;
             }
-            
+
             uint256 result = safeMath.safeSub(a, b);
             assertEq(result, a - b);
         }
@@ -77,7 +78,7 @@ contract SafeMathTest is Test {
                 safeMath.safeMul(a, b);
                 return;
             }
-            
+
             result = safeMath.safeMul(a, b);
             assertEq(result, c);
         }
@@ -95,7 +96,7 @@ contract SafeMathTest is Test {
                 safeMath.safeDiv(a, b);
                 return;
             }
-            
+
             uint256 result = safeMath.safeDiv(a, b);
             assertEq(result, a / b);
         }
@@ -113,7 +114,7 @@ contract SafeMathTest is Test {
                 safeMath.safeMod(a, b);
                 return;
             }
-            
+
             uint256 result = safeMath.safeMod(a, b);
             assertEq(result, a % b);
         }
