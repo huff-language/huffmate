@@ -3,33 +3,10 @@ pragma solidity 0.8.15;
 
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
-import {HuffConfig} from "foundry-huff/HuffConfig.sol";
-import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 
-import {IERC20Ownable} from "../../src/tokens/interfaces/IERC20.sol";
+import "forge-std/console.sol";
 
-interface ERC20 {
-    /* Metadata */
-    function name() external view returns (string memory);
-    function symbol() external view returns (string memory);
-    function decimals() external view returns (uint8);
-    function DOMAIN_SEPARATOR() external view returns (bytes32);
-
-    /* Accessors */
-    function totalSupply() external view returns (uint256);
-    function balanceOf(address) external view returns (uint256);
-    function allowance(address, address) external view returns (uint256);
-
-    /* EIP-2612 */
-    // function nonces(address) external view returns (uint256);
-
-    /* Mutators */
-    function transfer(address, uint256) external;
-    // function transferFrom(address, address, uint256) external;
-    function approve(address, uint256) external;
-    // function permit(address, address, uint256, uint256, uint8, bytes32, bytes32) external;
-    function mint(address, uint256) external;
-}
+import { IERC20Ownable } from "../../src/tokens/interfaces/IERC20.sol";
 
 /// @author These tests have been adapted from Solmate and include additional coverage.
 contract ERC20Test is Test {

@@ -239,6 +239,9 @@
 
     // Store the value at slot = keccak256(from . to)
     STORE_ELEMENT_FROM_KEYS(0x00)
+
+}
+
 /*//////////////////////////////////////////////////////////////////
 //                              EIP-2612 LOGIC
 //////////////////////////////////////////////////////////////////*/
@@ -515,7 +518,6 @@
 
 // Main Macro
 #define macro MAIN_ERC20() = takes(1) returns (1) {
-    NAME()
     // Identify which function is being called.
     // [func sig]
     dup1 __FUNC_SIG(transfer)           eq transferJump         jumpi
