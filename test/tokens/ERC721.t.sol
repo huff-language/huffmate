@@ -33,4 +33,9 @@ contract ERC721Test is Test {
         HuffConfig config = HuffDeployer.config().with_code(mockErc721);
         erc721 = ERC721(config.deploy("tokens/ERC721"));
     }
+
+    function testMetadata() public {
+        assertEq(erc721.name(), "Token");
+        assertEq(erc721.symbol(), "TKN");
+    }
 }
