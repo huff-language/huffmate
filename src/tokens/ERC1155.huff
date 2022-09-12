@@ -375,7 +375,7 @@
     dup8                            // [to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     dup8                            // [from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     caller                          // [caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-__EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     dup5 0x40 add                   // [len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     0x20                            // [offset, len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     log4                            // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
