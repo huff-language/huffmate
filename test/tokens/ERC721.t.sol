@@ -27,7 +27,7 @@ contract ERC721Test is Test {
 
     function setUp() public {
         // Read mock erc721 from file
-        string memory mockErc721 = vm.readFile("test/tokens/mocks/MockERC721.huff");
+        string memory mockErc721 = vm.readFile("test/tokens/mocks/ERC721Wrapper.huff");
 
         // Create mock erc721
         HuffConfig config = HuffDeployer.config().with_code(mockErc721);
