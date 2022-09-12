@@ -54,11 +54,11 @@ contract ERC20Test is Test {
         // Deploy the Mintable ERC20
         vm.startPrank(deployer);
         address mintableTokenAddress = HuffDeployer.config()
-            .with_bytes32_constant("META_NAME", META_NAME)
-            .with_uint_constant("META_NAME_LENGTH", META_NAME_LENGTH)
-            .with_bytes32_constant("META_SYMBOL", META_SYMBOL)
-            .with_uint_constant("META_SYMBOL_LENGTH", META_SYMBOL_LENGTH)
-            .with_uint_constant("META_DECIMALS", DECIMALS)
+            // .with_bytes32_constant("META_NAME", META_NAME)
+            // .with_uint_constant("META_NAME_LENGTH", META_NAME_LENGTH)
+            // .with_bytes32_constant("META_SYMBOL", META_SYMBOL)
+            // .with_uint_constant("META_SYMBOL_LENGTH", META_SYMBOL_LENGTH)
+            // .with_uint_constant("META_DECIMALS", DECIMALS)
             .with_code(mintable_wrapper)
             .deploy("tokens/ERC20");
         console2.log("Deployed ERC20");
@@ -70,11 +70,11 @@ contract ERC20Test is Test {
         // Deploy the Mock ERC20
         vm.startPrank(deployer);
         address mockTokenAddress = HuffDeployer.config()
-            .with_bytes32_constant("META_NAME", META_NAME)
-            .with_uint_constant("META_NAME_LENGTH", META_NAME_LENGTH)
-            .with_bytes32_constant("META_SYMBOL", META_SYMBOL)
-            .with_uint_constant("META_SYMBOL_LENGTH", META_SYMBOL_LENGTH)
-            .with_uint_constant("META_DECIMALS", DECIMALS)
+            // .with_bytes32_constant("META_NAME", META_NAME)
+            // .with_uint_constant("META_NAME_LENGTH", META_NAME_LENGTH)
+            // .with_bytes32_constant("META_SYMBOL", META_SYMBOL)
+            // .with_uint_constant("META_SYMBOL_LENGTH", META_SYMBOL_LENGTH)
+            // .with_uint_constant("META_DECIMALS", DECIMALS)
             .with_code(mock_wrapper)
             .deploy("tokens/ERC20");
         mockToken = IERC20(mockTokenAddress);

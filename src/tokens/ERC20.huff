@@ -62,13 +62,13 @@
 
 /// @notice Approve
 /// @notice Grants approval to an operator to transfer tokens on behalf of the sender.
-#define macro APPROVE() {
+#define macro APPROVE() = {
     NON_PAYABLE()
     0x24 calldataload                                                          // [value]
     0x04 calldataload                                                          // [to, value]
     caller                                                                     // [from, to, value]
     [APPROVAL_SLOT]                                                            // [slot, from, to, value]
-    STORE_ELEMENT_FROM_SLOT_AND_KEYS(0x00)                                     // []
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)                                           // []
 
     // Emit the Approval event
     0x24 calldataload                                                          // [value]
@@ -121,7 +121,7 @@
     [APPROVAL_SLOT]                                                            // [slot, from, msg.sender, from, to]
 
     // Check for max approval
-    LOAD_ELEMENT_FROM_SLOT_AND_KEYS(0x00)                                      // [approved, from, to]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)                                            // [approved, from, to]
     dup1                                                                       // [approved, approved, from, to]
     0x44 calldataload                                                          // [value, approved, approved, from, to]
 
@@ -148,7 +148,7 @@
     caller                                                                     // [msg.sender, newApprovalValue, from, to]
     dup3                                                                       // [from, msg.sender, newApprovalValue, from, to]
     [APPROVAL_SLOT]                                                            // [slot, from, msg.sender, newApprovalValue, from, to]
-    STORE_ELEMENT_FROM_SLOT_AND_KEYS(0x00)                                     // [from, to]
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)                                           // [from, to]
     approved2 jump                                                             // [from, to]
 
     approved1:                                                                 // [value, approved, approved, from, to]
@@ -346,7 +346,7 @@
     iszero                                                                     // [owner != recovered address, recovered address, spender, value]
     invalidSigner jumpi                                                        // [recovered address, spender, value]
     [APPROVAL_SLOT]                                                            // [slot, recovered address, spender, value]
-    STORE_ELEMENT_FROM_SLOT_AND_KEYS(0x00)                                     // []
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)                                           // []
 
     // Emit the Approval event
     0x44 calldataload                                                          // [value]
@@ -437,7 +437,7 @@
     0x24 calldataload                                                          // [to]
     0x04 calldataload                                                          // [from, to]
     [APPROVAL_SLOT]                                                            // [slot, from, to]
-    LOAD_ELEMENT_FROM_SLOT_AND_KEYS(0x00)                                      // [allowance]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)                                            // [allowance]
     0x00 mstore                                                                // []
     0x20 0x00 return
 }

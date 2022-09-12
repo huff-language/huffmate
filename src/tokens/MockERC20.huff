@@ -3,6 +3,8 @@
 // This code is meant to be appended to src/tokens/ERC20.huff
 // Thus, it does not import any other files
 
+#include "./ERC20.huff"
+
 // Constructor
 // #define macro CONSTRUCTOR() {
 //     // Construct the ERC20
