@@ -10,10 +10,6 @@ on:
       - test/**
       - src/**
 
-# Foundry env
-env:
-  FOUNDRY_PROFILE: ci
-
 jobs:
   check:
     strategy:

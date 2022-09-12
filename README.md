@@ -5,9 +5,11 @@
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
 ## Warning: Be cautious
+
 Huffmate is still a work in progress and the majority of contracts have yet to be completed and audited. We do not give any warranties and will not be liable for any loss incurred through any use of this codebase.
 
 Use these contracts at your own risk!
+
 
 ## Usage
 

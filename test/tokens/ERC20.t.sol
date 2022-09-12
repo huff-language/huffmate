@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 
 import "forge-std/console.sol";
 
-import { IERC20 } from "../../src/tokens/interfaces/IERC20.sol";
+import { IERC20, IMintableERC20 } from "../../src/tokens/interfaces/IERC20.sol";
 
 /// @author These tests have been adapted from Solmate and include additional coverage.
 contract ERC20Test is Test {
@@ -23,7 +23,7 @@ contract ERC20Test is Test {
 
     // Tokens
     IERC20 mockToken;
-    IERC20 token;
+    IMintableERC20 token;
 
     address public bob = address(0xB0B);
     address public deployer = address(0xC0DE60D);
@@ -63,7 +63,7 @@ contract ERC20Test is Test {
             .deploy("tokens/ERC20");
         console2.log("Deployed ERC20");
         console2.log(mintableTokenAddress);
-        token = IERC20(mintableTokenAddress);
+        token = IMintableERC20(mintableTokenAddress);
         console2.log("Interface match :D");
         vm.stopPrank();
 

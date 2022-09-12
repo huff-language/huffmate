@@ -504,59 +504,52 @@
 }
 
 
-// Main Macro
+// Function Dispatching
 #define macro MAIN_ERC20() = takes(1) returns (1) {
     // Identify which function is being called.
     // [func sig]
-    dup1 __FUNC_SIG(transfer)           eq transferJump         jumpi
-    dup1 __FUNC_SIG(transferFrom)       eq transferFromJump     jumpi
-    dup1 __FUNC_SIG(balanceOf)          eq balanceOfJump        jumpi
-    dup1 __FUNC_SIG(totalSupply)        eq totalSupplyJump      jumpi
-    dup1 __FUNC_SIG(approve)            eq approveJump          jumpi
-    dup1 __FUNC_SIG(allowance)          eq allowanceJump        jumpi
+
     dup1 __FUNC_SIG(permit)             eq permitJump           jumpi
     dup1 __FUNC_SIG(nonces)             eq noncesJump           jumpi
+
     dup1 __FUNC_SIG(name)               eq nameJump             jumpi
     dup1 __FUNC_SIG(symbol)             eq symbolJump           jumpi
     dup1 __FUNC_SIG(decimals)           eq decimalsJump         jumpi
     dup1 __FUNC_SIG(DOMAIN_SEPARATOR)   eq domainSeparatorJump  jumpi
+
+    dup1 __FUNC_SIG(totalSupply)        eq totalSupplyJump      jumpi
+    dup1 __FUNC_SIG(balanceOf)          eq balanceOfJump        jumpi
+    dup1 __FUNC_SIG(allowance)          eq allowanceJump        jumpi
+
+    dup1 __FUNC_SIG(transfer)           eq transferJump         jumpi
+    dup1 __FUNC_SIG(transferFrom)       eq transferFromJump     jumpi
+    dup1 __FUNC_SIG(approve)            eq approveJump          jumpi
 
     // Revert if function selector is not recognized.
     0x00 dup1 revert
 
     allowanceJump:
         ALLOWANCE()
-
     approveJump:
         APPROVE()
-
     balanceOfJump:
         BALANCE_OF()
-
     decimalsJump:
         DECIMALS()
-
     domainSeparatorJump:
         DOMAIN_SEPARATOR()
-
     nameJump:
         NAME()
-
     noncesJump:
         NONCES()
-
     permitJump:
         PERMIT()
-
     symbolJump:
         SYMBOL()
-
     totalSupplyJump:
         TOTAL_SUPPLY()
-
     transferFromJump:
         TRANSFER_FROM()
-
     transferJump:
         TRANSFER()
 }
