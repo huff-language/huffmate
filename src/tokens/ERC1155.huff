@@ -235,7 +235,7 @@
     SAFE_CALL()
 
     error:
-        0x00 dup1 revert
+        0x00 dup1 revert            // []
 }
 
 /// @title Burn
