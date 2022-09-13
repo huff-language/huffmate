@@ -400,17 +400,16 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
     calldataload dup1               // [ids.length, ids.length, amounts.length, &ids, &amount, to, from]
     swap2                           // [amounts.len, ids.len, ids.len, &ids, &amount, to, from]
 
-    0x00               // [0, ids.len, &ids, &amount, to, from]
-    eq                              // [amounts.length == ids.length, 0, ids.len, &ids, &amount, to, from]
-    loop jumpi                    // [0, ids.len, &ids, &amount, to, from]
+    0x00 swap2                      // [ids.len, amounts.len, 0, ids.len, &ids, &amount, to, from]
+    eq                              // [ids.len == amounts.length, 0, ids.len, &ids, &amount, to, from]
+    loop jumpi                      // [0, ids.len, &ids, &amount, to, from]
     dup1 revert
 
 
     // loop over the arrays of ids and amounts and increase the balance
     loop:
-        dup2 dup2           //[i, ids.length, i, ids.length, &amount, &ids, to, from]
+        dup2 dup2           // [i, ids.length, i, ids.length, &amount, &ids, to, from]
         eq exit jumpi       // [i, ids.length, &amount, &ids, to, from]
-
 
         // takes: to, tokenId, amount
         swap2               // [&amount, ids.length, i,  &ids, to, from]
@@ -427,17 +426,17 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
         swap5 swap1         // [&ids++, i, amount[0], ids.len, &amount++, &ids++, to, from]
         calldataload        // [ids[0], i, amount[0], ids.len, &amount++, &ids++, to, from]
 
-        swap1 swap2         // [ ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+        swap1 swap2         // [ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
 
         dup8                // [from, ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
         DECREASE_BALANCE()  // [i, ids.len, &amount++, &ids++, to, from]
 
-        0x01 add            // [ i,  ids.len, &amount++, &ids++, to, from]
+        0x01 add            // [i, ids.len, &amount++, &ids++, to, from]
         loop jump
 
     exit:
-        dup4 0x20 add       // [ &data, i,  ids.len, &amount++, &ids++, to, from]
-        0x84                // [ &ids, &data, i,  ids.len, &amount++, &ids++, to, from]
+        dup4 0x20 add       // [&data, i,  ids.len, &amount++, &ids++, to, from]
+        0x84                // [&ids, &data, i,  ids.len, &amount++, &ids++, to, from]
 
         EMIT_BATCH_LOG()    // emit batch transfer to zero address log
         stop                // executed successfully
