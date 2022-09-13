@@ -447,11 +447,11 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @param {calldata} [address from, address to, uint256[] ids, uint256[] amounts, uint256[] data]
 /// @return []
 #define macro BATCH_SAFE_TRANSFER_FROM() = takes(0) returns(0) {
-    // check lengths
+    // Load to and from addresses
     0x04 calldataload               // [from]
     0x24 calldataload               // [to, from]
 
-    // get length of the ids array - stash arr pointers at end of stack
+    // Get length of the ids array - stash arr pointers at end of stack
     0x64 calldataload 0x4 add dup1  // [&amount, &amount, to, from]
     0x44 calldataload 0x4 add dup1  // [&ids, &ids, &amount, &amount, to, from]
     swap2                           // [&amount, &ids, &ids, &amount, to, from]
@@ -459,13 +459,17 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
     calldataload dup1               // [ids.length, ids.length, amounts.length, &ids, &amount, to, from ]
     swap2                           // [amounts.len, ids.len, ids.len, &ids, &amount, to, from]
 
-    0x00 eq iszero error jumpi           // [0, ids.len, &amount, &ids, to, from]
+    // Check array length mismatch
+    0x00 swap2                      // [ids.len, amounts.len, 0, ids.len, &ids, &amount, to, from]
+    eq iszero                       // [ids.len != amounts.length, 0, ids.len, &ids, &amount, to, from]
+    error jumpi                     // [0, ids.len, &ids, &amount, to, from]
 
-    // check approvals
-    IS_OWNER_OR_APPROVED(error)
+    // Check approvals
+    dup6                            // [from, 0, ids.len, &ids, &amount, to, from]
+    IS_OWNER_OR_APPROVED(error)     // [0, ids.len, &ids, &amount, to, from]
 
     loop:
-        dup2 dup2           //[i, ids.length, i, ids.length, &amount, &ids, to, from]
+        dup2 dup2           // [i, ids.length, i, ids.length, &amount, &ids, to, from]
 
         // Exit if the loop has finished
         eq exit jumpi       // [i, ids.length, &amount, &ids, from]
@@ -498,10 +502,10 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 
         // increase the balance of the to account
         // takes: [to, id, amount]
-        INCREASE_BALANCE()  // [i,  ids.len, &amount++, &ids++, to, from ]
+        INCREASE_BALANCE()  // [i, ids.len, &amount++, &ids++, to, from ]
 
         // increase loop counter
-        0x01 add            // [ i,  ids.len, &amount++, &ids++, to, from]
+        0x01 add            // [i,  ids.len, &amount++, &ids++, to, from]
         loop jump
 
     exit:
@@ -519,7 +523,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
         // Get the location of the start of the ids dynamic data
         0x44                           // [&ids, i, ids.len, &amount++, &ids++, to, from]
         dup7                           // [from, dyn(ids), i, ids.len, &amount++, &ids++, to, from]
-        dup7                           //[to, from, dyn(ids), i, ids.len, &amount++, &ids++, to, from]
+        dup7                           // [to, from, dyn(ids), i, ids.len, &amount++, &ids++, to, from]
 
         // takes: [to, from, dyn(ids)]
         SAFE_BATCH()
