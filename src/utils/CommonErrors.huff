@@ -1,0 +1,36 @@
+
+#include "./Errors.huff"
+
+// Error Constants
+#define constant NOT_AUTHORIZED_ERROR = 0xe4e4f545f415554484f52495a4544000000000000000000000000000000000000
+#define constant NOT_AUTHORIZED_LENGTH = 0x0e
+
+#define constant LENGTH_MISMATCH_ERROR = 0xf4c454e4754485f4d49534d415443480000000000000000000000000000000000
+#define constant LENGTH_MISMATCH_LENGTH = 0x0f
+
+#define constant UNSAFE_RECIPIENT_ERROR = 0x554e534146455f524543495049454e5400000000000000000000000000000000
+#define constant UNSAFE_RECIPIENT_LENGTH = 0x10
+
+/// @notice Reverts with an "NOT_AUTHORIZED" message if the condition is false
+#define macro UNAUTHORIZED(condition) = takes (0) returns (0) {
+    [NOT_AUTHORIZED_ERROR]      // ["NOT_AUTHORIZED"]
+    [NOT_AUTHORIZED_LENGTH]     // [14 (length), "NOT_AUTHORIZED"]
+    <condition>                 // [condition, 14 (length), "NOT_AUTHORIZED"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "LENGTH_MISMATCH" message if condition is false
+#define macro LENGTH_MISMATCH(condition) = takes (0) returns (0) {
+    [LENGTH_MISMATCH_ERROR]     // ["LENGTH_MISMATCH"]
+    [LENGTH_MISMATCH_LENGTH]    // [15 (length), "LENGTH_MISMATCH"]
+    <condition>                 // [condition, 15 (length), "LENGTH_MISMATCH"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "UNSAFE_RECIPIENT" message if condition is false
+#define macro UNSAFE_RECIPIENT(condition) = takes (0) returns (0) {
+    [UNSAFE_RECIPIENT_ERROR]    // ["UNSAFE_RECIPIENT"]
+    [UNSAFE_RECIPIENT_LENGTH]   // [16 (length), "UNSAFE_RECIPIENT"]
+    <condition>                 // [condition, 16 (length), "UNSAFE_RECIPIENT"]
+    REQUIRE()                   // []
+}
