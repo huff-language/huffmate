@@ -57,14 +57,14 @@ utils
 ├─ Data — TODO
 ├─ BitPackLib — "Efficient bit packing library"
 ├─ CustomErrors — "Wrappers for reverting with common error messages"
-├─ ERC1155Receiver — TODO
+├─ ERC1155Receiver — "A minimal interface for receiving ERC1155 tokens"
 ├─ Errors — "Custom error utilities"
 ├─ JumpTableUtil — "Utility macros for retrieving jumpdest pcs from jump tables"
 ├─ LibBit — "A library ported from solady for bit twiddling operations"
 ├─ MerkleProofLib — "Gas optimized merkle proof verification library"
 ├─ Multicallable — "Enables a single call to call multiple methods within a contract"
 ├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
-├─ ReentrancyGuard — TODO
+├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
 ├─ SSTORE2 — TODO
 ```
 

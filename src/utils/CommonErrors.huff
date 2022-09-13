@@ -15,6 +15,12 @@
 #define constant UNSAFE_RECIPIENT_ERROR = 0x554e534146455f524543495049454e5400000000000000000000000000000000
 #define constant UNSAFE_RECIPIENT_LENGTH = 0x10
 
+#define constant REENTRANCY_ERROR = 0xa5245454e5452414e435900000000000000000000000000000000000000000000
+#define constant REENTRANCY_LENGTH = 0x0a
+
+#define constant DISPATCH_ERROR_MESSAGE = 0xe44495350415443485f4552524f52000000000000000000000000000000000000
+#define constant DISPATCH_LENGTH = 0x0e
+
 /// @notice Reverts with an "NOT_AUTHORIZED" message if the condition is false
 #define macro UNAUTHORIZED(condition) = takes (0) returns (0) {
     [NOT_AUTHORIZED_ERROR]      // ["NOT_AUTHORIZED"]
@@ -36,5 +42,21 @@
     [UNSAFE_RECIPIENT_ERROR]    // ["UNSAFE_RECIPIENT"]
     [UNSAFE_RECIPIENT_LENGTH]   // [16 (length), "UNSAFE_RECIPIENT"]
     <condition>                 // [condition, 16 (length), "UNSAFE_RECIPIENT"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with a "REENTRANCY" message if condition is false
+#define macro REENTRANCY(condition) = takes (0) returns (0) {
+    [REENTRANCY_ERROR]          // ["REENTRANCY"]
+    [REENTRANCY_LENGTH]         // [10 (length), "REENTRANCY"]
+    <condition>                 // [condition, 10 (length), "REENTRANCY"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with a "DISPATCH_ERROR" message if condition is false
+#define macro DISPATCH_ERROR(condition) = takes (0) returns (0) {
+    [DISPATCH_ERROR_MESSAGE]    // ["DISPATCH_ERROR"]
+    [DISPATCH_LENGTH]           // [14 (length), "DISPATCH_ERROR"]
+    <condition>                 // [condition, 14 (length), "DISPATCH_ERROR"]
     REQUIRE()                   // []
 }

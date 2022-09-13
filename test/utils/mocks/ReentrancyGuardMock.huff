@@ -1,54 +1,39 @@
-#include "../../../src/utils/ReentrancyGuard.huff"
 
-#define function unprotectedCall()
-#define function protectedCall()
-#define function overprotectedCall()
-#define function protectedCallWithReturnData()
-#define function enterTimes() view returns (uint256)
+#define function state() view returns (uint256)
+#define function lock() nonpayable returns ()
+#define function unlock() nonpayable returns ()
 
-#define constant ENTER_TIMES = FREE_STORAGE_POINTER()
+#define macro LOCK_WRAPPER() = takes (0) returns (0) {
+    LOCK()
+    stop
+}
 
-#define macro UNPROTECTED_CALL() = takes (0) returns (0) {}
-#define macro PROTECTED_CALL() = takes (0) returns (0) {}
-#define macro OVERPROTECTED_CALL() = takes (0) returns (0) {}
-#define macro PROTECTED_CALL_WITH_RETURN_DATA() = takes (0) returns (0) {}
-#define macro ENTER_TIMES() = takes (0) returns (1) {}
+#define macro UNLOCK_WRAPPER() = takes (0) returns (0) {
+    UNLOCK()
+    stop
+}
+
+#define macro GET_STATE() = takes (0) returns (0) {
+    [LOCKED_SLOT] sload // [LOCKED]
+    0x00 mstore         // []
+    0x20 0x00 return    // []
+}
 
 #define macro MAIN() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr                 
-    __FUNC_SIG(unprotectedCall) eq unprotected_call jumpi
-    __FUNC_SIG(protectedCall) eq unprotected_call jumpi
-    __FUNC_SIG(overprotectedCall) eq unprotected_call jumpi
-    __FUNC_SIG(protectedCallWithReturnData) eq unprotected_call jumpi
-    __FUNC_SIG(enterTimes) eq unprotected_call jumpi
+    pc calldataload 0xE0 shr  // [selector]
 
-    0x00 0x00 revert
+    dup1 __FUNC_SIG(state) eq state_jump jumpi
+    dup1 __FUNC_SIG(lock) eq lock_jump jumpi
+    dup1 __FUNC_SIG(unlock) eq unlock_jump jumpi
 
-    unprotected_call:
-        UNPROTECTED_CALL()
+    DISPATCH_ERROR(0x00)
 
-    // 1st way of calling LOCK/UNLOCK
-    // https://docs.huff.sh/style-guide/overview/#contract-call-return
-    protectedCall:
-        LOCK()
-        PROTECTED_CALL()
-        UNLOCK()
+    state_jump:
+        GET_STATE()
 
-    overprotectedCall:
-        LOCK()
-        OVERPROTECTED_CALL()
-        UNLOCK()
+    lock_jump:
+        LOCK_WRAPPER()
 
-    // 2nd way of calling LOCK/UNLOCK when you need to return data
-    protectedCallWithReturnData:
-        LOCK()
-        PROTECTED_CALL_WITH_RETURN_DATA()
-        finish jump
-
-    enterTimes:
-        ENTER_TIMES()
-
-    finish:
-        UNLOCK()
-        return
+    unlock_jump:
+        UNLOCK_WRAPPER()
 }
