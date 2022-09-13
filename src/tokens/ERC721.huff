@@ -7,7 +7,7 @@
 // Imports
 #include "../utils/CommonErrors.huff"
 #include "../utils/NonPayable.huff"
-#include "../data-structures/HashMap.huff"
+#include "../data-structures/Hashmap.huff"
 
 // Interface
 #define function name() nonpayable returns (string)

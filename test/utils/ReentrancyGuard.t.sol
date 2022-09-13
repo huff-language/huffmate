@@ -45,8 +45,8 @@ contract ReentranctGuardTest is Test {
         state = guard.state();
         assertEq(state, 2);
 
-        // vm.expectRevert(bytes4(""));
-        // guard.lock();
+        vm.expectRevert(bytes("REENTRANCY"));
+        guard.lock();
     }
 
 }
