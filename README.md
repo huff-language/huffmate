@@ -5,11 +5,13 @@
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
 ## Warning: Be cautious
+
 Huffmate is still a work in progress and the majority of contracts have yet to be completed and audited. We do not give any warranties and will not be liable for any loss incurred through any use of this codebase.
 
 Use these contracts at your own risk!
 
-## Usage
+
+### Usage
 
 To install with [**Foundry**](https://github.com/foundry-rs/foundry):
 
@@ -24,7 +26,7 @@ npm install @pentagonxyz/huffmate
 ```
 
 
-## Contracts
+### Contracts
 
 ```ml
 auth
@@ -34,39 +36,47 @@ auth
 ├─ Owned — "Simple single owner authorization"
 ├─ RolesAuthority — "Role based Authority that supports up to 256 roles"
 data-structures
-├─ Arrays - "Memory translation handlers for arrays"
+├─ Arrays — "Memory translation handlers for arrays"
 ├─ Bytes — TODO
-├─ Hashmap - "Simple mapping utilities for 32 byte words"
+├─ Hashmap — "Simple mapping utilities for 32 byte words"
 factories
-├─ Factory - TODO
+├─ Factory — TODO
 ├─ ProxyFactory — TODO
 math
-├─ FixedPointMath - "Fixed-point number arithmetic"
+├─ FixedPointMath — "Arithmetic library with operations for fixed-point numbers"
 ├─ Math — "Refactored, common arithmetic macros"
-├─ SafeMath — "Safe wrappers for primitive arithmetic operations"
+├─ SafeMath — "Safe Wrappers over primitive arithmetic operations"
+├─ Trigonometry — "Basic trigonometry functions where inputs and outputs are integers"
 tokens
 ├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
-├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
+├─ ERC721 — TODO — "Modern, minimalist, and gas efficient ERC721 implementation"
 ├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
-├─ ERC4626 — "Minimal ERC4626 tokenized Vault implementation"
+├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
 utils
-├─ Calls - TODO
+├─ Calls — TODO
 ├─ Data — TODO
+├─ BitPackLib — "Efficient bit packing library"
+├─ CustomErrors — "Wrappers for reverting with common error messages"
+├─ ERC1155Receiver — TODO
+├─ Errors — "Custom error utilities"
+├─ JumpTableUtil — "Utility macros for retrieving jumpdest pcs from jump tables"
+├─ LibBit — "A library ported from solady for bit twiddling operations"
 ├─ MerkleProofLib — "Gas optimized merkle proof verification library"
-├─ Multicallable — "Enables a single call to call multiple methods within a contract."
+├─ Multicallable — "Enables a single call to call multiple methods within a contract"
+├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
 ├─ ReentrancyGuard — TODO
 ├─ SSTORE2 — TODO
 ```
 
 
-## Safety
+### Safety
 
 Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
 
 We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
 
-## Acknowledgements
+### Acknowledgements
 
 These contracts were inspired by or directly modified from many sources, primarily:
 

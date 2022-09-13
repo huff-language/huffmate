@@ -1,5 +1,5 @@
 /// @title Roles Authority
-/// @author Andreas Bigger
+/// @author asnared <https://github.com/abigger87>
 /// @notice A Roles Authority module based off <https://github.com/Rari-Capital/solmate/blob/main/src/auth/authorities/RolesAuthority.sol>
 /// @license Apache License, Version 2.0
 
