@@ -194,7 +194,8 @@
 /// @param {calldata} [address from, address to, uint256 tokenId, uint256 amount, bytes data]
 /// @return []
 #define macro SAFE_TRANSFER_FROM() = takes(0) returns (0) {
-    IS_OWNER_OR_APPROVED(error)
+    0x04 calldataload               // [from]
+    IS_OWNER_OR_APPROVED(error)     // []
 
     // Place calldata args onto the stack
     0x64 calldataload               // [amount]
