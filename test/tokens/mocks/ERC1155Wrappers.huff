@@ -1,5 +1,5 @@
 
-#define macro MAIN() {
+#define macro MAIN() = {
     0x00 calldataload 0xE0 shr      // [function selector on stack]
 
     dup1 __FUNC_SIG(mint) eq mint jumpi
@@ -28,7 +28,7 @@
     batchSafeTransferFrom:
         BATCH_SAFE_TRANSFER_FROM()
     burn:
-        BURN_TOKEN()
+        BURN()
     batchMint:
         BATCH_MINT()
     setApprovalForAll:

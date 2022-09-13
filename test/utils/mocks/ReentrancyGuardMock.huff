@@ -1,0 +1,39 @@
+
+#define function state() view returns (uint256)
+#define function lock() nonpayable returns ()
+#define function unlock() nonpayable returns ()
+
+#define macro LOCK_WRAPPER() = takes (0) returns (0) {
+    LOCK()
+    stop
+}
+
+#define macro UNLOCK_WRAPPER() = takes (0) returns (0) {
+    UNLOCK()
+    stop
+}
+
+#define macro GET_STATE() = takes (0) returns (0) {
+    [LOCKED_SLOT] sload // [LOCKED]
+    0x00 mstore         // []
+    0x20 0x00 return    // []
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr  // [selector]
+
+    dup1 __FUNC_SIG(state) eq state_jump jumpi
+    dup1 __FUNC_SIG(lock) eq lock_jump jumpi
+    dup1 __FUNC_SIG(unlock) eq unlock_jump jumpi
+
+    DISPATCH_ERROR(0x00)
+
+    state_jump:
+        GET_STATE()
+
+    lock_jump:
+        LOCK_WRAPPER()
+
+    unlock_jump:
+        UNLOCK_WRAPPER()
+}

@@ -1,6 +1,7 @@
 /// @title SafeMath
-/// @author https://github.com/kadenzipfel
-/// @notice SafeMath module based off https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol
+/// @author kadenzipfel <https://github.com/kadenzipfel>
+/// @notice Math module over Solidity's arithmetic operations with safety checks
+/// @notice Adapted from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol
 
 // Interface
 #define function safeAdd(uint256,uint256) pure returns (uint256)

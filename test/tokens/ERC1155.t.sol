@@ -252,7 +252,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         assertEq(token.balanceOf(address(0xBEEF), 1337), 30);
     }
 
-        function testBatchBurn() public {
+    function testBatchBurn() public {
         uint256[] memory ids = new uint256[](5);
         ids[0] = 1337;
         ids[1] = 1338;
@@ -383,7 +383,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         assertEq(token.balanceOf(address(0xBEEF), 1341), 250);
     }
 
-  function testSafeBatchTransferFromToERC1155Recipient() public {
+    function testSafeBatchTransferFromToERC1155Recipient() public {
         address from = address(0xABCD);
 
         ERC1155Recipient to = new ERC1155Recipient();
@@ -438,7 +438,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         assertEq(token.balanceOf(address(to), 1341), 250);
     }
 
-   function testBatchBalanceOf() public {
+    function testBatchBalanceOf() public {
         address[] memory tos = new address[](5);
         tos[0] = address(0xBEEF);
         tos[1] = address(0xCAFE);
@@ -1224,6 +1224,11 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
     ) public {
         uint256 minLength = min3(tos.length, ids.length, amounts.length);
 
+        for (uint256 i = 0; i < minLength; i++) {
+            vm.assume(tos[i] != address(0));
+            vm.assume(tos[i] != address(this));
+        }
+
         address[] memory normalizedTos = new address[](minLength);
         uint256[] memory normalizedIds = new uint256[](minLength);
 
@@ -1250,36 +1255,43 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         }
     }
 
-    function testFailMintToZero(
+    function testMintToZeroUnsafeRecipient(
         uint256 id,
         uint256 amount,
         bytes memory data
     ) public {
+        vm.expectRevert(bytes("UNSAFE_RECIPIENT"));
         token.mint(address(0), id, amount, data);
     }
 
-    function testFailMintToNonERC155Recipient(
+    function testMintToNonERC155RecipientUnsafeRecipient(
         uint256 id,
         uint256 mintAmount,
         bytes memory mintData
     ) public {
-        token.mint(address(new NonERC1155Recipient()), id, mintAmount, mintData);
+        address recipient = address(new NonERC1155Recipient());
+        vm.expectRevert();
+        token.mint(recipient, id, mintAmount, mintData);
     }
 
-    function testFailMintToRevertingERC155Recipient(
+    function testMintToRevertingERC155RecipientReverts(
         uint256 id,
         uint256 mintAmount,
         bytes memory mintData
     ) public {
-        token.mint(address(new RevertingERC1155Recipient()), id, mintAmount, mintData);
+        address recipient = address(new RevertingERC1155Recipient());
+        vm.expectRevert();
+        token.mint(recipient, id, mintAmount, mintData);
     }
 
-    function testFailMintToWrongReturnDataERC155Recipient(
+    function testMintToWrongReturnDataERC155RecipientUnsafeRecipient(
         uint256 id,
         uint256 mintAmount,
         bytes memory mintData
     ) public {
-        token.mint(address(new RevertingERC1155Recipient()), id, mintAmount, mintData);
+        address recipient = address(new RevertingERC1155Recipient());
+        vm.expectRevert();
+        token.mint(recipient, id, mintAmount, mintData);
     }
 
     function testFailBurnInsufficientBalance(

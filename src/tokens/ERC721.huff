@@ -1,8 +1,12 @@
+/// @title BitPackLib
+/// @author kadenzipfel <https://github.com/kadenzipfel>
+/// @notice Modern and heavily gas golfed ERC-721 implementation
+/// @notice Adapted from Solmate https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol
 
-/* Imports */
+// Imports
 #include "../data-structures/HashMap.huff"
 
-/* Interface */
+// Interface
 #define function name() nonpayable returns (string)
 #define function symbol() nonpayable returns (string)
 #define function tokenURI(uint256) nonpayable returns (string)

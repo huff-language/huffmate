@@ -1,0 +1,43 @@
+#define function msb(uint256) pure returns (uint256)
+#define function lsb(uint256) pure returns (uint256)
+#define function popCount(uint256) pure returns (uint256)
+
+#define macro MSB_WRAPPER() = {
+    0x04 calldataload
+    MSB()
+
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro LSB_WRAPPER() = {
+    0x04 calldataload
+    LSB()
+
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro POP_COUNT_WRAPPER() = {
+    0x04 calldataload
+    POP_COUNT()
+
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MAIN() = {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(msb)      eq msb       jumpi
+    dup1 __FUNC_SIG(lsb)      eq lsb       jumpi
+    dup1 __FUNC_SIG(popCount) eq pop_count jumpi
+
+    0x00 dup1 revert
+
+    msb:
+        MSB_WRAPPER()
+    lsb:
+        LSB_WRAPPER()
+    pop_count:
+        POP_COUNT_WRAPPER()
+}
