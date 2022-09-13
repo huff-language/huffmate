@@ -9,7 +9,8 @@ interface IERC721 {
     function symbol() external returns (string memory);
     function tokenURI(uint256) external returns (string memory);
 
-    function mint(address, uint256) external;
+    function mint(address, uint256) payable external;
+    function burn(uint256) external;
 
     function transfer(address, uint256) external;
     function transferFrom(address, address, uint256) external;
@@ -17,7 +18,7 @@ interface IERC721 {
     function setApprovalForAll(address, bool) external;
 
     function getApproved(uint256) external returns (address);
-    function isApprovedForAll(address, address) external returns (uint256);
+    function isApprovedForAll(address, address) external returns (bool);
     function ownerOf(uint256) external returns (address);
     function balanceOf(address) external returns (uint256);
     function supportsInterface(bytes4) external returns (bool);
@@ -51,5 +52,59 @@ contract ERC721Test is Test {
         // Minting the same token twice should fail
         vm.expectRevert(bytes("ALREADY_MINTED"));
         token.mint(address(0xBEEF), 1337);
+    }
+
+    function testBurn() public {
+        // We can't burn a token we don't have
+        assertEq(token.balanceOf(address(this)), 0);
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(0));
+        vm.expectRevert(bytes("NOT_MINTED"));
+        token.burn(1337);
+
+        // Mint a token
+        token.mint(address(this), 1337);
+        assertEq(token.balanceOf(address(this)), 1);
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(this));
+
+        // Set approval and then check that it is zeroed out
+        token.approve(address(0xBEEF), 1337);
+        assertEq(token.getApproved(1337), address(0xBEEF));
+
+        // Now we should be able to burn the minted token
+        token.burn(1337);
+        assertEq(token.balanceOf(address(this)), 0);
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(0));
+
+        vm.expectRevert(bytes("NOT_MINTED"));
+        token.burn(1337);
+    }
+
+    function testApprove() public {
+        token.mint(address(this), 1337);
+        token.approve(address(0xBEEF), 1337);
+        assertEq(token.getApproved(1337), address(0xBEEF));
+
+        token.approve(address(0xCAFE), 1337);
+        assertEq(token.getApproved(1337), address(0xCAFE));
+    }
+
+    function testApproveBurn() public {
+        token.mint(address(this), 1337);
+        token.approve(address(0xBEEF), 1337);
+        token.burn(1337);
+
+        assertEq(token.balanceOf(address(this)), 0);
+        assertEq(token.getApproved(1337), address(0));
+    }
+
+    function testApproveAll() public {
+        assertFalse(token.isApprovedForAll(address(this), address(0xBEEF)));
+        token.setApprovalForAll(address(0xBEEF), true);
+        assertTrue(token.isApprovedForAll(address(this), address(0xBEEF)));
+        token.setApprovalForAll(address(0xBEEF), false);
+        assertFalse(token.isApprovedForAll(address(this), address(0xBEEF)));
     }
 }

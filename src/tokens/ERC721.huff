@@ -14,14 +14,16 @@
 #define function symbol() nonpayable returns (string)
 #define function tokenURI(uint256) nonpayable returns (string)
 
-#define function mint(address,uint256) nonpayable returns ()
+#define function mint(address, uint256) payable returns ()
+#define function burn(uint256) nonpayable returns ()
+
 #define function transfer(address,uint256) nonpayable returns ()
 #define function transferFrom(address,address,uint256) nonpayable returns ()
 #define function approve(address,uint256) nonpayable returns ()
 #define function setApprovalForAll(address,bool) nonpayable returns ()
 
 #define function getApproved(uint256) view returns (address)
-#define function isApprovedForAll(address,address) view returns (uint256)
+#define function isApprovedForAll(address,address) view returns (bool)
 #define function ownerOf(uint256) view returns (address)
 #define function balanceOf(address) view returns (uint256)
 #define function supportsInterface(bytes4) view returns (bool)
@@ -145,7 +147,8 @@
 
 /// @notice Mint
 /// @notice Mints a new token
-#define macro _MINT() = takes(2) returns (0) {
+/// @dev The Mint function is payable
+#define macro _MINT() = takes (2) returns (0) {
     // Input stack:                                 // [to, tokenId]
 
     // Check that the recipient is valid
@@ -176,9 +179,51 @@
         ALREADY_MINTED(0x00)
 }
 
+/// @notice Burn
+/// @notice Burns the token with the given id
+#define macro _BURN() = takes (1) returns (0) {
+    // Input stack:                                 // [tokenId]
+    NON_PAYABLE()                                   // [tokenId]
+
+    dup1                                            // [tokenId, tokenId]
+    [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, tokenId]
+
+    // Check that the recipient is valid
+    dup1 iszero                                     // [owner == 0, owner, tokenId]
+    not_minted jumpi                                // [owner, tokenId]
+
+    // Create the burning params
+    0x00 swap1                                      // [owner, to (0x00), tokenId]
+
+    // Reduce the balance of owner by 1
+    0x01 dup2                                       // [owner, 1, owner, to, tokenId]
+    [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00) // [balance, 1, owner, to, tokenId]
+    sub dup2                                        // [owner, balance-1, owner, to, tokenId]
+    [BALANCE_LOCATION]
+    STORE_ELEMENT_FROM_KEYS(0x00)                   // [owner, to, tokenId]
+
+    // Set the owner of the token to 0x00
+    0x00 dup4 [OWNER_LOCATION]                      // [slot, owner, 0x00, owner, to, tokenId]
+    STORE_ELEMENT_FROM_KEYS(0x00)                   // [owner, to, tokenId]
+
+    // Set the approval of the token to 0x00 for the owner
+    0x00 dup4 [SINGLE_APPROVAL_LOCATION]            // [slot, owner, 0x00, owner, to, tokenId]
+    STORE_ELEMENT_FROM_KEYS(0x00)                   // [owner, to, tokenId]
+
+    // Emit the transfer event.
+    __EVENT_HASH(Transfer)                          // [sig, owner, to (0x00), tokenId]
+    0x00 0x00                                       // [0, 0, sig, owner, to (0x00), tokenId]
+    log4                                            // []
+
+    stop
+
+    not_minted:
+        NOT_MINTED(0x00)
+}
+
 /// >>>>>>>>>>>>>>>>>>>>>  EXTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
 
-/* Transfer Functions */
+/// @notice Transfer From
 #define macro TRANSFER_TAKE_FROM(error) = takes(3) returns (3) {
     // input stack [from, to, tokenId]
 
@@ -245,6 +290,8 @@
     STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
 }
 
+/// @notice Approve
+/// @notice Approves a spender for a specific token
 #define macro APPROVE() = takes (0) returns (0) {
     // get owner
     0x24 calldataload dup1          // [tokenId, tokenId]
@@ -257,7 +304,7 @@
     caller dup3                     // [owner, msg.sender, is_sender_owner, owner, tokenId]
     LOAD_ELEMENT_FROM_KEYS(0x00)    // [is_approved_for_all, is_sender_owner, owner, tokenId]]
     or cont jumpi                   // [owner, tokenId]
-        error jump
+        not_authorized jump
     cont:
 
     // store approval
@@ -272,29 +319,30 @@
     log4                                            // []
 
     stop
-    error:
-        0x00 0x00 revert
+
+    not_authorized:
+        UNAUTHORIZED(0x00)
 }
 
+/// @notice Set Approval For All
+/// @notice Sets an operator as approved for all tokens of the caller
 #define macro SET_APPROVAL_FOR_ALL() = takes (0) returns (0) {
+    // Store the operator as approved for all
     0x24 calldataload                               // [approved]
     0x04 calldataload                               // [operator, approved]
     caller                                          // [msg.sender, operator, approved]
-
     STORE_ELEMENT_FROM_KEYS(0x00)                   // []
 
-    0x04 calldataload                               // [operator]
-    caller                                          // [msg.sender, operator]
-    0x24 calldataload                               // [approved, msg.sender, operator]
-    // emit the approval event
-    0x00 mstore                                     // [owner, operator]
+    // Emit the ApprovalForAll event
+    0x24 calldataload                               // [approved]
+    0x04 calldataload                               // [operator, approved]
+    caller                                          // [msg.sender, operator, approved]
     __EVENT_HASH(ApprovalForAll)                    // [sig, owner, operator]
     0x00 0x00                                       // [0, 32, sig, owner, operator]
     log4                                            // []
 
+    // Stop execution
     stop
-    error:
-        0x00 0x00 revert
 }
 
 #define macro TRANSFER_FROM() = takes(0) returns(0) {

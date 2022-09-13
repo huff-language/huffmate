@@ -27,6 +27,9 @@
 #define constant ALREADY_MINTED_ERROR = 0x414c52454144595f4d494e544544000000000000000000000000000000000000
 #define constant ALREADY_MINTED_LENGTH = 0x0e
 
+#define constant NOT_MINTED_ERROR = 0x4e4f545f4d494e54454400000000000000000000000000000000000000000000
+#define constant NOT_MINTED_LENGTH = 0x0a
+
 /// @notice Reverts with an "NOT_AUTHORIZED" message if the condition is false
 #define macro UNAUTHORIZED(condition) = takes (0) returns (0) {
     [NOT_AUTHORIZED_ERROR]      // ["NOT_AUTHORIZED"]
@@ -59,6 +62,13 @@
     REQUIRE()                   // []
 }
 
+/// @notice Reverts with an "NOT_MINTED" message if condition is false
+#define macro NOT_MINTED(condition) = takes (0) returns (0) {
+    [NOT_MINTED_ERROR]          // ["NOT_MINTED"]
+    [NOT_MINTED_LENGTH]         // [10 (length), "NOT_MINTED"]
+    <condition>                 // [condition, 10 (length), "NOT_MINTED"]
+    REQUIRE()                   // []
+}
 
 /// @notice Reverts with a "INVALID_RECIPIENT" message if condition is false
 #define macro INVALID_RECIPIENT(condition) = takes (0) returns (0) {
