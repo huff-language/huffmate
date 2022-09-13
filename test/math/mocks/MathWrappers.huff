@@ -1,12 +1,12 @@
 
-#define macro SQRT_WRAPPER() {
+#define macro SQRT_WRAPPER() = {
     0x04 calldataload
     SQRT()
     0x00 mstore
     0x20 0x00 return
 }
 
-#define macro MAX_WRAPPER() {
+#define macro MAX_WRAPPER() = {
     0x04 calldataload
     0x24 calldataload
     MAX()
@@ -14,7 +14,7 @@
     0x20 0x00 return
 }
 
-#define macro MIN_WRAPPER() {
+#define macro MIN_WRAPPER() = {
     0x04 calldataload
     0x24 calldataload
     MIN()
@@ -22,7 +22,7 @@
     0x20 0x00 return
 }
 
-#define macro AVG_WRAPPER() {
+#define macro AVG_WRAPPER() = {
     0x04 calldataload
     0x24 calldataload
     AVG()
@@ -30,7 +30,7 @@
     0x20 0x00 return
 }
 
-#define macro CEIL_DIV_WRAPPER() {
+#define macro CEIL_DIV_WRAPPER() = {
     0x24 calldataload
     0x04 calldataload
     CEIL_DIV()
@@ -38,7 +38,7 @@
     0x20 0x00 return
 }
 
-#define macro MAIN() {
+#define macro MAIN() = {
     0x00 calldataload 0xE0 shr
     dup1 __FUNC_SIG(sqrt) eq sqrt jumpi
     dup1 __FUNC_SIG(max) eq max jumpi
