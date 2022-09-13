@@ -36,26 +36,34 @@ auth
 ├─ Owned — "Simple single owner authorization"
 ├─ RolesAuthority — "Role based Authority that supports up to 256 roles"
 data-structures
-├─ Arrays - "Memory translation handlers for arrays"
+├─ Arrays — "Memory translation handlers for arrays"
 ├─ Bytes — TODO
-├─ Hashmap - "Simple mapping utilities for 32 byte words"
+├─ Hashmap — "Simple mapping utilities for 32 byte words"
 factories
-├─ Factory - TODO
+├─ Factory — TODO
 ├─ ProxyFactory — TODO
 math
-├─ FixedPointMath - "Arithmetic library with operations for fixed-point numbers"
+├─ FixedPointMath — "Arithmetic library with operations for fixed-point numbers"
 ├─ Math — "Refactored, common arithmetic macros"
 ├─ SafeMath — "Safe Wrappers over primitive arithmetic operations"
+├─ Trigonometry — "Basic trigonometry functions where inputs and outputs are integers"
 tokens
 ├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
-├─ ERC721 — TODO - "Modern, minimalist, and gas efficient ERC721 implementation"
-├─ ERC1155 -"Minimalist and gas efficient standard ERC1155 implementation"
+├─ ERC721 — TODO — "Modern, minimalist, and gas efficient ERC721 implementation"
+├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
 ├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
 utils
-├─ Calls - TODO
+├─ Calls — TODO
 ├─ Data — TODO
+├─ BitPackLib — "Efficient bit packing library"
+├─ CustomErrors — "Wrappers for reverting with common error messages"
+├─ ERC1155Receiver — TODO
+├─ Errors — "Custom error utilities"
+├─ JumpTableUtil — "Utility macros for retrieving jumpdest pcs from jump tables"
+├─ LibBit — "A library ported from solady for bit twiddling operations"
 ├─ MerkleProofLib — "Gas optimized merkle proof verification library"
-├─ Multicallable — "Enables a single call to call multiple methods within a contract."
+├─ Multicallable — "Enables a single call to call multiple methods within a contract"
+├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
 ├─ ReentrancyGuard — TODO
 ├─ SSTORE2 — TODO
 ```

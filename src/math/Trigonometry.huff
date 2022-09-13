@@ -1,5 +1,5 @@
 /// @title Trigonometry
-/// @notice basic trigonometry functions where inputs and outputs are integers. Inputs are 
+/// @notice Basic trigonometry functions where inputs and outputs are integers. Inputs are 
 ///         specified in radians scaled by 1e18, and similarly outputs are scaled by 1e18.
 ///
 ///         Huff implementation based off of `solidity-trigonometry` by `mds1`:

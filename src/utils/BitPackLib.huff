@@ -1,6 +1,6 @@
 /// @title BitPackLib
 /// @author https://github.com/kadenzipfel
-/// @notice Efficient bit packing lib
+/// @notice Efficient bit packing library
 
 #define constant MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
