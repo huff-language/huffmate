@@ -233,21 +233,20 @@
 
 
 #define macro COMPUTE_DOMAIN_SEPARATOR() = takes (0) returns (1) {
-    [PERMIT_TYPEHASH]               // [DOMAIN_SEPARATOR_3
-    0x00 mstore                     // []
-    [META_NAME] 0x20 mstore         // []
-    0x20 0x20 sha3                  // [name hash]
-    0x20 mstore                     // []
-    0x31                            // ["1"] 0x31 is hex for ascii for 1
-    0x40 mstore                     // []
-    0x02 0x40 sha3                  // [hash of "1"]
-    0x20 0x40 mstore                // []
-    chainid                         // [chainid]
-    0x60 mstore                     // []
-    address                         // [address(this)]
-    0x80 mstore                     // []
-    0xA0 0x00                       // [loc, len]
-    sha3                            // [hash]
+    // WARNING: 0x00 - 0x3f (64 bytes): scratch space for hashing methods
+    // AS SUCH, WE STORE VARIABLES IN MEMORY STARTING AT 0x40
+    [PERMIT_TYPEHASH] 0x40 mstore   // []
+    [META_NAME] 0x60 mstore         // []
+    0x20 0x60 sha3 0x60 mstore      // []
+
+    // 0x31 is hex for ascii for 1
+    0x31 0x80 mstore                // []
+    0x02 0x80 sha3 0x80 mstore      // [hash of "1"]
+
+    chainid 0xa0 mstore             // [chainid]
+    address 0xc0 mstore             // [address(this)]
+
+    0xA0 0x40 sha3                  // [hash]
 }
 
 #define macro DOMAIN_SEPARATOR() = takes (0) returns (0) {
@@ -289,7 +288,17 @@
     gt                                      // [timestamp > deadline, deadline]
     expired jumpi                           // [deadline]
 
-    // calc inner kec
+    // Calculate inner keccak
+    // keccak256(
+    //      abi.encode(
+    //        PERMIT_TYPEHASH,
+    //        owner,
+    //        spender,
+    //        value,
+    //        nonces[owner]++,
+    //        deadline
+    //      )
+    // )
     0x04 calldataload                       // [owner, deadline]
     _NONCE_PLUS_PLUS()                      // [nonce, deadline]
     0x44 calldataload                       // [value, nonce, deadline]
@@ -305,16 +314,28 @@
     0xc0 0x00                               // [loc, len]
     sha3                                    // [inner hash]
 
-    // calc and mstore outer kec
-    _DOMAIN_SEPARATOR()                     // [DOMAIN_SEPARATOR, inner hash]
-    [X_1901]                                // [0x1901, DOMAIN_SEPARATOR, inner hash]
-    0x00 mstore                             // [DOMAIN_SEPARATOR, inner hash]
-    0x02 mstore                             // [inner hash]
-    0x22 mstore                             // []
-    0x42 0x00                               // [loc, len]
-    sha3                                    // [outer hash]
+    // Grab the domain separator
+    _DOMAIN_SEPARATOR()                     // [domain separator, inner hash]
+    [X_1901]                                // [x1901, domain separator, inner hash]
 
-    //                                                           memory layout:
+    // Bitwise shifts
+    dup3 0xf0 shl                           // [inner hash << 0xf0, x1901, domain separator, inner hash]
+
+    // Create the second word
+    dup3 0xf0 shl                           // [domain separator << 0xf0, inner hash << 0xf0, x1901, domain separator, inner hash]
+    dup5 0x10 shr or                        // [domain separator << 0xf0 | inner hash >> 0x10, inner hash << 0xf0, x1901, domain separator, inner hash]
+
+    // Create the first word
+    dup4 dup4 swap1 0x10 shr or             // [x1901 | domain separator >> 0x10, domain separator << 0xf0 | inner hash >> 0x10, inner hash << 0xf0, x1901, domain separator, inner hash]
+
+    // Prepare memory mstore outer keccak
+    0x40 mstore                             // [domain separator << 0xf0 | inner hash >> 0x10, inner hash << 0xf0, x1901, domain separator, inner hash]
+    0x60 mstore                             // [inner hash << 0xf0, x1901, domain separator, inner hash]
+    0x80 mstore                             // [x1901, domain separator, inner hash]
+    0x42 0x40                               // [loc, len, x1901, domain separator, inner hash]
+    sha3                                    // [outer hash, x1901, domain separator, inner hash]
+
+    // Store signature in memory                                 memory layout:
     0x00 mstore                             // []                0x00 outer hash
     0x84 calldataload                       // [v]
     0x20 mstore                             // []                0x00 outerhash 0x20 v
@@ -323,7 +344,7 @@
     0xc4 calldataload                       // [s]
     0x60 mstore                             // []                0x00 outerhash 0x20 v 0x40 r 0x60 s
 
-    // prepare stack for later
+    // Prepare stack for later
     0x44 calldataload                       // [value]
     0x24 calldataload                       // [spender, value]
 
