@@ -9,6 +9,9 @@
 #define constant NOT_AUTHORIZED_ERROR = 0x4e4f545f415554484f52495a4544000000000000000000000000000000000000
 #define constant NOT_AUTHORIZED_LENGTH = 0x0e
 
+#define constant WRONG_FROM_ERROR = 0x57524f4e475f46524f4d00000000000000000000000000000000000000000000
+#define constant WRONG_FROM_LENGTH = 0x0a
+
 #define constant LENGTH_MISMATCH_ERROR = 0x4c454e4754485f4d49534d415443480000000000000000000000000000000000
 #define constant LENGTH_MISMATCH_LENGTH = 0x0f
 
@@ -35,6 +38,14 @@
     [NOT_AUTHORIZED_ERROR]      // ["NOT_AUTHORIZED"]
     [NOT_AUTHORIZED_LENGTH]     // [14 (length), "NOT_AUTHORIZED"]
     <condition>                 // [condition, 14 (length), "NOT_AUTHORIZED"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "WRONG_FROM" message if the condition is false
+#define macro WRONG_FROM(condition) = takes (0) returns (0) {
+    [WRONG_FROM_ERROR]          // ["WRONG_FROM"]
+    [WRONG_FROM_LENGTH]         // [10 (length), "WRONG_FROM"]
+    <condition>                 // [condition, 10 (length), "WRONG_FROM"]
     REQUIRE()                   // []
 }
 

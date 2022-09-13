@@ -224,45 +224,47 @@
 /// >>>>>>>>>>>>>>>>>>>>>  EXTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
 
 /// @notice Transfer From
-#define macro TRANSFER_TAKE_FROM(error) = takes(3) returns (3) {
-    // input stack [from, to, tokenId]
+#define macro TRANSFER_TAKE_FROM() = takes(3) returns (3) {
+    // Input stack: [from, to, tokenId]
 
-    // check if from is the owner of the token
-    dup1                                            // [from, from, to, tokenId]
-    dup4                                            // [tokenId, from, from, to, tokenId]
+    // If from !== ownerOf[tokenId] revert with "WRONG_FROM"
+    dup1 dup4                                       // [tokenId, from, from, to, tokenId]
     [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, from, from, to, tokenId]
-    swap2                                           // [from, owner, from, to, tokenId]
-    eq                                              // [from_is_owner, from, to, tokenId]
-    cont jumpi                                      // [from, to, tokenId]
-        <error> jump
+    eq cont jumpi                                   // [from, to, tokenId]
+    WRONG_FROM(0x00)
     cont:
 
-    // check if msg.sender == from
-    dup1 caller                                     // [msg.sender, from, from, to, tokenId]
-    eq                                              // [from_is_msg.sender, from, to, tokenId]
+    // If to === address(0) revert with "INVALID_RECIPIENT"
+    dup2 iszero iszero continue jumpi               // [from, to, tokenId]
+    INVALID_RECIPIENT(0x00)
+    continue:
+
+    // Check if msg.sender == from
+    dup1 caller eq                                  // [msg.sender == from, from, to, tokenId]
     is_authorized jumpi                             // [from, to, tokenId]
 
-    // check if approved for all
+    // Check if approved for all
     caller dup2                                     // [from, msg.sender, from, to, tokenId]
     LOAD_ELEMENT_FROM_KEYS(0x00)                    // [is_approved_for_all, from, to, tokenId]
     is_authorized jumpi                             // [from, to, tokenId]
 
-    // check if approved for tokenId
+    // Check if approved for tokenId
     dup3                                            // [tokenId, from, to, tokenId]
     [SINGLE_APPROVAL_LOCATION]                      // [SINGLE_APPROVAL_LOCATION, tokenId, from, to, tokenId]
     LOAD_ELEMENT_FROM_KEYS(0x00)                    // [address_approved_for_tokenId, from, to, tokenId]
-    caller eq                                       // [msg.sender_approved_for_tokenId, from, to, tokenId]
-    is_authorized jumpi                             // [from, to, tokenId]
-        <error> jump
+    caller eq is_authorized jumpi                   // [from, to, tokenId]
+
+    // If msg.sender != from && !isApprovedForAll[from][msg.sender] && msg.sender != getApproved[id],
+    UNAUTHORIZED(0x00)
+
     is_authorized:
 
-    // update balance of from
+    // Update balance of from
     0x01 dup2                                       // [from, 1, from, to, tokenId]
     [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00) // [balance, 1, from, to, tokenId]
     sub dup2                                        // [from, balance-1, from, to, tokenId]
     [BALANCE_LOCATION]
     STORE_ELEMENT_FROM_KEYS(0x00)                   // [from, to, tokenId]
-
 }
 
 #define macro TRANSFER_GIVE_TO() = takes(3) returns (3) {
@@ -345,30 +347,30 @@
     stop
 }
 
-#define macro TRANSFER_FROM() = takes(0) returns(0) {
+/// @notice Transfer From
+/// @notice Transfers a token from one address to another
+#define macro TRANSFER_FROM() = takes (0) returns (0) {
     // Setup the stack for the transfer function.
-    0x44 calldataload   // [tokenId]
-    0x24 calldataload   // [to, tokenId]
-    0x04 calldataload   // [from, to, tokenId]
+    0x44 calldataload       // [tokenId]
+    0x24 calldataload       // [to, tokenId]
+    0x04 calldataload       // [from, to, tokenId]
 
-    TRANSFER_TAKE_FROM(error)                       // [from, to, tokenId]
-    TRANSFER_GIVE_TO()                              // [from, to, tokenId]
+    TRANSFER_TAKE_FROM()    // [from, to, tokenId]
+    TRANSFER_GIVE_TO()      // [from, to, tokenId]
 
     // Emit the transfer event.
-    __EVENT_HASH(Transfer)                          // [sig,from, to, tokenId]
-    0x20 0x00                                       // [0, 0, sig, from, to, tokenId]
-    log4                                            // []
+    __EVENT_HASH(Transfer)  // [sig,from, to, tokenId]
+    0x20 0x00               // [0, 0, sig, from, to, tokenId]
+    log4                    // []
 
+    // Stop execution
     stop
-    // Error destination.
-    error:
-        0x00 0x00 revert
 }
 
-#define macro SAFE_TRANSFER_FROM() = takes(0) returns (0) {
+#define macro SAFE_TRANSFER_FROM() = takes (0) returns (0) {
     0x00 0x00 revert
 }
 
-#define macro SAFE_TRANSFER_FROM_WITH_DATA() = takes(0) returns (0) {
+#define macro SAFE_TRANSFER_FROM_WITH_DATA() = takes (0) returns (0) {
     0x00 0x00 revert
 }

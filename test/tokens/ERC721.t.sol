@@ -107,4 +107,79 @@ contract ERC721Test is Test {
         token.setApprovalForAll(address(0xBEEF), false);
         assertFalse(token.isApprovedForAll(address(this), address(0xBEEF)));
     }
+
+    /// @notice Tests Transfer From
+    /// @notice sbf is coming to steal your tokens
+    function testTransferFrom(address sbf) public {
+        address from = address(0xABCD);
+        vm.assume(sbf != from);
+        vm.assume(sbf != address(0));
+
+        // Mint the from a token
+        token.mint(from, 1337);
+
+
+        // Non owner cannot transfer
+        vm.expectRevert(bytes("WRONG_FROM"));
+        token.transferFrom(sbf, address(this), 1337);
+
+        // sbf can't steal our tokens
+        vm.startPrank(sbf);
+        vm.expectRevert(bytes("NOT_AUTHORIZED"));
+        token.transferFrom(from, sbf, 1337);
+        vm.stopPrank();
+
+        // Prank from
+        vm.startPrank(from);
+
+        // Cannot transfer to 0
+        vm.expectRevert(bytes("INVALID_RECIPIENT"));
+        token.transferFrom(from, address(0), 1337);
+
+        // The owner can transfer it!
+        token.transferFrom(from, address(0xBEEF), 1337);
+        vm.stopPrank();
+
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(0xBEEF));
+        assertEq(token.balanceOf(address(0xBEEF)), 1);
+        assertEq(token.balanceOf(from), 0);
+    }
+
+    /// @notice Tests Transferring from yourself
+    function testTransferFromSelf(address minter) public {
+        vm.assume(minter != address(0));
+
+        // Mint a token
+        token.mint(minter, 1337);
+
+        // Transfer from self
+        vm.prank(minter);
+        token.transferFrom(minter, address(0xBEEF), 1337);
+
+        // Check that it worked
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(0xBEEF));
+        assertEq(token.balanceOf(address(0xBEEF)), 1);
+        assertEq(token.balanceOf(address(this)), 0);
+    }
+
+    function testTransferFromApproveAll(address from) public {
+        vm.assume(from != address(0));
+
+        // Mint a token
+        token.mint(from, 1337);
+
+        // Give this contract approval to transfer
+        vm.prank(from);
+        token.setApprovalForAll(address(this), true);
+
+        // The approved address can transfer
+        token.transferFrom(from, address(0xBEEF), 1337);
+
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(0xBEEF));
+        assertEq(token.balanceOf(address(0xBEEF)), 1);
+        assertEq(token.balanceOf(from), 0);
+    }
 }
