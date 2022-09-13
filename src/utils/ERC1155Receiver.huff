@@ -1,6 +1,6 @@
 /// @title ERC1155 Receiver
 /// @author asnared <https://github.com/abigger87>
-/// @notice A basic interface for receiving ERC1155 tokens.
+/// @notice A minimal interface for receiving ERC1155 tokens.
 
 /// @notice On ERC1155 Received
 /// @notice Returns the function selector for `onERC1155Received`
