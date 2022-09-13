@@ -4,7 +4,7 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
 
-interface ERC721 {
+interface IERC721 {
     function name() external returns (string memory);
     function symbol() external returns (string memory);
     function tokenURI(uint256) external returns (string memory);
@@ -23,19 +23,17 @@ interface ERC721 {
 }
 
 contract ERC721Test is Test {
-    ERC721 erc721;
+    IERC721 erc721;
 
     function setUp() public {
-        // Read mock erc721 from file
-        string memory mockErc721 = vm.readFile("test/tokens/mocks/ERC721Wrapper.huff");
-
-        // Create mock erc721
-        HuffConfig config = HuffDeployer.config().with_code(mockErc721);
-        erc721 = ERC721(config.deploy("tokens/ERC721"));
+        // Deploy the ERC721
+        string memory wrapper_code = vm.readFile("test/tokens/mocks/ERC721Wrapper.huff");
+        erc721 = IERC721(HuffDeployer.config().with_code(wrapper_code).deploy("tokens/ERC721"));
     }
 
+    /// @notice Test the ERC721 Metadata
     function testMetadata() public {
-        assertEq(erc721.name(), "Token");
-        assertEq(erc721.symbol(), "TKN");
+        assertEq(keccak256(abi.encode(erc721.name())), keccak256(abi.encode("Token")));
+        assertEq(keccak256(abi.encode(erc721.symbol())), keccak256(abi.encode("TKN")));
     }
 }

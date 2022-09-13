@@ -21,6 +21,12 @@
 #define constant DISPATCH_ERROR_MESSAGE = 0xe44495350415443485f4552524f52000000000000000000000000000000000000
 #define constant DISPATCH_LENGTH = 0x0e
 
+#define constant INVALID_RECIPIENT_ERROR = 0x11494e56414c49445f524543495049454e54000000000000000000000000000000
+#define constant INVALID_RECIPIENT_LENGTH = 0x11
+
+#define constant ALREADY_MINTED_ERROR = 0xe414c52454144595f4d494e544544000000000000000000000000000000000000
+#define constant ALREADY_MINTED_LENGTH = 0x0e
+
 /// @notice Reverts with an "NOT_AUTHORIZED" message if the condition is false
 #define macro UNAUTHORIZED(condition) = takes (0) returns (0) {
     [NOT_AUTHORIZED_ERROR]      // ["NOT_AUTHORIZED"]
@@ -43,6 +49,23 @@
     [UNSAFE_RECIPIENT_LENGTH]   // [16 (length), "UNSAFE_RECIPIENT"]
     <condition>                 // [condition, 16 (length), "UNSAFE_RECIPIENT"]
     REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "ALREADY_MINTED" message if condition is false
+#define macro ALREADY_MINTED(condition) = takes (0) returns (0) {
+    [ALREADY_MINTED_ERROR]      // ["ALREADY_MINTED"]
+    [ALREADY_MINTED_LENGTH]     // [14 (length), "ALREADY_MINTED"]
+    <condition>                 // [condition, 14 (length), "ALREADY_MINTED"]
+    REQUIRE()                   // []
+}
+
+
+/// @notice Reverts with a "INVALID_RECIPIENT" message if condition is false
+#define macro INVALID_RECIPIENT(condition) = takes (0) returns (0) {
+    [INVALID_RECIPIENT_ERROR]    // ["INVALID_RECIPIENT"]
+    [INVALID_RECIPIENT_LENGTH]   // [17 (length), "INVALID_RECIPIENT"]
+    <condition>                  // [condition, 17 (length), "INVALID_RECIPIENT"]
+    REQUIRE()                    // []
 }
 
 /// @notice Reverts with a "REENTRANCY" message if condition is false

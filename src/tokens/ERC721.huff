@@ -1,9 +1,12 @@
-/// @title BitPackLib
+/// @title ERC721
+/// @author asnared <https://github.com/abigger87>
 /// @author kadenzipfel <https://github.com/kadenzipfel>
 /// @notice Modern and heavily gas golfed ERC-721 implementation
 /// @notice Adapted from Solmate https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol
 
 // Imports
+#include "../utils/CommonErrors.huff"
+#include "../utils/NonPayable.huff"
 #include "../data-structures/HashMap.huff"
 
 // Interface
@@ -23,45 +26,60 @@
 #define function balanceOf(address) view returns (uint256)
 #define function supportsInterface(bytes4) view returns (bool)
 
+// Events
 #define event Transfer(address,address,uint256)
 #define event Approval(address,address,uint256)
 #define event ApprovalForAll(address,address,bool)
 
-/* Events Signatures */
-#define constant TRANSFER_EVENT_SIGNATURE = 0xDDF252AD1BE2C89B69C2B068FC378DAA952BA7F163C4A11628F55A4DF523B3EF
-#define constant APPROVAL_EVENT_SIGNATURE = 0x8C5BE1E5EBEC7D5BD14F71427D1E84F3DD0314C0F7B2291E5B200AC8C7C3B925
-#define constant APPROVAL_FOR_ALL_EVENT_SIGNATURE = 0x17307EAB39AB6107E8899845AD3D59BD9653F200F220920489CA2B5937696C31
-
-/* Storage Slots */
+// Storage Slots
 #define constant OWNER_LOCATION = FREE_STORAGE_POINTER() // ownerOf
 #define constant BALANCE_LOCATION = FREE_STORAGE_POINTER() // balanceOf
 #define constant SINGLE_APPROVAL_LOCATION = FREE_STORAGE_POINTER() // getApproved
 
+// Metadata
+// META_NAME = "Token"
+#define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000
+#define constant META_NAME_LENGTH = 0x05
+
+// META_SYMBOL = "TKN"
+#define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
+#define constant META_SYMBOL_LENGTH = 0x03
+
+
 /// >>>>>>>>>>>>>>>>>>>>>  VIEW FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
 
+/// @notice Name
+/// @notice Returns the token name string
 #define macro NAME() = takes (0) returns (0) {
-    0x05546f6b656e              // [`${len}Token`]
-    0x25 mstore                 // []
-
-    0x20 returndatasize mstore  // []
-    0x60 returndatasize return
+    NON_PAYABLE()                       // []
+    0x20 0x00 mstore                    // []
+    [META_NAME_LENGTH] 0x20 mstore      // []
+    [META_NAME] 0x40 mstore             // []
+    0x60 0x00 return                    // []
 }
 
+/// @notice Symbol
+/// @notice Returns the symbol of the token
 #define macro SYMBOL() = takes (0) returns (0) {
-    0x03544B4E                  // [`${len}TKN`]
-    0x23 mstore                 // []
-
-    0x20 returndatasize mstore  // []
-    0x60 returndatasize return
+    NON_PAYABLE()                       // []
+    0x20 0x00 mstore                    // []
+    [META_SYMBOL_LENGTH] 0x20 mstore    // []
+    [META_SYMBOL] 0x40 mstore           // []
+    0x60 0x00 return                    // []
 }
 
+/// @notice Balance Of
+/// @notice Returns the balance of the given address
 #define macro BALANCE_OF() = takes (0) returns (0) {
-    0x04 calldataload                               // [account]
-    [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00) // [balance]
-    0x00 mstore                                     // []
-    0x20 0x00 return                                // []
+    NON_PAYABLE()                                       // []
+    0x04 calldataload                                   // [account]
+    [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)     // [balance]
+    0x00 mstore                                         // []
+    0x20 0x00 return                                    // []
 }
 
+/// @notice Owner Of
+/// @notice Returns the owner of the given token id
 #define macro OWNER_OF() = takes (0) returns (0) {
     0x04 calldataload                               // [tokenId]
     [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner]
@@ -69,22 +87,26 @@
     0x20 0x00 return                                // []
 }
 
+/// @notice Is Approved For All
+/// @notice Returns whether the given operator is approved for all tokens of the given owner
 #define macro IS_APPROVED_FOR_ALL() = takes (0) returns (0) {
     0x24 calldataload               // [to]
     0x04 calldataload               // [from, to]
     LOAD_ELEMENT_FROM_KEYS(0x00)    // [value]
-    
-    0x00 mstore
-    0x20 0x00 return
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
 }
 
+/// @notice Get Approved
+/// @notice Returns the approved address for the given token id
 #define macro GET_APPROVED() = takes (0) returns (0) {
     0x04 calldataload               // [tokenId]
-    [SINGLE_APPROVAL_LOCATION]
+    [SINGLE_APPROVAL_LOCATION]      // [approval_slot, tokenId]
     LOAD_ELEMENT_FROM_KEYS(0x00)    // [spender]
-    0x00 mstore
-    0x20 0x00 return
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
 }
+
 
 #define macro TOKEN_URI() = takes (0) returns (0) {
     0x00 0x00 revert
@@ -93,7 +115,7 @@
 #define macro SUPPORTS_INTERFACE() = takes (0) returns (0) {
     // grab interfaceId
     0x04 calldataload       // [interfaceId]
-    0xe0 
+    0xe0
     shr
 
     // check if erc165 interfaceId
@@ -121,30 +143,37 @@
 
 /// >>>>>>>>>>>>>>>>>>>>>  INTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
 
+/// @notice Mint
+/// @notice Mints a new token
 #define macro _MINT() = takes(2) returns (0) {
     // Input stack:                                 // [to, tokenId]
+
+    // Check that the recipient is valid
+    dup1 iszero invalid_recipient jumpi             // [to, tokenId]
+
+    // Create the minting params
     0x00                                            // [from (0x00), to, tokenId]
     dup3                                            // [tokenId, from (0x00), to, tokenId]
 
-    //check no one owns it
+    // Check token ownership
     [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, from (0x00), to, tokenId]
-    iszero cont jumpi
-        error jump
-
-    cont:
+    iszero iszero unauthorized jumpi
 
     // Give tokens to the recipient.
     TRANSFER_GIVE_TO()                              // [from (0x00), to, tokenId]
 
     // Emit the transfer event.
-    [TRANSFER_EVENT_SIGNATURE]                      // [sig, from (0x00), to, tokenId]
+    __EVENT_HASH(Transfer)                          // [sig, from (0x00), to, tokenId]
     0x00 0x00                                       // [0, 0, sig, from (0x00), to, tokenId]
     log4                                            // []
 
     stop
 
-    error:
-        0x00 0x00 revert
+    invalid_recipient:
+        INVALID_RECIPIENT(0x00)
+
+    unauthorized:
+        ALREADY_MINTED(0x00)
 }
 
 /// >>>>>>>>>>>>>>>>>>>>>  EXTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
@@ -179,7 +208,7 @@
     LOAD_ELEMENT_FROM_KEYS(0x00)                    // [address_approved_for_tokenId, from, to, tokenId]
     caller eq                                       // [msg.sender_approved_for_tokenId, from, to, tokenId]
     is_authorized jumpi                             // [from, to, tokenId]
-        <error> jump                                   
+        <error> jump
     is_authorized:
 
     // update balance of from
@@ -238,7 +267,7 @@
     swap1                           // [owner, spender, tokenId]
 
     // emit the approval event
-    [APPROVAL_EVENT_SIGNATURE]                      // [sig, owner, spender, tokenId]
+    __EVENT_HASH(Approval)                          // [sig, owner, spender, tokenId]
     0x00 0x00                                       // [0, 0, sig, owner, spender, tokenId]
     log4                                            // []
 
@@ -259,7 +288,7 @@
     0x24 calldataload                               // [approved, msg.sender, operator]
     // emit the approval event
     0x00 mstore                                     // [owner, operator]
-    [APPROVAL_FOR_ALL_EVENT_SIGNATURE]              // [sig, owner, operator]
+    __EVENT_HASH(ApprovalForAll)                    // [sig, owner, operator]
     0x00 0x00                                       // [0, 32, sig, owner, operator]
     log4                                            // []
 
@@ -278,7 +307,7 @@
     TRANSFER_GIVE_TO()                              // [from, to, tokenId]
 
     // Emit the transfer event.
-    [TRANSFER_EVENT_SIGNATURE]                      // [sig,from, to, tokenId]
+    __EVENT_HASH(Transfer)                          // [sig,from, to, tokenId]
     0x20 0x00                                       // [0, 0, sig, from, to, tokenId]
     log4                                            // []
 
