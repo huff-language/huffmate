@@ -383,7 +383,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         assertEq(token.balanceOf(address(0xBEEF), 1341), 250);
     }
 
-  function testSafeBatchTransferFromToERC1155Recipient() public {
+    function testSafeBatchTransferFromToERC1155Recipient() public {
         address from = address(0xABCD);
 
         ERC1155Recipient to = new ERC1155Recipient();
@@ -1223,6 +1223,11 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         bytes memory mintData
     ) public {
         uint256 minLength = min3(tos.length, ids.length, amounts.length);
+
+        for (uint256 i = 0; i < minLength; i++) {
+            vm.assume(tos[i] != address(0));
+            vm.assume(tos[i] != address(this));
+        }
 
         address[] memory normalizedTos = new address[](minLength);
         uint256[] memory normalizedIds = new uint256[](minLength);
