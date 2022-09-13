@@ -391,34 +391,15 @@ contract ERC20Test is Test {
             )
         );
 
-        console2.log("Inner hash:");
-        console2.logBytes32(inner_hash);
-
-        bytes memory x1901 = abi.encodePacked("\x19\x01");
-        console2.log("0x1901:");
-        console2.logBytes(x1901);
-
-        bytes memory packedEncoding = abi.encodePacked(
-            "\x19\x01",
-            token.DOMAIN_SEPARATOR(),
-            inner_hash
-        );
-        console2.log("Packed encoding:");
-        console2.logBytes(packedEncoding);
-
-        console2.log("DOMAIN_SEPARATOR");
-        console2.logBytes32(token.DOMAIN_SEPARATOR());
-
-        bytes32 actualDomainSeparator = keccak256(
-            abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(abi.encode(0x546f6b656e000000000000000000000000000000000000000000000000000000)),
-                keccak256("1"),
-                block.chainid,
-                address(token)
-            )
-        );
-        console2.logBytes32(actualDomainSeparator);
+        // bytes32 actualDomainSeparator = keccak256(
+        //     abi.encode(
+        //         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+        //         keccak256(abi.encode(0x546f6b656e000000000000000000000000000000000000000000000000000000)),
+        //         keccak256("1"),
+        //         block.chainid,
+        //         address(token)
+        //     )
+        // );
 
         bytes32 outer_hash = keccak256(
             abi.encodePacked(
@@ -427,9 +408,6 @@ contract ERC20Test is Test {
                 inner_hash
             )
         );
-
-        console2.log("Outer hash:");
-        console2.logBytes32(outer_hash);
 
         // Create the signature
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, outer_hash);

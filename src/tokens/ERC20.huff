@@ -56,7 +56,8 @@
 #define constant ZERO_ADDRESS = 0x0000000000000000000000000000000000000000
 
 /// @notice Constructor
-#define macro CONSTRUCTOR_ERC20() = takes(0) returns (0) {
+/// @notice Sets the initial domain separator and chain ID
+#define macro CONSTRUCTOR_ERC20() = takes (0) returns (0) {
     chainid [INITIAL_CHAIN_ID] sstore       // []
     COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
@@ -64,7 +65,7 @@
 
 /// @notice Approve
 /// @notice Grants approval to an operator to transfer tokens on behalf of the sender.
-#define macro APPROVE() = {
+#define macro APPROVE() = takes (0) returns (0) {
     NON_PAYABLE()                           // []
 
     0x24 calldataload                       // [value]
@@ -179,7 +180,8 @@
         0x00 0x00 revert                    // []
 }
 
-#define macro _TRANSFER_TAKE_FROM() = takes(3) returns (3) {
+/// @notice Transfers an amount of tokens from
+#define macro _TRANSFER_TAKE_FROM() = takes (3) returns (3) {
     // input stack: [value, from, to]
     dup2 [BALANCE_SLOT] LOAD_ELEMENT_FROM_KEYS(0x00)        // [balance, value, from, to]                                                // [from, value, from, to]
     dup1                                                    // [balance, balance, value, from, to]
@@ -201,7 +203,7 @@
 }
 
 /// @notice Transfers an amount of tokens from one address to another.
-#define macro _TRANSFER_GIVE_TO() = takes(3) returns (3) {
+#define macro _TRANSFER_GIVE_TO() = takes (3) returns (3) {
     // input stack: [value, from, to]
     dup3                                                // [to, value, from, to]
     dup2                                                // [value, to, value, from, to]
@@ -212,6 +214,8 @@
     [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)        // [value, from, to]
 }
 
+/// @notice Approve
+/// @notice Approves an address to spend an amount of tokens on the caller's behalf
 #define macro APPROVE() = takes (0) returns (0) {
     0x24 calldataload                           // [value]
     dup1 0x00 mstore                            // [value]
@@ -226,12 +230,33 @@
 
     // Store the value at slot = keccak256(from . to)
     STORE_ELEMENT_FROM_KEYS(0x00)
-
 }
 
-// EIP-2612 LOGIC
+/// @notice Domain Separator
+/// @notice Returns the EIP-712 domain separator
+#define macro DOMAIN_SEPARATOR() = takes (0) returns (0) {
+    NON_PAYABLE()                   // []
+    _DOMAIN_SEPARATOR()             // [domain separator]
+    0x00 mstore                     // [domain separator]
+    0x20 0x00 return                // []
+}
 
+/// @notice Loads the EIP-712 domain separator
+#define macro _DOMAIN_SEPARATOR() = takes (0) returns (1) {
+    chainid                                     // [chainid]
+    [INITIAL_CHAIN_ID] sload                    // [INITIAL_CHAIN_ID, chainid]
+    eq                                          // [INITIAL_CHAIN_ID == chainid]
+    useInitial jumpi                            // []
+    COMPUTE_DOMAIN_SEPARATOR()                  // [computed domain separator]
+    done jump
 
+    useInitial:
+        [INITIAL_DOMAIN_SEPARATOR] sload        // [INITIAL_DOMAIN_SEPARATOR]
+
+    done:
+}
+
+/// @notice Computes the EIP-712 domain separator
 #define macro COMPUTE_DOMAIN_SEPARATOR() = takes (0) returns (1) {
     // WARNING: 0x00 - 0x3f (64 bytes): scratch space for hashing methods
     // AS SUCH, WE STORE VARIABLES IN MEMORY STARTING AT 0x40
@@ -249,27 +274,8 @@
     0xA0 0x40 sha3                  // [hash]
 }
 
-#define macro DOMAIN_SEPARATOR() = takes (0) returns (0) {
-    NON_PAYABLE()                   // []
-    _DOMAIN_SEPARATOR()             // [domain separator]
-    0x00 mstore                     // [domain separator]
-    0x20 0x00 return                // []
-}
-
-#define macro _DOMAIN_SEPARATOR() = takes (0) returns (1) {
-    chainid                                     // [chainid]
-    [INITIAL_CHAIN_ID] sload                    // [INITIAL_CHAIN_ID, chainid]
-    eq                                          // [INITIAL_CHAIN_ID == chainid]
-    useInitial jumpi                            // []
-    COMPUTE_DOMAIN_SEPARATOR()                  // [computed domain separator]
-    done jump
-
-    useInitial:
-        [INITIAL_DOMAIN_SEPARATOR] sload        // [INITIAL_DOMAIN_SEPARATOR]
-
-    done:
-}
-
+/// @notice Permit
+/// @notice EIP 2612 Signed Approvals
 #define macro PERMIT() = takes (0) returns (0) {
     NON_PAYABLE()
     // function permit arg    calldata loc
@@ -400,8 +406,8 @@
         REVERT_WITH_REASON(0x00)
 }
 
-// Takes an address off the stack, returns the current nonce for that address onto the stack.
-// Increments the nonce for next time,
+/// @notice Takes an address off the stack, returns the current nonce for that address onto the stack.
+/// @notice Increments the nonce for next time,
 #define macro _NONCE_PLUS_PLUS() = takes (1) returns (1) {
     // input stack                                  // [account]
     dup1                                            // [account, account]
@@ -415,7 +421,8 @@
     pop   // clean up stack                         // [currentNonce]
 }
 
-
+/// @notice Nonces
+/// @notice Returns the current nonce for an account
 #define macro NONCES() = takes (0) returns (0) {
     0x04 calldataload                               // [account]
     [NONCE_SLOT] LOAD_ELEMENT_FROM_KEYS(0x00)       // [nonce]
@@ -423,7 +430,8 @@
     0x20 0x00 return                                // []
 }
 
-// Metadata
+/// @notice Name
+/// @notice Returns the token name string
 #define macro NAME() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
     0x20 0x00 mstore                    // []
@@ -432,6 +440,8 @@
     0x60 0x00 return                    // []
 }
 
+/// @notice Symbol
+/// @notice Returns the symbol of the token
 #define macro SYMBOL() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
     0x20 0x00 mstore                    // []
@@ -440,13 +450,16 @@
     0x60 0x00 return                    // []
 }
 
+/// @notice Decimals
+/// @notice Returns the token decimal representation
 #define macro DECIMALS() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
     [META_DECIMALS] 0x00 mstore         // []
     0x20 0x00 return                    // []
 }
 
-// Accounting Functions
+/// @notice Balance Of
+/// @notice Returns the token balance of an address
 #define macro BALANCE_OF() = takes (0) returns (0) {
     NON_PAYABLE()                                   // []
     0x04 calldataload                               // [account]
@@ -455,6 +468,8 @@
     0x20 0x00 return                                // []
 }
 
+/// @notice Total Supply
+/// @notice Returns the total supply of the token
 #define macro TOTAL_SUPPLY() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
     [TOTAL_SUPPLY_SLOT] sload           // [supply]
@@ -462,7 +477,8 @@
     0x20 0x00 return                    // []
 }
 
-// Approval Functions
+/// @notice Allowance
+/// @notice Returns the amount which a spender is allowed to transfer on behalf of an owner
 #define macro ALLOWANCE() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
     0x24 calldataload                   // [to]
@@ -494,7 +510,7 @@
 }
 
 /// @notice Mints tokens to a specified address
-#define macro _MINT() = takes(2) returns (0) {
+#define macro _MINT() = takes (2) returns (0) {
     // Input stack: [value, to]
     dup2                            // [to, value, to]
     swap1                           // [value, to, to]
@@ -514,10 +530,8 @@
     log3                            // []
 }
 
-// Utility Functions
-
 /// @notice Reverts if the call has a non-zero value.
-#define macro NON_PAYABLE() = takes(0) returns (0) {
+#define macro NON_PAYABLE() = takes (0) returns (0) {
     callvalue iszero                                                            // [msg.value == 0]
     novalue jumpi                                                               // []
 
@@ -530,7 +544,7 @@
 }
 
 /// @notice Revert with a string reason
-#define macro REVERT_WITH_REASON(mem_ptr) = takes(2) returns(0) {
+#define macro REVERT_WITH_REASON(mem_ptr) = takes (2) returns(0) {
     // NOTE: String must be < 32 bytes
     // [len, "str"]
     [ERROR_SIG] <mem_ptr> mstore            // [len, "str"]   0x00 error sig
@@ -542,7 +556,7 @@
 
 
 // Function Dispatching
-#define macro MAIN_ERC20() = takes(1) returns (1) {
+#define macro MAIN_ERC20() = takes (1) returns (1) {
     // Identify which function is being called.
     // [func sig]
 
