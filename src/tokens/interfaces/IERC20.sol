@@ -27,7 +27,7 @@ interface IERC20 {
     function symbol() external view returns (string memory);
 
     /// @dev Returns the symbol of token
-    function decimals() external view returns (uint);
+    function decimals() external view returns (uint256);
 
     /// @dev Returns the domain separator
     function DOMAIN_SEPARATOR() external view returns (bytes32);

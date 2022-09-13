@@ -54,27 +54,14 @@ contract ERC20Test is Test {
         // Deploy the Mintable ERC20
         vm.startPrank(deployer);
         address mintableTokenAddress = HuffDeployer.config()
-            // .with_bytes32_constant("META_NAME", META_NAME)
-            // .with_uint_constant("META_NAME_LENGTH", META_NAME_LENGTH)
-            // .with_bytes32_constant("META_SYMBOL", META_SYMBOL)
-            // .with_uint_constant("META_SYMBOL_LENGTH", META_SYMBOL_LENGTH)
-            // .with_uint_constant("META_DECIMALS", DECIMALS)
             .with_code(mintable_wrapper)
             .deploy("tokens/ERC20");
-        console2.log("Deployed ERC20");
-        console2.log(mintableTokenAddress);
         token = IMintableERC20(mintableTokenAddress);
-        console2.log("Interface match :D");
         vm.stopPrank();
 
         // Deploy the Mock ERC20
         vm.startPrank(deployer);
         address mockTokenAddress = HuffDeployer.config()
-            // .with_bytes32_constant("META_NAME", META_NAME)
-            // .with_uint_constant("META_NAME_LENGTH", META_NAME_LENGTH)
-            // .with_bytes32_constant("META_SYMBOL", META_SYMBOL)
-            // .with_uint_constant("META_SYMBOL_LENGTH", META_SYMBOL_LENGTH)
-            // .with_uint_constant("META_DECIMALS", DECIMALS)
             .with_code(mock_wrapper)
             .deploy("tokens/ERC20");
         mockToken = IERC20(mockTokenAddress);
@@ -82,14 +69,13 @@ contract ERC20Test is Test {
     }
 
     function testMockERC20Metadata() public {
-        console2.log(address(mockToken));
-        console2.log("Getting mock token name...");
         string memory mockTokenName = mockToken.name();
-        console2.log(mockTokenName);
+        string memory mockTokenSymbol = mockToken.symbol();
+        uint256 mockTokenDecimals = mockToken.decimals();
 
-        // assertEq(token.name(), NAME);
-        // assertEq(token.symbol(), SYMBOL);
-        // assertEq(token.decimals(), DECIMALS);
+        assertEq(keccak256(abi.encode(mockTokenName)), keccak256(abi.encode(NAME)));
+        assertEq(keccak256(abi.encode(mockTokenSymbol)), keccak256(abi.encode(SYMBOL)));
+        assertEq(mockTokenDecimals, DECIMALS);
     }
 
     function testNonPayable() public {
@@ -158,11 +144,13 @@ contract ERC20Test is Test {
     // SOLMATE ERC20 tests
     // https://github.com/transmissions11/solmate/blob/main/src/test/ERC20.t.sol
     function testMetadata() public {
-        console.log(address(token));
-        token.name();
-        // assertEq(token.name(), NAME);
-        // assertEq(token.symbol(), SYMBOL);
-        // assertEq(token.decimals(), DECIMALS);
+        string memory tokenName = token.name();
+        string memory tokenSymbol = token.symbol();
+        uint256 tokenDecimals = token.decimals();
+
+        assertEq(keccak256(abi.encode(tokenName)), keccak256(abi.encode(NAME)));
+        assertEq(keccak256(abi.encode(tokenSymbol)), keccak256(abi.encode(SYMBOL)));
+        assertEq(tokenDecimals, DECIMALS);
     }
 
     function testMint() public {

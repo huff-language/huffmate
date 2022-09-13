@@ -28,7 +28,7 @@
     batchSafeTransferFrom:
         BATCH_SAFE_TRANSFER_FROM()
     burn:
-        BURN_TOKEN()
+        BURN()
     batchMint:
         BATCH_MINT()
     setApprovalForAll:

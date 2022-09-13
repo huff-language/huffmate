@@ -11,7 +11,7 @@ Huffmate is still a work in progress and the majority of contracts have yet to b
 Use these contracts at your own risk!
 
 
-## Usage
+### Usage
 
 To install with [**Foundry**](https://github.com/foundry-rs/foundry):
 
@@ -26,7 +26,7 @@ npm install @pentagonxyz/huffmate
 ```
 
 
-## Contracts
+### Contracts
 
 ```ml
 auth
@@ -49,7 +49,7 @@ math
 tokens
 ├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
 ├─ ERC721 — TODO - "Modern, minimalist, and gas efficient ERC721 implementation"
-├─ ERC1155 — TODO -"Minimalist and gas efficient standard ERC1155 implementation"
+├─ ERC1155 -"Minimalist and gas efficient standard ERC1155 implementation"
 ├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
 utils
 ├─ Calls - TODO
@@ -61,14 +61,14 @@ utils
 ```
 
 
-## Safety
+### Safety
 
 Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
 
 We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
 
-## Acknowledgements
+### Acknowledgements
 
 These contracts were inspired by or directly modified from many sources, primarily:
 

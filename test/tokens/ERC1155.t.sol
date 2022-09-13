@@ -252,7 +252,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         assertEq(token.balanceOf(address(0xBEEF), 1337), 30);
     }
 
-        function testBatchBurn() public {
+    function testBatchBurn() public {
         uint256[] memory ids = new uint256[](5);
         ids[0] = 1337;
         ids[1] = 1338;

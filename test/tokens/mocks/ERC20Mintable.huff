@@ -5,39 +5,51 @@
 #define macro BURN() = takes(0) returns (0) {
     NON_PAYABLE()
     // Setup the stack for the burn function.
-    0x00                                                                       // [to (0x00)]
-    0x04 calldataload                                                          // [from, to]
-    0x24 calldataload                                                          // [value, from, to]
-    _BURN()
-    0x00 0x00 return
+    0x04 calldataload   // [from]
+    0x24 calldataload   // [value, from]
+
+    // Call ERC20.huff's _BURN macro
+    _BURN()             // []
+
+    // Stop Execution
+    stop                // []
 }
 
 #define macro MINT() = takes(0) returns (0) {
     NON_PAYABLE()
 
     // Setup the stack for the mint function.
-    0x04 calldataload                                                          // [to]
-    0x00                                                                       // [from (0x00), to]
-    0x24 calldataload                                                          // [value, from, to]
-    _MINT()                                                                    // [value, from, to]
-    0x00 0x00 return
+    0x04 calldataload   // [to]
+    0x24 calldataload   // [value, to]
+
+    // Call ERC20.huff's _MINT macro
+    _MINT()             // []
+
+    // Stop Execution
+    stop                // []
 }
 
 #define macro MAIN() = takes (0) returns (0) {
     0x00 calldataload 0xE0 shr
-    dup1 __FUNC_SIG(transfer) eq transfer jumpi
-    dup1 __FUNC_SIG(approve) eq approve jumpi
+
     dup1 __FUNC_SIG(mint) eq mint jumpi
-    // dup1 __FUNC_SIG(from) eq from jumpi
+    dup1 __FUNC_SIG(burn) eq burn jumpi
 
-    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi
-    dup1 __FUNC_SIG(totalSupply) eq totalSupply jumpi
-    dup1 __FUNC_SIG(allowance) eq allowance jumpi
+    dup1 __FUNC_SIG(permit) eq permitJump           jumpi
+    dup1 __FUNC_SIG(nonces) eq noncesJump           jumpi
 
-    dup1 __FUNC_SIG(name) eq name jumpi
-    dup1 __FUNC_SIG(symbol) eq symbol jumpi
-    dup1 __FUNC_SIG(decimals) eq decimals jumpi
-    dup1 __FUNC_SIG(DOMAIN_SEPARATOR) eq separator jumpi
+    dup1 __FUNC_SIG(name) eq nameJump jumpi
+    dup1 __FUNC_SIG(symbol) eq symbolJump jumpi
+    dup1 __FUNC_SIG(decimals) eq decimalsJump jumpi
+    dup1 __FUNC_SIG(DOMAIN_SEPARATOR) eq domainSeparatorJump jumpi
+
+    dup1 __FUNC_SIG(totalSupply) eq totalSupplyJump jumpi
+    dup1 __FUNC_SIG(balanceOf) eq balanceOfJump jumpi
+    dup1 __FUNC_SIG(allowance) eq allowanceJump jumpi
+
+    dup1 __FUNC_SIG(transfer)           eq transferJump         jumpi
+    dup1 __FUNC_SIG(transferFrom)       eq transferFromJump     jumpi
+    dup1 __FUNC_SIG(approve)            eq approveJump          jumpi
 
     // Revert if no selector matches
     0x00 0x00 revert
@@ -46,22 +58,28 @@
         MINT()
     burn:
         BURN()
-    name:
-        NAME()
-    symbol:
-        SYMBOL()
-    decimals:
-        DECIMALS()
-    separator:
-        DOMAIN_SEPARATOR()
-    transfer:
-        TRANSFER()
-    balanceOf:
-        BALANCE_OF()
-    totalSupply:
-        TOTAL_SUPPLY()
-    approve:
-        APPROVE()
-    allowance:
+    allowanceJump:
         ALLOWANCE()
+    approveJump:
+        APPROVE()
+    balanceOfJump:
+        BALANCE_OF()
+    decimalsJump:
+        DECIMALS()
+    domainSeparatorJump:
+        DOMAIN_SEPARATOR()
+    nameJump:
+        NAME()
+    noncesJump:
+        NONCES()
+    permitJump:
+        PERMIT()
+    symbolJump:
+        SYMBOL()
+    totalSupplyJump:
+        TOTAL_SUPPLY()
+    transferFromJump:
+        TRANSFER_FROM()
+    transferJump:
+        TRANSFER()
 }
