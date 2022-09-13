@@ -6,6 +6,7 @@
 #include "../data-structures/Hashmap.huff"
 #include "../math/SafeMath.huff"
 #include "../utils/ERC1155Receiver.huff"
+#include "../utils/CommonErrors.huff"
 
 // Stateful Function Interface
 #define function mint(address,uint256,uint256,bytes) nonpayable returns ()
@@ -47,7 +48,7 @@
 /// @dev Slices account and address from calldata and retreives the balance
 /// @param {calldata} [address account, uint256 tokenId]
 /// @return {return} [uint256 balance]
-#define macro BALANCE_OF() = takes(0) returns(0) {
+#define macro BALANCE_OF() = takes (0) returns(0) {
     0x24 calldataload                               // [tokenId]
     0x04 calldataload                               // [account, tokenId]
 
@@ -86,7 +87,7 @@
 /// @notice Returns the supported ERC165 interface
 /// @param {calldata} [bytes4 interfaceId]
 /// @return [bool]
-#define macro SUPPORTS_INTERFACE() = takes(0) returns(0) {
+#define macro SUPPORTS_INTERFACE() = takes (0) returns(0) {
     0x04 calldataload
     dup1 0x01ffc9a7 eq isTrue jumpi
     dup1 0xd9b67a26 eq isTrue jumpi
@@ -108,7 +109,7 @@
 /// @dev Modifies mapping(adddress => mapping(address => bool)) for a given account
 /// @param {calldata} [address operator, bool approved]
 /// @return []
-#define macro SET_APPROVAL_FOR_ALL() = takes(0) returns(0){
+#define macro SET_APPROVAL_FOR_ALL() = takes (0) returns(0){
     0x24 calldataload                   // [approved]
 
     // store approved in memory for the log
@@ -136,7 +137,7 @@
 /// @notice Getter method for approval mapping
 /// @param {calldata} [address owner, address operator]
 /// @return {approved} [bool]
-#define macro IS_APPROVED_FOR_ALL() = takes(0) returns(0) {
+#define macro IS_APPROVED_FOR_ALL() = takes (0) returns (0) {
     0x24 calldataload                 // [operator]
     0x04 calldataload                 // [owner, operator]
 
@@ -153,7 +154,7 @@
 /// @notice Increase the balance of the msg.sender for the given tokenId and amount.
 /// @param {calldata} [uint256 account, uint256 tokenId, uint256 amount, bytes data]
 /// @return []
-#define macro MINT() = takes(0) returns (0){
+#define macro MINT() = takes (0) returns (0) {
     // increase the balance of the address
     0x44 calldataload               // [amount]
 
@@ -193,7 +194,7 @@
 /// @dev Performs safe transfer hook within the SAFE_CALL macro
 /// @param {calldata} [address from, address to, uint256 tokenId, uint256 amount, bytes data]
 /// @return []
-#define macro SAFE_TRANSFER_FROM() = takes(0) returns (0) {
+#define macro SAFE_TRANSFER_FROM() = takes (0) returns (0) {
     0x04 calldataload               // [from]
     IS_OWNER_OR_APPROVED(error)     // []
 
@@ -235,7 +236,7 @@
     SAFE_CALL()
 
     error:
-        0x00 dup1 revert            // []
+        UNAUTHORIZED(0x00)
 }
 
 /// @title Burn
@@ -358,7 +359,7 @@
 /// @dev Used within batchMint, batchBurn and batchTransfer.
 /// @param {stack} [uint256 &ids, uint256 &data, uint256 i, uint256 ids.len, uint256 &amount++, uint256 &ids++, address to, address from]
 /// @return [uint256 len(ids, amounts), uint256 &ids, uint256 i, uint256 ids.len,  uint256 &amount++, uint256 &ids++, address to, address from]
-#define macro EMIT_BATCH_LOG() = takes(9) returns(8) {
+#define macro EMIT_BATCH_LOG() = takes (9) returns (8) {
     // takes:                       // [&ids, &data, i, ids.len, &amount++, &ids++, to, from]
     dup1                            // [&ids, &ids, &data, i, ids.len, &amount++, &ids++, to, from]
     swap2                           // [&data. &ids, &ids, i, ids.len, &amount++, &ids++, to, from]
@@ -369,14 +370,15 @@
     0x60                            // [0x60, &ids, len(ids, amounts), len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]]   // offset, &ids
     calldatacopy                    // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
 
-    // store the pointers to the ids and amounts in memory
+    // Store the pointers to the ids and amounts in memory
     0x40 0x20 mstore                // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    0x40 0x20 dup5 dup2 mul add add 0x40 mstore  // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    0x40 0x20 dup5 dup2             // [0x40, i, 0x20, 0x40, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    mul add add 0x40 mstore         // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
 
     dup8                            // [to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     dup8                            // [from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     caller                          // [caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-__EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     dup5 0x40 add                   // [len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     0x20                            // [offset, len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     log4                            // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
@@ -388,7 +390,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @dev Protect this function before deploying to production
 /// @param {calldata} [address from, uint256[] ids, uint256[] amounts]
 /// @return []
-#define macro BATCH_BURN() = takes(0) returns(0) {
+#define macro BATCH_BURN() = takes (0) returns (0) {
     // Stash to and from and the end of the stack
     0x04 calldataload               // [from]
     0x00                            // [to, from]
@@ -406,8 +408,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
     loop jumpi                      // [0, ids.len, &ids, &amount, to, from]
     dup1 revert
 
-
-    // loop over the arrays of ids and amounts and increase the balance
+    // Loop over the arrays of ids and amounts and increase the balance
     loop:
         dup2 dup2           // [i, ids.length, i, ids.length, &amount, &ids, to, from]
         eq exit jumpi       // [i, ids.length, &amount, &ids, to, from]
@@ -447,7 +448,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @notice Transfer a multiple tokens from an account to another.
 /// @param {calldata} [address from, address to, uint256[] ids, uint256[] amounts, uint256[] data]
 /// @return []
-#define macro BATCH_SAFE_TRANSFER_FROM() = takes(0) returns(0) {
+#define macro BATCH_SAFE_TRANSFER_FROM() = takes (0) returns (0) {
     // Load to and from addresses
     0x04 calldataload               // [from]
     0x24 calldataload               // [to, from]
@@ -535,7 +536,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @notice Get the balance of multiple accounts and tokenIds in a single call.
 /// @param {calldata} [address[] owners, uint256[] ids]
 /// @return []
-#define macro BALANCE_OF_BATCH() = takes(0) returns(0) {
+#define macro BALANCE_OF_BATCH() = takes (0) returns (0) {
 
     // store pointer for start of return array now, so that it can be found at the end of the stack
     0x80                           // [&ret]
@@ -575,7 +576,6 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
         // Exit if the loop has finished
         eq exit jumpi               // [i, owners.length, &ids, &owners, &ret]
 
-        // TODO: document
         swap2                       // [&ids, owners.length, i, &owners, &ret]
         0x20 add                    // [&ids++, owners.length, i, &owners, &ret]
         dup1                        // [&ids++, &ids++, owners.length, i, &owners, &ret]
@@ -618,7 +618,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
         return
 
     error:
-        0x00 dup1 revert
+        LENGTH_MISMATCH(0x00)
 }
 
 // Helper Macros
@@ -629,7 +629,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @dev Uses LOAD_ELEMENT_FROM_KEYS_2D under the hood to perform a nested mapping lookup
 /// @param {stack} [account, tokenId]
 /// @return {stack} [balance]
-#define macro GET_BALANCE_OF() = takes(2) returns(1) {
+#define macro GET_BALANCE_OF() = takes (2) returns (1) {
     // input stack: [account, tokenId]
     [BALANCE_LOCATION]                              // [BALANCE_LOCATION, account, tokenId]
     LOAD_ELEMENT_FROM_KEYS_2D(0x00)                 // [balance]
@@ -639,7 +639,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @notice Decreases the balance by amount of a given account for the given tokenId
 /// @param {stack} [address from, uint256 tokenId, uint256 amount]
 /// @return []
-#define macro DECREASE_BALANCE() = takes(3) returns(0){
+#define macro DECREASE_BALANCE() = takes (3) returns (0) {
     // takes 3 [from, tokenId, amount]
     [BALANCE_LOCATION]              // [&balance, from, tokenId, amount]
     GET_SLOT_FROM_KEYS_2D(0x00)      // [slot, amount]
@@ -661,7 +661,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @notice Increases the balance by amount of a given account for the given tokenId
 /// @param {stack} [address from, uint256 tokenId, uint256 amount]
 /// @return []
-#define macro INCREASE_BALANCE() = takes(3) returns(0) {
+#define macro INCREASE_BALANCE() = takes (3) returns (0) {
     // input stack: [to, tokenId, amount]
 
     [BALANCE_LOCATION]              // [&balance, to, tokenId, amount]
@@ -685,7 +685,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @dev If the sender is an EOA this is skipped
 /// @param {stack} [address to, address from, uint256 &ids]
 /// @return []
-#define macro SAFE_CALL() = takes(3) returns(0) {
+#define macro SAFE_CALL() = takes (3) returns (0) {
     // input stack: [to, from, &ids]
 
     // safe transfer if the contract to has code
@@ -701,7 +701,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 
     // check for zero address, if sent to the zero address revert, otherwise fin
     iszero                          // [!to, to, from, &ids]
-    error jumpi                     // [to, from, &ids]
+    unsafe jumpi                    // [to, from, &ids]
     continue jump                   // [to, from, &ids]
 
     isContract:
@@ -761,10 +761,13 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
         // read response
         0x00 mload 0xE0 shr             // [response]
         0xf23a6e61                      // [selector, response]
-        eq iszero error jumpi           // If the selector and the response are not equal, error
+        eq iszero unsafe jumpi          // If the selector and the response are not equal, error
 
     continue:
         stop                            // execution completed successfully
+
+    unsafe:
+        UNSAFE_RECIPIENT(0x00)
 
     error:
         0x00 dup1 revert
@@ -775,7 +778,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @dev Used within batchMint and batchTransfer.
 /// @param {stack} [address to, address from, &ids]
 /// @return []
-#define macro SAFE_BATCH() = takes(3) returns(0) {
+#define macro SAFE_BATCH() = takes (3) returns (0) {
     // [to, from, &ids]
 
     // If being sent by a contract then do contract code check, no need to check for zero address and contract as it would not have code
@@ -784,7 +787,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 
     // check is sending to the zero address, if so revert, otherwise continue
     iszero                          // [iszero(to), from, &ids]
-    error jumpi                     // error if address is zero
+    unsafe jumpi                    // error if address is zero
     continue jump                   // continue to end and stop if complete
 
     // Note: to has not been popped off here as we skip the zero check above
@@ -838,7 +841,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
     0x00                            // [value, argOffset, argSize, retOffset, retSize, selector, to]             value: 0x00                // send no ether
     dup8                            // [to, value, argOffset, argSize, retOffset, retSize, selector, to]         to: to                     // send to the to address
     gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, selector, to]    gas: gas                   // forward all gas    
-    call                            // [success, selector, to]                                                   call 
+    call                            // [success, selector, to]                                                   call
 
     iszero error jumpi
 
@@ -852,6 +855,9 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 
     error:
         0x00 dup1 revert
+
+    unsafe:
+        UNSAFE_RECIPIENT(0x00)
 }
 
 /// @title Is Owner Or Approved
@@ -860,7 +866,7 @@ __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &i
 /// @param {calldata} [address from]
 /// @param {argument} [(jump_label) error]
 /// @return []
-#define macro IS_OWNER_OR_APPROVED(error) = takes(1) returns(0) {
+#define macro IS_OWNER_OR_APPROVED(error) = takes (1) returns (0) {
     // takes: [from]
     caller swap1                       // [from, msg.sender]
     dup2 dup2                          // [from, msg.sender, from, msg.sender]
