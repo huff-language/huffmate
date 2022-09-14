@@ -4,9 +4,10 @@
 /// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
 /// @notice Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol)
 
+// Imports
+#include "../utils/Errors.huff"
+#include "../utils/NonPayable.huff"
 #include "../data-structures/Hashmap.huff"
-
-// TODO: Add revert strings (and related tests)
 
 // Interface
 #define function allowance(address,address) view returns (uint256)
@@ -398,12 +399,14 @@
     expired:
         0x5045524D49545F444541444C494E455F45585049524544000000000000000000         // ["PERMIT_DEADLINE_EXPIRED"]
         0x17                                                                       // [23 (length), "PERMIT_DEADLINE_EXPIRED"]
-        REVERT_WITH_REASON(0x00)
+        0x00                                                                       // [0, 23 (length), "PERMIT_DEADLINE_EXPIRED"]
+        REQUIRE()
 
     invalidSigner:
         0x494E56414C49445F5349474E4552000000000000000000000000000000000000         // ["INVALID_SIGNER"]
         0x0e                                                                       // [14 (length), "INVALID_SIGNER"]
-        REVERT_WITH_REASON(0x00)
+        0x00                                                                       // [0, 14 (length), "INVALID_SIGNER"]
+        REQUIRE()
 }
 
 /// @notice Takes an address off the stack, returns the current nonce for that address onto the stack.
@@ -528,30 +531,6 @@
     __EVENT_HASH(Transfer)          // [sig, from, to]
     0x20 0x00                       // [0, 32, sig, from, to]
     log3                            // []
-}
-
-/// @notice Reverts if the call has a non-zero value.
-#define macro NON_PAYABLE() = takes (0) returns (0) {
-    callvalue iszero                                                            // [msg.value == 0]
-    novalue jumpi                                                               // []
-
-    // Revert with a "NON_PAYABLE" message
-    0xb4e4f4e5f50415941424c4500000000000000000000000000000000000000000          // ["NON_PAYABLE"]
-    0x1b                                                                        // [11 (length), "NON_PAYABLE"]
-    REVERT_WITH_REASON(0x00)                                                    // []
-
-    novalue:
-}
-
-/// @notice Revert with a string reason
-#define macro REVERT_WITH_REASON(mem_ptr) = takes (2) returns(0) {
-    // NOTE: String must be < 32 bytes
-    // [len, "str"]
-    [ERROR_SIG] <mem_ptr> mstore            // [len, "str"]   0x00 error sig
-    0x20 <mem_ptr> 0x04 add mstore          // [len, "str"]   0x00 error sig  0x04 offset
-    <mem_ptr> 0x24 add mstore               // ["str"]        0x00 error sig  0x04 offset  0x24 len
-    <mem_ptr> 0x44 add mstore               // []             0x00 error sig  0x04 offset  0x24 len  0x44: "string"
-    0x64 0x00 revert
 }
 
 

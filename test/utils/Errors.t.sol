@@ -51,7 +51,7 @@ contract ErrorsTest is Test {
     IErrorsMock eLib;
 
     function setUp() public {
-        string memory wrapper_code = vm.readFile("test/utils/mocks/ErrorsMock.huff");
+        string memory wrapper_code = vm.readFile("test/utils/mocks/ErrorWrappers.huff");
         eLib = IErrorsMock(HuffDeployer.deploy_with_code("utils/Errors", wrapper_code));
     }
 

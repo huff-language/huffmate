@@ -19,7 +19,7 @@ contract ArraysTest is Test {
     function setUp() public {
         // Read instantiable arrays from file
         string memory instantiable_code = vm.readFile(
-            "test/data-structures/mocks/InstantiatedArrays.huff"
+            "test/data-structures/mocks/ArrayWrappers.huff"
         );
 
         // Create an Instantiable Arrays

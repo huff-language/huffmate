@@ -1,3 +1,8 @@
+/// @title Arrays
+/// @author exp-table <https://github.com/exp-table>
+/// @notice Array utility library for Solidity contracts
+/// @notice Adapted from <https://github.com/huff-language/huff-examples/blob/main/erc20/contracts/utils/HashMap.huff>
+
 // Sets an array in storage from calldata.
 // Note that since no assumptions is made regarding the context in which
 // this function is called, the position of the encoded array in the calldata

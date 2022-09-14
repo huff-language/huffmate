@@ -1,5 +1,5 @@
 /// @title HashMap
-/// @author Andreas Bigger
+/// @author asnared <https://github.com/abigger87>
 /// @notice A Minimal HashMap based off <https://github.com/huff-language/huff-examples/blob/main/erc20/contracts/utils/HashMap.huff>
 
 // Given a piece of data (ie an address), hash it, generating the storage slot for a hashmap.

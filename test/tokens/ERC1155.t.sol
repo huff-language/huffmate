@@ -1225,8 +1225,8 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         uint256 minLength = min3(tos.length, ids.length, amounts.length);
 
         for (uint256 i = 0; i < minLength; i++) {
-            vm.assume(tos[i] != address(0));
-            vm.assume(tos[i] != address(this));
+            tos[i] = tos[i] == address(0) ? address(0xBEEF) : tos[i];
+            tos[i] = tos[i] == address(this) ? address(0xBEEF) : tos[i];
         }
 
         address[] memory normalizedTos = new address[](minLength);
@@ -1234,7 +1234,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
 
         for (uint256 i = 0; i < minLength; i++) {
             uint256 id = ids[i];
-            address to = tos[i] == address(0) ? address(0xBEEF) : tos[i];
+            address to = tos[i];
 
             uint256 remainingMintAmountForId = type(uint256).max - userMintAmounts[to][id];
 

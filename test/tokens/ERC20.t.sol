@@ -48,8 +48,8 @@ contract ERC20Test is Test {
 
     function setUp() public {
         // Read our wrappers
-        string memory mintable_wrapper = vm.readFile("test/tokens/mocks/ERC20Mintable.huff");
-        string memory mock_wrapper = vm.readFile("test/tokens/mocks/MockERC20.huff");
+        string memory mintable_wrapper = vm.readFile("test/tokens/mocks/ERC20MintableWrappers.huff");
+        string memory mock_wrapper = vm.readFile("test/tokens/mocks/ERC20Wrappers.huff");
 
         // Deploy the Mintable ERC20
         vm.startPrank(deployer);

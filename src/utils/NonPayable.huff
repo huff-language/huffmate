@@ -1,0 +1,18 @@
+/// @title Non Payable
+/// @author asnared <https://github.com/abigger87>
+/// @notice Simple macro to revert if a call has a value
+
+#include "./Errors.huff"
+
+// "NON_PAYABLE" Revert Message String
+#define constant NON_PAYABLE_ERROR = 0xb4e4f4e5f50415941424c45000000000000000000000000000000000000000000
+#define constant NON_PAYABLE_LENGTH = 0x0b
+
+/// @notice Reverts if the call has a non-zero value
+/// @notice Reverts with message "NON_PAYABLE"
+#define macro NON_PAYABLE() = takes (0) returns (0) {
+    [NON_PAYABLE_ERROR]      // ["NON_PAYABLE"]
+    [NON_PAYABLE_LENGTH]     // [11 (length), "NON_PAYABLE"]
+    callvalue iszero         // [msg.value == 0, 11 (length), "NON_PAYABLE"]
+    REQUIRE()                // []
+}

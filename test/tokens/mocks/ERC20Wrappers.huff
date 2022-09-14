@@ -1,0 +1,5 @@
+
+#define macro MAIN() = {
+    0x00 calldataload 0xE0 shr    // [func sig]
+    MAIN_ERC20()
+}

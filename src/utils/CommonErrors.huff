@@ -6,26 +6,46 @@
 #include "./Errors.huff"
 
 // Error Constants
-#define constant NOT_AUTHORIZED_ERROR = 0xe4e4f545f415554484f52495a4544000000000000000000000000000000000000
+#define constant NOT_AUTHORIZED_ERROR = 0x4e4f545f415554484f52495a4544000000000000000000000000000000000000
 #define constant NOT_AUTHORIZED_LENGTH = 0x0e
 
-#define constant LENGTH_MISMATCH_ERROR = 0xf4c454e4754485f4d49534d415443480000000000000000000000000000000000
+#define constant WRONG_FROM_ERROR = 0x57524f4e475f46524f4d00000000000000000000000000000000000000000000
+#define constant WRONG_FROM_LENGTH = 0x0a
+
+#define constant LENGTH_MISMATCH_ERROR = 0x4c454e4754485f4d49534d415443480000000000000000000000000000000000
 #define constant LENGTH_MISMATCH_LENGTH = 0x0f
 
 #define constant UNSAFE_RECIPIENT_ERROR = 0x554e534146455f524543495049454e5400000000000000000000000000000000
 #define constant UNSAFE_RECIPIENT_LENGTH = 0x10
 
-#define constant REENTRANCY_ERROR = 0xa5245454e5452414e435900000000000000000000000000000000000000000000
+#define constant REENTRANCY_ERROR = 0x5245454e5452414e435900000000000000000000000000000000000000000000
 #define constant REENTRANCY_LENGTH = 0x0a
 
-#define constant DISPATCH_ERROR_MESSAGE = 0xe44495350415443485f4552524f52000000000000000000000000000000000000
+#define constant DISPATCH_ERROR_MESSAGE = 0x44495350415443485f4552524f52000000000000000000000000000000000000
 #define constant DISPATCH_LENGTH = 0x0e
+
+#define constant INVALID_RECIPIENT_ERROR = 0x494e56414c49445f524543495049454e54000000000000000000000000000000
+#define constant INVALID_RECIPIENT_LENGTH = 0x11
+
+#define constant ALREADY_MINTED_ERROR = 0x414c52454144595f4d494e544544000000000000000000000000000000000000
+#define constant ALREADY_MINTED_LENGTH = 0x0e
+
+#define constant NOT_MINTED_ERROR = 0x4e4f545f4d494e54454400000000000000000000000000000000000000000000
+#define constant NOT_MINTED_LENGTH = 0x0a
 
 /// @notice Reverts with an "NOT_AUTHORIZED" message if the condition is false
 #define macro UNAUTHORIZED(condition) = takes (0) returns (0) {
     [NOT_AUTHORIZED_ERROR]      // ["NOT_AUTHORIZED"]
     [NOT_AUTHORIZED_LENGTH]     // [14 (length), "NOT_AUTHORIZED"]
     <condition>                 // [condition, 14 (length), "NOT_AUTHORIZED"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "WRONG_FROM" message if the condition is false
+#define macro WRONG_FROM(condition) = takes (0) returns (0) {
+    [WRONG_FROM_ERROR]          // ["WRONG_FROM"]
+    [WRONG_FROM_LENGTH]         // [10 (length), "WRONG_FROM"]
+    <condition>                 // [condition, 10 (length), "WRONG_FROM"]
     REQUIRE()                   // []
 }
 
@@ -43,6 +63,30 @@
     [UNSAFE_RECIPIENT_LENGTH]   // [16 (length), "UNSAFE_RECIPIENT"]
     <condition>                 // [condition, 16 (length), "UNSAFE_RECIPIENT"]
     REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "ALREADY_MINTED" message if condition is false
+#define macro ALREADY_MINTED(condition) = takes (0) returns (0) {
+    [ALREADY_MINTED_ERROR]      // ["ALREADY_MINTED"]
+    [ALREADY_MINTED_LENGTH]     // [14 (length), "ALREADY_MINTED"]
+    <condition>                 // [condition, 14 (length), "ALREADY_MINTED"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "NOT_MINTED" message if condition is false
+#define macro NOT_MINTED(condition) = takes (0) returns (0) {
+    [NOT_MINTED_ERROR]          // ["NOT_MINTED"]
+    [NOT_MINTED_LENGTH]         // [10 (length), "NOT_MINTED"]
+    <condition>                 // [condition, 10 (length), "NOT_MINTED"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with a "INVALID_RECIPIENT" message if condition is false
+#define macro INVALID_RECIPIENT(condition) = takes (0) returns (0) {
+    [INVALID_RECIPIENT_ERROR]    // ["INVALID_RECIPIENT"]
+    [INVALID_RECIPIENT_LENGTH]   // [17 (length), "INVALID_RECIPIENT"]
+    <condition>                  // [condition, 17 (length), "INVALID_RECIPIENT"]
+    REQUIRE()                    // []
 }
 
 /// @notice Reverts with a "REENTRANCY" message if condition is false

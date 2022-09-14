@@ -8,20 +8,19 @@
 #include "../utils/ERC1155Receiver.huff"
 #include "../utils/CommonErrors.huff"
 
-// Stateful Function Interface
+// Function Interface
 #define function mint(address,uint256,uint256,bytes) nonpayable returns ()
-#define function batchMint(address,uint256[],uint256[],bytes) nonpayable returns ()
-
 #define function burn(address,uint256,uint256) nonpayable returns ()
+
+#define function batchMint(address,uint256[],uint256[],bytes) nonpayable returns ()
 #define function batchBurn(address,uint256[],uint256[]) nonpayable returns ()
+
+#define function isApprovedForAll(address,address) view returns (bool)
+#define function setApprovalForAll(address,bool) nonpayable returns ()
 
 #define function safeTransferFrom(address,address,uint256,uint256,bytes) nonpayable returns ()
 #define function safeBatchTransferFrom(address,address,uint256[],uint256[],bytes) nonpayable returns()
-#define function setApprovalForAll(address,bool) nonpayable returns ()
 
-// Accessor Function Interface
-#define function getApproved(uint256) view returns (address)
-#define function isApprovedForAll(address,address) view returns (bool)
 #define function balanceOf(address,uint256) view returns (uint256)
 #define function balanceOfBatch(address[],uint256[]) view returns (uint256[])
 
@@ -542,8 +541,8 @@
     0x80                           // [&ret]
 
     // Get lengths of dynamic arrays, duplicate in prepare to compare
-    0x24 calldataload 0x4 add dup1 // [&ids, &ids, &owners, &owners, &ret]
-    0x04 calldataload 0x4 add dup1 // [&ids, &ids, &ret]
+    0x24 calldataload 0x4 add dup1 // [&ids, &ids, &ret]
+    0x04 calldataload 0x4 add dup1 // [&ids, &ids, &owners, &owners, &ret]
 
     // compare lengths
     swap2                           // [&owners, &ids, &ids, &owners, &ret]
