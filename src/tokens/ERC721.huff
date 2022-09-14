@@ -413,35 +413,13 @@
     0x44 calldataload       // [tokenId, onERC721Received, to]
     0x64 mstore             // [onERC721Received, to]
 
-    // Blank bytes array as 4th arg (no data)
-    0x64 calldataload       // [len(bytes), onERC721Received, to]
-    dup1                    // [len(bytes), len(bytes), onERC721Received, to]
-
-    // Store the length of the data
-    0x84 mstore             // [len(bytes), onERC721Received, to]
-
-    // Prepare the loop
-    0x84 add                // [len(bytes) + 0x84, onERC721Received, to]
-    0xA4                    // [mem_i, len(bytes), onERC721Received, to]
-    0x84                    // [i, mem_i, len(bytes), onERC721Received, to]
-
-    loop:
-        dup1                // [i, i, mem_i, len(bytes), onERC721Received, to]
-        calldataload        // [bytes[i], i, mem_i, len(bytes), onERC721Received, to]
-        dup3                // [mem_i, bytes[i], i, mem_i, len(bytes), onERC721Received, to]
-
-        mstore              // [i, mem_i, len(bytes), onERC721Received, to]
-        0x20 add            // [i + 0x20, mem_i, len(bytes), onERC721Received, to]
-        swap1 0x20 add      // [mem_i + 0x20, i + 0x20, len(bytes), onERC721Received, to]
-        swap1               // [i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
-
-        dup3 0x20 add       // [len(bytes) + 0x20, i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
-        dup2                // [i + 0x20, len(bytes) + 0x20, i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
-        lt loop jumpi       // [i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
-
-    // Clean up stack
-    pop pop pop             // [onERC721Received, to]
-    0x64 calldataload       // [len(bytes), onERC721Received, to]
+    0x84 calldataload       // [len(data), onERC721Received, to]
+    0x05 shl                // [len(data) * 0x20, onERC721Received, to]
+    0x40 add                // [len(data) * 0x20 + 0x40, onERC721Received, to]
+    dup1                    // [len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
+    0x64                    // [0x64, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
+    0x84                    // [0x20, 0x64, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to] 
+    calldatacopy            // [len(bytes), onERC721received, to] 
 
     // Clean scratch space for return data use
     0x00 dup1 mstore        // [len(bytes), onERC721Received, to]
@@ -449,8 +427,8 @@
     // Call address(to).onERC721Received(msg.sender, from, tokenId, bytes)
     0x20                    // [retSize, len(bytes), onERC721Received, to]
     0x00                    // [retOffset, retSize, len(bytes), onERC721Received, to]
-    0xA4                    // [0xA4, retOffset, retSize, len(bytes), onERC721Received, to]
-    dup4 add                // [argSize, retOffset, retSize, len(bytes), onERC721Received, to]
+    swap1 swap2             // [len(bytes), retOffset, retSize, onERC721Received, to]
+    0x64 add                // [argSize, retOffset, retSize, onERC721Received, to]
     dup3                    // [argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
     dup3                    // [value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
     dup7                    // [to, value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
@@ -461,8 +439,6 @@
     cont jumpi              // [len(bytes), onERC721Received, to]
     0x00 dup1 revert
     cont:
-
-    pop                     // [onERC721Received, to]
 
     // Compare the return data to the onERC721Received selector
     0x00 mload 0xE0 shr     // [response, onERC721Received, to]
