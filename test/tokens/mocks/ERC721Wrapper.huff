@@ -6,6 +6,8 @@
 #define function mint(address,uint256) nonpayable returns ()
 #define function transfer(address,uint256) nonpayable returns ()
 #define function transferFrom(address,address,uint256) nonpayable returns ()
+#define function safeTransferFrom(address,address,uint256) nonpayable returns ()
+
 #define function approve(address,uint256) nonpayable returns ()
 #define function setApprovalForAll(address,bool) nonpayable returns ()
 
@@ -17,8 +19,6 @@
 
 #define function mint(address, uint256) payable returns ()
 #define function burn(uint256) nonpayable returns ()
-
-/// >>>>>>>>>>>>>>>>>>>>>  EXTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
 
 #define macro MINT() = takes (0) returns (0) {
     0x24 calldataload       // [tokenId]
@@ -40,19 +40,22 @@
     dup1 __FUNC_SIG(burn)                       eq burn_jump jumpi
 
     dup1 __FUNC_SIG(approve)                    eq approve jumpi
+    dup1 __FUNC_SIG(setApprovalForAll)          eq setApprovalForAll jumpi
+
     dup1 __FUNC_SIG(transferFrom)               eq transferFrom jumpi
     dup1 __FUNC_SIG(safeTransferFrom)           eq safeTransferFrom jumpi
     dup1 __FUNC_SIG(safeTransferFromWithData)   eq safeTransferFromWithData jumpi
-    dup1 __FUNC_SIG(setApprovalForAll)          eq setApprovalForAll jumpi
 
-    dup1 __FUNC_SIG(getApproved)                eq getApproved jumpi
-    dup1 __FUNC_SIG(balanceOf)                  eq balanceOf jumpi
-    dup1 __FUNC_SIG(ownerOf)                    eq ownerOf jumpi
     dup1 __FUNC_SIG(name)                       eq name jumpi
     dup1 __FUNC_SIG(symbol)                     eq symbol jumpi
     dup1 __FUNC_SIG(tokenURI)                   eq tokenURI jumpi
     dup1 __FUNC_SIG(supportsInterface)          eq supportsInterface jumpi
+
+    dup1 __FUNC_SIG(getApproved)                eq getApproved jumpi
     dup1 __FUNC_SIG(isApprovedForAll)           eq isApprovedForAll jumpi
+
+    dup1 __FUNC_SIG(balanceOf)                  eq balanceOf jumpi
+    dup1 __FUNC_SIG(ownerOf)                    eq ownerOf jumpi
 
     // Revert on failed dispatch
     0x00 dup1 revert
@@ -62,31 +65,34 @@
     burn_jump:
         BURN()
 
+    approve:
+        APPROVE()
+    setApprovalForAll:
+        SET_APPROVAL_FOR_ALL()
+
     transferFrom:
         TRANSFER_FROM()
     safeTransferFrom:
         SAFE_TRANSFER_FROM()    // not implemented yet
     safeTransferFromWithData:
         SAFE_TRANSFER_FROM_WITH_DATA()  // not implemented yet
-    approve:
-        APPROVE()
-    setApprovalForAll:
-        SET_APPROVAL_FOR_ALL()
 
-    getApproved:
-        GET_APPROVED()
     name:
         NAME()
     symbol:
         SYMBOL()
-    balanceOf:
-        BALANCE_OF()
     tokenURI:
         TOKEN_URI()             // not implemented yet
     supportsInterface:
         SUPPORTS_INTERFACE()
+
+    getApproved:
+        GET_APPROVED()
     isApprovedForAll:
         IS_APPROVED_FOR_ALL()
+
+    balanceOf:
+        BALANCE_OF()
     ownerOf:
         OWNER_OF()
 }

@@ -4,6 +4,29 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
 
+import { ERC721TokenReceiver } from "solmate/tokens/ERC721.sol";
+
+contract ERC721Recipient is ERC721TokenReceiver {
+    address public operator;
+    address public from;
+    uint256 public id;
+    bytes public data;
+
+    function onERC721Received(
+        address _operator,
+        address _from,
+        uint256 _id,
+        bytes calldata _data
+    ) public virtual override returns (bytes4) {
+        operator = _operator;
+        from = _from;
+        id = _id;
+        data = _data;
+
+        return ERC721TokenReceiver.onERC721Received.selector;
+    }
+}
+
 interface IERC721 {
     function name() external returns (string memory);
     function symbol() external returns (string memory);
@@ -14,6 +37,8 @@ interface IERC721 {
 
     function transfer(address, uint256) external;
     function transferFrom(address, address, uint256) external;
+    function safeTransferFrom(address, address, uint256) external;
+
     function approve(address, uint256) external;
     function setApprovalForAll(address, bool) external;
 
@@ -181,5 +206,46 @@ contract ERC721Test is Test {
         assertEq(token.ownerOf(1337), address(0xBEEF));
         assertEq(token.balanceOf(address(0xBEEF)), 1);
         assertEq(token.balanceOf(from), 0);
+    }
+
+    function testSafeTransferFromToEOA(address from) public {
+        vm.assume(from != address(0));
+        vm.assume(from != address(0xBEEF));
+
+        token.mint(from, 1337);
+
+        vm.prank(from);
+        token.setApprovalForAll(address(this), true);
+
+        token.safeTransferFrom(from, address(0xBEEF), 1337);
+
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(0xBEEF));
+        assertEq(token.balanceOf(address(0xBEEF)), 1);
+        assertEq(token.balanceOf(from), 0);
+    }
+
+    function testSafeTransferFromToERC721Recipient(address from) public {
+        vm.assume(from != address(0));
+
+        ERC721Recipient recipient = new ERC721Recipient();
+        console2.logBytes4(ERC721Recipient.onERC721Received.selector);
+
+        token.mint(from, 1337);
+
+        vm.prank(from);
+        token.setApprovalForAll(address(this), true);
+
+        token.safeTransferFrom(from, address(recipient), 1337);
+
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(recipient));
+        assertEq(token.balanceOf(address(recipient)), 1);
+        assertEq(token.balanceOf(from), 0);
+
+        assertEq(recipient.operator(), address(this));
+        assertEq(recipient.from(), from);
+        assertEq(recipient.id(), 1337);
+        assertEq(keccak256(abi.encode(recipient.data())), keccak256(abi.encode("")));
     }
 }
