@@ -232,6 +232,7 @@ contract ERC721Test is Test {
         vm.assume(from != address(0));
 
         ERC721Recipient recipient = new ERC721Recipient();
+        vm.assume(from != address(recipient));
 
         token.mint(from, 1337);
 

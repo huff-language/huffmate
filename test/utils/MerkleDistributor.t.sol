@@ -10,7 +10,7 @@ import { ERC20 } from "solmate/tokens/ERC20.sol";
 contract MerkleDistributorTest is Test {
     ERC20 token;
     bytes32 constant merkleRoot = bytes32(uint256(0x4a9dd8c7af51100e0f04f128c61c526a9380cfde11c830800f9e670429440c1f));
-    
+
     // Test User 1
     address user1 = 0xD08c8e6d78a1f64B1796d6DC3137B19665cb6F1F;
     uint amount1 = 10;
@@ -23,7 +23,7 @@ contract MerkleDistributorTest is Test {
 
     // Test User 3
     address user3 = 0xf69Ca530Cd4849e3d1329FBEC06787a96a3f9A68;
-    uint amount3 = 20;    
+    uint amount3 = 20;
     uint index3 = 2;
 
     // Test User 4
@@ -31,7 +31,7 @@ contract MerkleDistributorTest is Test {
     uint amount4 = 30;
     uint index4 = 3;
 
-    /// @dev Address of the SimpleStore contract.  
+    /// @dev Address of the SimpleStore contract.
     MerkleDistributor public merkleDistributor;
 
     /// @dev Setup the testing environment.
@@ -40,19 +40,22 @@ contract MerkleDistributorTest is Test {
         token = new TestToken(10_000 * 10**18);
 
         // Deploy MerkleDistributor
-        address mdAddr = HuffDeployer
-            .config()
-            .with_args(bytes.concat(abi.encode(token), abi.encode(merkleRoot)))
-            .deploy("utils/MerkleDistributor");
-        merkleDistributor = MerkleDistributor(mdAddr);
+        string memory wrapper_code = vm.readFile("test/utils/mocks/MerkleDistributorWrappers.huff");
+        merkleDistributor = MerkleDistributor(
+            HuffDeployer
+                .config()
+                .with_code(wrapper_code)
+                .with_args(bytes.concat(abi.encode(address(token)), abi.encode(merkleRoot)))
+                .deploy("utils/MerkleDistributor")
+        );
 
         // Transfer to merkledistributor
         uint currBalance = token.balanceOf(address(this));
         token.transfer(address(merkleDistributor), currBalance);
 
         // Confirm constructor variables set properly
-        assert(merkleDistributor.getTokenAddress() == address(token));
-        assert(merkleDistributor.getMerkleRoot() == merkleRoot);
+        assertEq(merkleDistributor.getTokenAddress(), address(token));
+        assertEq(merkleDistributor.getMerkleRoot(), merkleRoot);
     }
 
     /// @dev Ensure revert for claimed index
@@ -67,7 +70,7 @@ contract MerkleDistributorTest is Test {
 
     /// @dev Ensure tokens transfer
     function testClaimTransfer() public {
-        bytes32[] memory proof3 = new bytes32[](2); 
+        bytes32[] memory proof3 = new bytes32[](2);
         proof3[0] = 0x85b9749ddb06ff3ff63b0a0333c8b19b29a7ffb4d9a6891c6f1351a2b670d5bb;
         proof3[1] = 0x97ca9eb557c807d4223d28a6b6e2581aaeb2cd26a7d24c4195db6dcbf3eafc45;
 

@@ -1,82 +1,72 @@
 /// @title Merkle Distributor
 /// @author Ben Leimberger <https://github.com/benleim>
 /// @author Magna <https://github.com/magna-eng>
+/// @author asnared <https://github.com/abigger87>
 /// @notice Minimal, gas efficient Merkle Distributor implementation
 
-/* Imports */
+
+// Imports
+#include "./CommonErrors.huff"
 #include "./MerkleProofLib.huff"
 #include "./Address.huff"
-#include "./ERC20Helper.huff"
+#include "./ERC20Transfer.huff"
 
-/* Interface */
-/* Stateful Functions */
+// Interface
 #define function claim(uint256,address,uint256,bytes32[]) nonpayable returns ()
 
-/* View Functions */
 #define function getMerkleRoot() view returns (bytes32)
 #define function getTokenAddress() view returns (address)
 #define function isClaimed(uint256) view returns (bool)
 
-/* Storage Slots */
+// Storage Slots
 #define constant CLAIMED_BIT_MAP_SLOT = FREE_STORAGE_POINTER()  // 0x00
 #define constant TOKEN_ADDR_SLOT = FREE_STORAGE_POINTER()       // 0x01
 #define constant MERKLE_ROOT_SLOT = FREE_STORAGE_POINTER()      // 0x02
 
-/* Errors */
+// Errors
 #define error TransferError(string)
 #define error ClaimedError(string)
 #define error ProofError(string)
 
-/* Constants */
-#define constant CLAIMED_ERROR_LENGTH = 0x20
-#define constant CLAIMED_ERROR_STRING = 0x4d65726b6c65446973743a2044726f7020616c726561647920636c61696d6564
 
-#define constant TRANSFER_ERROR_LENGTH = 0x23
-#define constant TRANSFER_ERROR_STRING = 0x4d65726b6c65446973743a205472616e73666572206661696c6564
-
-#define constant PROOF_ERROR_LENGTH = 0x21
-#define constant PROOF_ERROR_STRING = 0x4d65726b6c65446973743a20496e76616c69642070726f6f66
-
-/* Methods */
-
-/** Get Merkle Root
- * @notice Entry point for: getMerkleRoot()
- * @dev Fetches merkle root from storage slot
- * @param {calldata} []
- * @return {return} [bytes32 root]
- */
+/// @notice Get Merkle Root
+/// @notice Entry point for: getMerkleRoot()
+/// @dev Fetches merkle root from storage slot
+/// @param {calldata} []
+/// @return {return} [bytes32 root]
 #define macro GET_MERKLE_ROOT() = takes (0) returns (0) {
-    // Load value from storage.
+    // Load value from storage
     [MERKLE_ROOT_SLOT] sload    // [merkle_root]
 
-    // Store value in memory.
+    // Store value in memory
     0x00 mstore                 // []
 
     // Return value
-    0x20 0x00 return
+    0x20 0x00 return            // []
 }
 
+/// @notice Get Token Address
 #define macro GET_TOKEN_ADDR() = takes (0) returns (0) {
-    // Load value from storage.
-    [TOKEN_ADDR_SLOT] sload
-    // Store value in memory.
-    0x00 mstore
+    // Load value from storage
+    [TOKEN_ADDR_SLOT] sload     // [token_addr]
+
+    // Store value in memory
+    0x00 mstore                 // []
+
     // Return value
-    0x20 0x00 return
+    0x20 0x00 return            // []
 }
 
 
-/** Is Claimed
- * @notice Entry point for: isClaimed(uint256)
- * @dev Check if index is claimed
- * @param {calldata} [uint256 index]
- * @return {return} [bytes32 root]
- */
+/// Is Claimed
+/// @notice Entry point for: isClaimed(uint256)
+/// @dev Check if index is claimed
+/// @param {calldata} [uint256 index]
+/// @return {return} [bytes32 root]
 #define macro IS_CLAIMED() = takes (0) returns (0) {
     // Load first argument from calldata
-    0x04                        // [0x04]
-    calldataload                // [arg0]
-    
+    0x04 calldataload           // [index]
+
     // Utility macro
     __UTIL_IS_CLAIMED()         // [isEqual]
 
@@ -85,63 +75,62 @@
     0x20 0x00 return
 }
 
-/// Input stack:                 // [arg0]
-/// Output stack:                // [isEqual]
 /// @dev stores result in 0x00 to 0x20 memory slot
 #define macro __UTIL_IS_CLAIMED() = takes (1) returns (1) {
+    // Stack input:                 // [arg0]
+    // Stack output:                // [isEqual]
     // index / 256
-    0x100 dup2 div               // [index]
+    0x100 dup2 div                  // [index]
 
-    __UTIL_GENERATE_MAPPING_KEY()// [key(claimed[index]), arg0]
-    
+    __UTIL_GENERATE_MAPPING_KEY()   // [key(claimed[index]), arg0]
+
     // Load mapping key
-    sload                       // [claimed[index], arg0]
+    sload                           // [claimed[index], arg0]
 
-    // index % 256                 [claimed[index], arg0]
-    0x1 0x100 dup4 mod shl      // [mask, claimed[index], arg0]
-    dup1 swap2 dup2 and         // [masked, mask, claimed[index], arg0]
-    eq                          // [isEqual, claimed[index], arg0]
-    swap2 pop pop               // [isEqual]
+    // index % 256                     [claimed[index], arg0]
+    0x1 0x100 dup4 mod shl          // [mask, claimed[index], arg0]
+    dup1 swap2 dup2 and             // [masked, mask, claimed[index], arg0]
+    eq                              // [isEqual, claimed[index], arg0]
+    swap2 pop pop                   // [isEqual]
 }
 
 
-#define macro __UTIL_SET_CLAIMED() = takes (0) returns (0) {
-    0x04                        // [0x04]
-    calldataload                // [arg0]
+/// @notice Set as claimed
+#define macro __UTIL_SET_CLAIMED() = takes (1) returns (0) {
+    // Stack input:                 // [arg0]
 
     // index / 256
-    0x100 dup2 div              // [index, arg0]
+    0x100 dup2 div                  // [index, arg0]
 
-    __UTIL_GENERATE_MAPPING_KEY()// [key(claimed[index]), arg0]
-    
+    __UTIL_GENERATE_MAPPING_KEY()   // [key(claimed[index]), arg0]
+
     // Load mapping key
-    dup1 sload                  // [claimed[index], key(claimed[index]), arg0]
+    dup1 sload                      // [claimed[index], key(claimed[index]), arg0]
 
-    // index % 256                 [claimed[index], key(claimed[index]), arg0]
-    0x1 0x100 dup5 mod shl      // [mask, claimed[index], key(claimed[index]), arg0]
-    or                          // [masked, key(claimed[to]), arg0]
+    // index % 256                      [claimed[index], key(claimed[index]), arg0]
+    0x1 0x100 dup5 mod shl          // [mask, claimed[index], key(claimed[index]), arg0]
+    or                              // [masked, key(claimed[to]), arg0]
 
     // Update
-    swap1 sstore                // [arg0]
-
-    // Clean-up
-    pop
+    swap1 sstore pop                // []
 }
 
-// Input stack:         [index]
-// Output stack:        [key(claimed[index])]
+/// @notice Creates a mapping key from an index
 #define macro __UTIL_GENERATE_MAPPING_KEY() = takes (1) returns (1) {
-    0x00 mstore                 // []
-    [CLAIMED_BIT_MAP_SLOT] 0x20 mstore
-    0x40 0x00 sha3              // [key(claimed[index])]
+    // Stack input:         [index]
+    // Stack output:        [key(claimed[index])]
+    0x00 mstore                         // []
+    [CLAIMED_BIT_MAP_SLOT] 0x20 mstore  // []
+
+    // key(claimed[index]) = keccak256(index . claimedBitMapSlot)
+    0x40 0x00 sha3                      // [key(claimed[index])]
 }
 
-/** Claim
- * @notice Entry point for: claim(uint256,address,uint256,bytes[])
- * @dev Claim distribution with proof
- * @param {calldata} [uint256 index, address account, uint256 amount, bytes[] proof]
- * @return {return} []
- */
+/// @notice Claim
+/// @notice Entry point for: claim(uint256,address,uint256,bytes[])
+/// @dev Claim distribution with proof
+/// @param {calldata} [uint256 index, address account, uint256 amount, bytes[] proof]
+/// @return {return} []
 #define macro CLAIM() = takes (0) returns (0) {
     // Preload merkle root
     [MERKLE_ROOT_SLOT] sload                // [root]
@@ -151,16 +140,12 @@
     0x24 calldataload MASK_ADDRESS()        // [account, amount, root]
     0x04 calldataload                       // [index, account, amount, root]
 
-    // Revert error msg
-    [CLAIMED_ERROR_STRING]                  // [message, index, account, amount, root]
-    [CLAIMED_ERROR_LENGTH]                  // [message_length, message, index, account, amount, root]
-    dup3                                    // [index, message_length, message, index, account, amount, root]
+    // Check if an index is claimed
+    dup1 __UTIL_IS_CLAIMED()                // [isClaimed, index, account, amount, root]
+    iszero cont jumpi                       // [index, account, amount, root]
+    ALREADY_CLAIMED(0x00)
+    cont:
 
-    // Required()
-    __UTIL_IS_CLAIMED()         // [isClaimed, message_length, message, index, account, amount, root]
-    iszero                      // [!isClaimed, message_length, message, index, account, amount, root]
-    REQUIRE()                   // [index, account, amount, root]
-    
     // EncodePacked
     // [ 32 bytes | 20 bytes | 32 bytes ] = 84 bytes
     0x00 mstore                 // [account, amount, root]
@@ -174,15 +159,13 @@
 
     // Required()
     VERIFY_PROOF()              // [isProven]
-    [PROOF_ERROR_STRING]        // [message, isProven]
-    [PROOF_ERROR_LENGTH]        // [message_length, message, isProven]
-    dup3                        // [isProven, message_length, message]
-    REQUIRE()                   // []
+    verified jumpi              // []
+    INVALID_PROOF(0x00)
+    verified:
 
     // Mark it claimed
-    0x04                        // [0x04]
-    calldataload                // [arg0]
-    __UTIL_SET_CLAIMED()
+    0x04 calldataload           // [arg0]
+    __UTIL_SET_CLAIMED()        // []
 
     // Load other calldata arguments
     [TOKEN_ADDR_SLOT] sload     // [getter_addr]
@@ -193,43 +176,14 @@
     // Send the token
     ERC20_TRANSFER()
 
-    0x0 0x0 return
+    // Finish Execution
+    stop
 }
 
-/*
-
-Solidity Require. Error `string` MUST be no greater than 32 bytes.
-
-MEMORY LAYOUT WHEN THROWN
-| sig    || message offset                                                 || message length                                                 || message "revert"                                               |
-0x08c379a  0000000000000000000000000000000000000000000000000000000000000020  0000000000000000000000000000000000000000000000000000000000000006  7265766572740000000000000000000000000000000000000000000000000000
-
-*/
-#define macro REQUIRE() = takes (3) returns (0) {
-    // takes:       // [condition, message_length, message]
-    do_not_throw    // [do_not_throw_jumpdest, condition, message_length, message]
-    jumpi           // [message_length, message]
-    __ERROR(ClaimedError)     // [error_sig, , message_length, message]
-    0x00            // [mem_ptr, error_sig, message_length, message]
-    mstore          // [message_length, message]
-    0x20            // [message_offset, message_length, message]
-    0x04            // [message_offset_ptr, message_offset, message_length, message]
-    mstore          // [message_length, message]
-    0x24            // [message_length_ptr, message_length, message]
-    mstore          // [message]
-    0x44            // [message_ptr, message]
-    mstore          // []
-    0x80            // [size]
-    0x00            // [offset, size]
-    revert          // []
-    do_not_throw:   // [message_length, message]
-        pop         // [message]
-        pop         // []
-}
-
-/* Constructor */
-// constructor(address, merkleRoot)
-#define macro CONSTRUCTOR() = takes (0) returns (0) {
+/// @notice Constructor
+/// @param address The address of the token to distribute
+/// @param merkleRoot The merkle root of the merkle tree
+#define macro INNER_MERKLE_CONSTRUCTOR() = takes (0) returns (0) {
     // Copy the first argument into memory
     0x20                        // [size] - byte size to copy
     0x40 codesize sub           // [offset, size] - offset in the code to copy from
@@ -253,13 +207,17 @@ MEMORY LAYOUT WHEN THROWN
     sstore                      // []
 }
 
-#define macro MAIN() = takes (0) returns (0) {
-    pc calldataload 0xE0 shr
-
+/// @notice Function Dispatch
+/// @notice Takes the first 4 bytes of calldata (aka the function selector) and dispatches to the appropriate function
+/// @notice If non match, execution proceeds as the code is inlined
+#define macro INNER_MERKLE_MAIN() = takes (1) returns (1) {
     dup1 __FUNC_SIG(getTokenAddress) eq getTokenAddress jumpi
     dup1 __FUNC_SIG(getMerkleRoot) eq getMerkleRoot jumpi
     dup1 __FUNC_SIG(isClaimed) eq isClaimed jumpi
     dup1 __FUNC_SIG(claim) eq claim jumpi
+
+    // Jump to the end if non match
+    non_match jump
 
     getMerkleRoot:
         GET_MERKLE_ROOT()
@@ -270,5 +228,5 @@ MEMORY LAYOUT WHEN THROWN
     claim:
         CLAIM()
 
-    0x00 dup1 revert
+    non_match:
 }
