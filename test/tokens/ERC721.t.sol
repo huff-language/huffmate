@@ -38,6 +38,7 @@ interface IERC721 {
     function transfer(address, uint256) external;
     function transferFrom(address, address, uint256) external;
     function safeTransferFrom(address, address, uint256) external;
+    function safeTransferFrom(address, address, uint256, bytes calldata) external;
 
     function approve(address, uint256) external;
     function setApprovalForAll(address, bool) external;
@@ -229,7 +230,6 @@ contract ERC721Test is Test {
         vm.assume(from != address(0));
 
         ERC721Recipient recipient = new ERC721Recipient();
-        console2.logBytes4(ERC721Recipient.onERC721Received.selector);
 
         token.mint(from, 1337);
 
@@ -247,5 +247,28 @@ contract ERC721Test is Test {
         assertEq(recipient.from(), from);
         assertEq(recipient.id(), 1337);
         assertEq(keccak256(abi.encode(recipient.data())), keccak256(abi.encode("")));
+    }
+
+    function testSafeTransferFromToERC721RecipientWithData(address from) public {
+        vm.assume(from != address(0));
+
+        ERC721Recipient recipient = new ERC721Recipient();
+
+        token.mint(from, 1337);
+
+        vm.prank(from);
+        token.setApprovalForAll(address(this), true);
+
+        token.safeTransferFrom(from, address(recipient), 1337, "testing 123");
+
+        assertEq(token.getApproved(1337), address(0));
+        assertEq(token.ownerOf(1337), address(recipient));
+        assertEq(token.balanceOf(address(recipient)), 1);
+        assertEq(token.balanceOf(from), 0);
+
+        assertEq(recipient.operator(), address(this));
+        assertEq(recipient.from(), from);
+        assertEq(recipient.id(), 1337);
+        assertEq(keccak256(abi.encode(recipient.data())), keccak256(abi.encode("testing 123")));
     }
 }
