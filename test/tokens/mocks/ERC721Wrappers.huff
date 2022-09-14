@@ -1,24 +1,3 @@
-// Interface
-#define function name() nonpayable returns (string)
-#define function symbol() nonpayable returns (string)
-#define function tokenURI(uint256) nonpayable returns (string)
-
-#define function mint(address,uint256) nonpayable returns ()
-#define function transfer(address,uint256) nonpayable returns ()
-#define function transferFrom(address,address,uint256) nonpayable returns ()
-#define function safeTransferFrom(address,address,uint256) nonpayable returns ()
-
-#define function approve(address,uint256) nonpayable returns ()
-#define function setApprovalForAll(address,bool) nonpayable returns ()
-
-#define function getApproved(uint256) view returns (address)
-#define function isApprovedForAll(address,address) view returns (bool)
-#define function ownerOf(uint256) view returns (address)
-#define function balanceOf(address) view returns (uint256)
-#define function supportsInterface(bytes4) view returns (bool)
-
-#define function mint(address, uint256) payable returns ()
-#define function burn(uint256) nonpayable returns ()
 
 #define macro MINT() = takes (0) returns (0) {
     0x24 calldataload       // [tokenId]

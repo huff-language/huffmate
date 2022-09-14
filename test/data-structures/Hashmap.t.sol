@@ -17,7 +17,7 @@ contract HashmapTest is Test {
 
   function setUp() public {
     // Read instantiable hashmap from file
-    string memory instantiable_code = vm.readFile("test/data-structures/mocks/InstantiatedHashmap.huff");
+    string memory instantiable_code = vm.readFile("test/data-structures/mocks/HashmapWrappers.huff");
 
     // Create an Instantiable Hashmap
     HuffConfig config = HuffDeployer.config().with_code(instantiable_code);
