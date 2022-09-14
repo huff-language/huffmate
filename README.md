@@ -49,7 +49,7 @@ math
 ├─ Trigonometry — "Basic trigonometry functions where inputs and outputs are integers"
 tokens
 ├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
-├─ ERC721 — TODO — "Modern, minimalist, and gas efficient ERC721 implementation"
+├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
 ├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
 ├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
 utils

@@ -421,20 +421,22 @@
     0x84 mstore             // [len(bytes), onERC721Received, to]
 
     // Prepare the loop
+    0x84 add                // [len(bytes) + 0x84, onERC721Received, to]
     0xA4                    // [mem_i, len(bytes), onERC721Received, to]
-    0x00                    // [i, mem_i, len(bytes), onERC721Received, to]
+    0x84                    // [i, mem_i, len(bytes), onERC721Received, to]
 
     loop:
+        dup1                // [i, i, mem_i, len(bytes), onERC721Received, to]
+        calldataload        // [bytes[i], i, mem_i, len(bytes), onERC721Received, to]
+        dup3                // [mem_i, bytes[i], i, mem_i, len(bytes), onERC721Received, to]
+
+        mstore              // [i, mem_i, len(bytes), onERC721Received, to]
         0x20 add            // [i + 0x20, mem_i, len(bytes), onERC721Received, to]
         swap1 0x20 add      // [mem_i + 0x20, i + 0x20, len(bytes), onERC721Received, to]
-        dup2                // [i + 0x20, mem_i + 0x20, i + 0x20, len(bytes), onERC721Received, to]
-        0x84 add            // [i + 0x20 + 0x84, mem_i + 0x20, i + 0x20, len(bytes), onERC721Received, to]
-        calldataload        // [bytes[i], mem_i + 0x20, i + 0x20, len(bytes), onERC721Received, to]
-        dup2                // [mem_i + 0x20, bytes[i], mem_i + 0x20, i + 0x20, len(bytes), onERC721Received, to]
-
-        mstore              // [mem_i + 0x20, i + 0x20, len(bytes), onERC721Received, to]
         swap1               // [i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
-        dup3 dup2           // [i + 0x20, len(bytes), i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
+
+        dup3 0x20 add       // [len(bytes) + 0x20, i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
+        dup2                // [i + 0x20, len(bytes) + 0x20, i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
         lt loop jumpi       // [i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
 
     // Clean up stack
