@@ -193,6 +193,7 @@ contract ERC721Test is Test {
 
     function testTransferFromApproveAll(address from) public {
         vm.assume(from != address(0));
+        vm.assume(from != address(0xBEEF));
 
         // Mint a token
         token.mint(from, 1337);
