@@ -20,10 +20,11 @@ fs_permissions = [
     { access = "read", path = "./test/utils/mocks/BitPackLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ErrorWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/JumpTableUtilWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/LibBitWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/MerkleDistributorWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/MerkleProofLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/MulticallableWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ReentrancyGuardWrappers.huff" },
-    { access = "read", path = "./test/utils/mocks/LibBitWrappers.huff" },
 ]
 remappings = [
     "forge-std/=lib/forge-std/src/",

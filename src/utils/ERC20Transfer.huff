@@ -1,0 +1,37 @@
+/// @title ERC-20 Helper
+/// @author Ben Leimberger <https://github.com/benleim>
+/// @notice Util macros for ERC-20 interactions
+
+/* External Interface */
+#define function transfer(address,uint256) nonpayable returns (bool)
+
+/// input stack:                [acct_addr, amount, getter_addr]
+#define macro ERC20_TRANSFER() = takes (3) returns (0) {
+    __FUNC_SIG(transfer) 0x0 mstore
+
+    // store args in memory
+    // address, uint256
+    0x20 mstore                 // [amount, getter_addr]
+    0x40 mstore                 // [getter_addr]
+
+    // make call. return size is zero because we can fetch it after the call
+    0x00                        // [ret_size, getter_addr]
+    dup1                        // [ret_offset, ret_size, getter_addr]
+    0x44                        // [args_size, ret_offset, ret_size, getter_addr]
+    0x1c                        // [args_offset, args_size, ret_offset, ret_size, getter_addr]
+    dup3                        // [value, args_offset, args_size, ret_offset, ret_size, getter_addr]
+    dup6                        // [getter_addr, value, args_offset, args_size, ret_offset, ret_size, getter_addr]
+    gas                         // [gas, getter_addr, value, args_offset, args_size, ret_offset, ret_size, getter_addr]
+    call                        // [successs, getter_addr]
+
+    // store returndata in memory
+    returndatasize              // [returndatasize, success, getter_addr]
+    0x00                        // [mem_offset, returndatasize, success, getter_addr]
+    dup1                        // [destOffset, mem_offset, returndatasize, success, getter_addr]
+    returndatacopy              // [success, getter_addr] // this stores the return data in memory
+
+    // return the returndata from memory to the msg.sender
+    returndatasize              // [returndatasize, success, getter_addr]
+    0x00                        // [mem_offset, returndatasize, success, getter_addr]
+    return
+}

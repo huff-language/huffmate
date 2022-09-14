@@ -1,0 +1,10 @@
+
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    INNER_MERKLE_CONSTRUCTOR()
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+    INNER_MERKLE_MAIN()
+    0x00 dup1 revert
+}
