@@ -452,12 +452,14 @@
     dup3                    // [value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
     dup7                    // [to, value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
     gas                     // [gas, to, value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
-    call                    // [success, onERC721Received, to]
+    call                    // [success, len(bytes), onERC721Received, to]
 
     // Revert if call isn't successful
-    cont jumpi              // [onERC721Received, to]
+    cont jumpi              // [len(bytes), onERC721Received, to]
     0x00 dup1 revert
     cont:
+
+    pop                     // [onERC721Received, to]
 
     // Compare the return data to the onERC721Received selector
     0x00 mload 0xE0 shr     // [response, onERC721Received, to]
