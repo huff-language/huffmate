@@ -313,8 +313,8 @@
     TRANSFER_GIVE_TO()      // [from, to, tokenId]
 
     // Emit the transfer event.
-    __EVENT_HASH(Transfer)  // [sig,from, to, tokenId]
-    0x20 0x00               // [0, 0, sig, from, to, tokenId]
+    __EVENT_HASH(Transfer)  // [sig, from, to, tokenId]
+    0x00 0x00               // [0, 0, sig, from, to, tokenId]
     log4                    // []
 
     // Make sure we can transfer to the recipient
@@ -436,23 +436,23 @@
     // retrieve balance
     // input stack:                 // [from, to, tokenId]
     dup2                            // [to, from, to, tokenId]
-	[BALANCE_LOCATION]
+	[BALANCE_LOCATION]              // [balance_slot, to, from, to, tokenId]
     LOAD_ELEMENT_FROM_KEYS(0x00)    // [balance, from, to, tokenId]
     0x01 add                        // [balance+1, from, to, tokenId]
 
     // update balance
 	dup3                            // [to, balance+1, from, to, tokenId]
-    [BALANCE_LOCATION]
+    [BALANCE_LOCATION]              // [balance_slot, to, balance+1, from, to, tokenId]
     STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
 
     // update ownerOf
     dup2                            // [to, from, to, tokenId]
     dup4                            // [tokenId, to, from, to, tokenId]
-    [OWNER_LOCATION]
+    [OWNER_LOCATION]                // [owner_slot, tokenId, to, from, to, tokenId]
     STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
 
     // update approval
     0x00 dup4                       // [tokenId, address(0), from, to, tokenId]
-    [SINGLE_APPROVAL_LOCATION]
+    [SINGLE_APPROVAL_LOCATION]      // [approval_slot, tokenId, address(0), from, to, tokenId]
     STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
 }
