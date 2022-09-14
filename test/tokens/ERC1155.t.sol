@@ -1040,13 +1040,12 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         address to,
         bytes memory transferData
     ) public {
-        if (to == address(0)) to = address(0xBEEF);
+        address from = address(0xABCD);
+        if (to == address(0) || to == from) to = address(0xBEEF);
 
         if (uint256(uint160(to)) <= 18 || to.code.length > 0) return;
 
         transferAmount = bound(transferAmount, 0, mintAmount);
-
-        address from = address(0xABCD);
 
         token.mint(from, id, mintAmount, mintData);
 

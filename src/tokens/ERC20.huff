@@ -555,8 +555,7 @@
     dup1 __FUNC_SIG(transferFrom)       eq transferFromJump     jumpi
     dup1 __FUNC_SIG(approve)            eq approveJump          jumpi
 
-    // Revert if function selector is not recognized.
-    0x00 dup1 revert
+    cont jumpi
 
     allowanceJump:
         ALLOWANCE()
@@ -582,4 +581,6 @@
         TRANSFER_FROM()
     transferJump:
         TRANSFER()
+
+    cont:
 }
