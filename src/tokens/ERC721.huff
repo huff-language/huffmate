@@ -114,9 +114,11 @@
     0x20 0x00 return                // []
 }
 
-
+/// @notice Token URI
 #define macro TOKEN_URI() = takes (0) returns (0) {
-    0x00 0x00 revert
+    0x20 0x00 mstore
+    0x00 0x20 mstore
+    0x40 0x00 return
 }
 
 #define macro SUPPORTS_INTERFACE() = takes (0) returns (0) {
@@ -346,9 +348,6 @@
     0x80 0x84 mstore
     0x00 0xA4 mstore
 
-    // Clean scratch space for return data use
-    0x00 dup1 mstore        // [onERC721Received, to]
-
     // Call address(to).onERC721Received(msg.sender, from, tokenId, "")
     0x20                    // [retSize, onERC721Received, to]
     0x00                    // [retOffset, retSize, onERC721Received, to]
@@ -418,11 +417,8 @@
     0x40 add                // [len(data) * 0x20 + 0x40, onERC721Received, to]
     dup1                    // [len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
     0x64                    // [0x64, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
-    0x84                    // [0x20, 0x64, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to] 
-    calldatacopy            // [len(bytes), onERC721received, to] 
-
-    // Clean scratch space for return data use
-    0x00 dup1 mstore        // [len(bytes), onERC721Received, to]
+    0x84                    // [0x20, 0x64, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
+    calldatacopy            // [len(bytes), onERC721received, to]
 
     // Call address(to).onERC721Received(msg.sender, from, tokenId, bytes)
     0x20                    // [retSize, len(bytes), onERC721Received, to]

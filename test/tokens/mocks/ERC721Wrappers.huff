@@ -65,7 +65,7 @@
     symbol:
         SYMBOL()
     tokenURI:
-        TOKEN_URI()             // not implemented yet
+        TOKEN_URI()
     supportsInterface:
         SUPPORTS_INTERFACE()
 

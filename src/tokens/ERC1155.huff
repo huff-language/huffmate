@@ -541,8 +541,8 @@
     0x80                           // [&ret]
 
     // Get lengths of dynamic arrays, duplicate in prepare to compare
-    0x24 calldataload 0x4 add dup1 // [&ids, &ids, &owners, &owners, &ret]
-    0x04 calldataload 0x4 add dup1 // [&ids, &ids, &ret]
+    0x24 calldataload 0x4 add dup1 // [&ids, &ids, &ret]
+    0x04 calldataload 0x4 add dup1 // [&ids, &ids, &owners, &owners, &ret]
 
     // compare lengths
     swap2                           // [&owners, &ids, &ids, &owners, &ret]

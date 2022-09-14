@@ -63,6 +63,7 @@ contract ERC721Test is Test {
     function testMetadata() public {
         assertEq(keccak256(abi.encode(token.name())), keccak256(abi.encode("Token")));
         assertEq(keccak256(abi.encode(token.symbol())), keccak256(abi.encode("TKN")));
+        assertEq(keccak256(abi.encode(token.tokenURI(1))), keccak256(abi.encode("")));
     }
 
     function testMint() public {
@@ -253,6 +254,7 @@ contract ERC721Test is Test {
         vm.assume(from != address(0));
 
         ERC721Recipient recipient = new ERC721Recipient();
+        vm.assume(from != address(recipient));
 
         token.mint(from, 1337);
 
