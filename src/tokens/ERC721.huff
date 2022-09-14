@@ -5,9 +5,9 @@
 /// @notice Adapted from Solmate https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC721.sol
 
 // Imports
+#include "../data-structures/Hashmap.huff"
 #include "../utils/CommonErrors.huff"
 #include "../utils/NonPayable.huff"
-#include "../data-structures/Hashmap.huff"
 
 // Interface
 #define function name() nonpayable returns (string)

@@ -2,6 +2,8 @@
 /// @author asnared <https://github.com/abigger87>
 /// @notice Simple macro to revert if a call has a value
 
+#include "./Errors.huff"
+
 // "NON_PAYABLE" Revert Message String
 #define constant NON_PAYABLE_ERROR = 0xb4e4f4e5f50415941424c45000000000000000000000000000000000000000000
 #define constant NON_PAYABLE_LENGTH = 0x0b

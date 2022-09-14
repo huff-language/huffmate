@@ -59,7 +59,7 @@ contract ERC721Test is Test {
     }
 
     /// @notice Test the ERC721 Metadata
-    function invariantMetadata() public {
+    function testMetadata() public {
         assertEq(keccak256(abi.encode(token.name())), keccak256(abi.encode("Token")));
         assertEq(keccak256(abi.encode(token.symbol())), keccak256(abi.encode("TKN")));
     }
