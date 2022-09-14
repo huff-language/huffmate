@@ -440,7 +440,8 @@
         lt loop jumpi       // [i + 0x20, mem_i + 0x20, len(bytes), onERC721Received, to]
 
     // Clean up stack
-    pop pop                 // [len(bytes), onERC721Received, to]
+    pop pop pop             // [onERC721Received, to]
+    0x64 calldataload       // [len(bytes), onERC721Received, to]
 
     // Clean scratch space for return data use
     0x00 dup1 mstore        // [len(bytes), onERC721Received, to]
