@@ -53,7 +53,6 @@ contract ERC4626Test is Test {
     function testMetadata() public {
         assertEq(keccak256(abi.encode(token.name())), keccak256(abi.encode("Token")));
         assertEq(keccak256(abi.encode(token.symbol())), keccak256(abi.encode("TKN")));
-        assertEq(keccak256(abi.encode(token.tokenURI(1))), keccak256(abi.encode("")));
         assertEq(token.decimals(), 18);
     }
 }

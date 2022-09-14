@@ -25,23 +25,24 @@
 #define event Transfer(address, address, uint256)
 
 // Metadata
+#define function decimals() nonpayable returns (uint256)
 #define function name() nonpayable returns (string)
+#define function symbol() nonpayable returns (string)
+
 // META_NAME = "Token"
 #define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000
 #define constant META_NAME_LENGTH = 0x05
 
-#define function symbol() nonpayable returns (string)
 // META_SYMBOL = "TKN"
 #define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
 #define constant META_SYMBOL_LENGTH = 0x03
 
-#define function decimals() nonpayable returns (uint256)
-#define constant META_DECIMALS = 0x12 // 18
 
 // ERC20 Storage
 #define constant TOTAL_SUPPLY_SLOT = FREE_STORAGE_POINTER()
 #define constant BALANCE_SLOT = FREE_STORAGE_POINTER()
 #define constant APPROVAL_SLOT = FREE_STORAGE_POINTER()
+#define constant DECIMALS_SLOT = FREE_STORAGE_POINTER()
 
 // EIP-2612 STORAGE
 #define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
@@ -58,7 +59,17 @@
 
 /// @notice Constructor
 /// @notice Sets the initial domain separator and chain ID
-#define macro CONSTRUCTOR_ERC20() = takes (0) returns (0) {
+#define macro INNER_ERC20_CONSTRUCTOR() = takes (0) returns (0) {
+    // Copy the decimals into memory from the bytecode
+    0x20                                    // [size] - byte size to copy
+    0x20 codesize sub                       // [offset, size] - offset in the code to copy from
+    0x00                                    // [mem, offset, size] - offset in memory to copy to
+    codecopy                                // []
+
+    // Copy the decimals from memory into the DECIMALS_SLOT storage location
+    0x00 mload                              // [decimals]
+    [DECIMALS_SLOT] sstore                  // []
+
     chainid [INITIAL_CHAIN_ID] sstore       // []
     COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
@@ -457,7 +468,8 @@
 /// @notice Returns the token decimal representation
 #define macro DECIMALS() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
-    [META_DECIMALS] 0x00 mstore         // []
+    [DECIMALS_SLOT] sload               // [decimals]
+    0x00 mstore                         // []
     0x20 0x00 return                    // []
 }
 

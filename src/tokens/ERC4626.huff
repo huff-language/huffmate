@@ -12,27 +12,20 @@
 
 // Interface
 
-
 // TODO: Grab dynamic constructor args
 
 // Storage
 #define constant ASSET_SLOT = FREE_STORAGE_POINTER()
-// TODO: remove this once ERC20 has it's own decimals slot
-// TODO: (at time of writing decimals was hard-coded as a constant)
-#define constant DECIMALS_SLOT = FREE_STORAGE_POINTER()
 
 
 /// @notice Constructor
 #define macro INNER_4626_CONSTRUCTOR() = takes (0) returns (0) {
-    // Copy the asset address into memory from the bytecode
+    // Copy the asset address into memory and then the stack from the bytecode
     0x20                    // [size] - byte size to copy
     0x20 codesize sub       // [offset, size] - offset in the code to copy from
     0x00                    // [mem, offset, size] - offset in memory to copy to
     codecopy                // []
-
-    // Copy the asset from memory into the ASSET_SLOT storage location
-    0x00 mload dup1         // [asset, asset]
-    [ASSET_SLOT] sstore     // [asset]
+    0x00 mload              // [asset]
 
     // Store the decimals function selector in memory to call
     __FUNC_SIG(decimals)    // [sig_right_padded, asset]
@@ -44,9 +37,8 @@
     0x00                    // [retOffset, retSize, asset]
     0x04                    // [argSize, retOffset, retSize, asset]
     0x20                    // [argOffset, argSize, retOffset, retSize, asset]
-    0x00                    // [value, argOffset, argSize, retOffset, retSize, asset]
-    dup6                    // [to, value, argOffset, argSize, retOffset, retSize, asset]
-    gas                     // [gas, to, value, argOffset, argSize, retOffset, retSize, asset]
+    dup5                    // [to, argOffset, argSize, retOffset, retSize, asset]
+    gas                     // [gas, to, argOffset, argSize, retOffset, retSize, asset]
     staticcall              // [success, asset]
 
     // If the call failed, revert
@@ -58,12 +50,16 @@
     // Store the decimals
     0x00 mload              // [decimals, asset]
     [DECIMALS_SLOT] sstore  // [asset]
-    pop                     // []
 
-    // Call the ERC20 constructor
-    CONSTRUCTOR_ERC20()
+    // Store the asset
+    [ASSET_SLOT] sstore     // []
 
-    // TODO: here is where we should set the asset, name, and symbol storage variables
+    // Configure the initial domain separator
+    chainid [INITIAL_CHAIN_ID] sstore       // []
+    COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
+    [INITIAL_DOMAIN_SEPARATOR] sstore       // []
+
+    // TODO: here is where we should set the name, and symbol storage variables
 
     // Allow execution to continue for parent construction
 }
@@ -71,7 +67,7 @@
 /// @notice Returns the ERC4626 decimals
 #define macro ERC4626_DECIMALS() = takes (0) returns (0) {
     [DECIMALS_SLOT] sload
-    0x20 0x00 mstore
+    0x00 mstore
     0x20 0x00 return
 }
 

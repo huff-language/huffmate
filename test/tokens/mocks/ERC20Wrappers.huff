@@ -1,4 +1,8 @@
 
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    INNER_ERC20_CONSTRUCTOR()
+}
+
 #define macro MAIN() = {
     0x00 calldataload 0xE0 shr    // [func sig]
     MAIN_ERC20()

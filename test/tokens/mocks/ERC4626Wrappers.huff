@@ -1,8 +1,6 @@
 
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr      // [func sig]
     INNER_4626_CONSTRUCTOR()        // [func sig]
-    0x00 dup1 revert
 }
 
 #define macro MAIN() = takes (0) returns (0) {
