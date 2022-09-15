@@ -44,6 +44,17 @@
 #define constant ZERO_SHARES_ERROR = 0x5a45524f5f534841524553000000000000000000000000000000000000000000
 #define constant ZERO_SHARES_LENGTH = 0x0b
 
+#define constant ZERO_ASSETS_ERROR = 0x5a45524f5f415353455453000000000000000000000000000000000000000000
+#define constant ZERO_ASSETS_LENGTH = 0x0b
+
+/// @notice Reverts with an "ZERO_ASSETS" message if the condition is false
+#define macro ZERO_ASSETS(condition) = takes (0) returns (0) {
+    [ZERO_ASSETS_ERROR]             // ["ZERO_ASSETS"]
+    [ZERO_ASSETS_LENGTH]            // [11 (length), "ZERO_ASSETS"]
+    <condition>                     // [condition, 11 (length), "ZERO_ASSETS"]
+    REQUIRE()                       // []
+}
+
 /// @notice Reverts with an "ZERO_SHARES" message if the condition is false
 #define macro ZERO_SHARES(condition) = takes (0) returns (0) {
     [ZERO_SHARES_ERROR]             // ["ZERO_SHARES"]

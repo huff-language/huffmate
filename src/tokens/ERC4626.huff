@@ -86,7 +86,6 @@
 // DEPOSIT/WITHDRAWAL LOGIC
 // ------------------------------------------------------
 
-
 /// @notice Mint
 /// @notice Mints a {receiver} x amount of {assets} proportional to the input {shares}
 /// @param shares The amount of shares to mint
@@ -161,30 +160,98 @@
     swap1 pop                       // [assets]
 }
 
-// TODO: redeem
-// function redeem(
-//     uint256 shares,
-//     address receiver,
-//     address owner
-// ) public virtual returns (uint256 assets) {
-//     if (msg.sender != owner) {
-//         uint256 allowed = allowance[owner][msg.sender]; // Saves gas for limited approvals.
+/// @notice Redeem
+/// @notice Redeems a {receiver} x amount of {assets} proportional to the input {shares}
+/// @param shares The amount of shares to mint
+#define macro REDEEM() = takes (0) returns (0) {
+    0x44 calldataload       // [owner]
+    0x24 calldataload       // [receiver, owner]
+    0x04 calldataload       // [shares, receiver, owner]
+    REDEEM_INNER()          // [assets]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
 
-//         if (allowed != type(uint256).max) allowance[owner][msg.sender] = allowed - shares;
-//     }
+/// @notice Redeem Internal Helper
+#define macro REDEEM_INNER() = takes (3) returns (1) {
+    // Input stack: [shares, receiver, owner]
+    // Output stack: [assets]
 
-//     // Check for rounding error since we round down in previewRedeem.
-//     require((assets = previewRedeem(shares)) != 0, "ZERO_ASSETS");
+    // Jump ahead if msg.sender == owner
+    dup3 caller eq ahead jumpi   // [shares, receiver, owner]
 
-//     beforeWithdraw(assets, shares);
+    // Check if the caller is approved to redeem the shares
 
-//     _burn(owner, shares);
+    // Get the allowance[owner][msg.sender]
+    caller dup4                         // [owner, msg.sender, shares, receiver, owner]
+    [APPROVAL_SLOT]                     // [slot, owner, msg.sender, shares, receiver, owner]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)     // [allowance, shares, receiver, owner]
 
-//     emit Withdraw(msg.sender, receiver, owner, assets, shares);
+    // If the allowed is no infinite approval, set to the allowance less shares
+    dup1 [TYPE_UINT_256_MAX]            // [type(uint256).max, allowance, allowance, shares, receiver, owner]
+    eq infinite jumpi                   // [allowance, shares, receiver, owner]
 
-//     asset.safeTransfer(receiver, assets);
-// }
+    // Set the new allowance
+    dup2 dup2 sub                       // [new_allowance, allowance, shares, receiver, owner]
+    caller dup6 [APPROVAL_SLOT]         // [slot, owner, msg.sender, new_allowance, allowance, shares, receiver, owner]
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)    // [allowance, shares, receiver, owner]
 
+    // Jump dests for initial checks
+    infinite:
+    ahead:
+
+    // Validate that the assets are non-zero
+    dup1 PREVIEW_REDEEM()               // [assets, shares, receiver, owner]
+    dup1 iszero iszero non_zero jumpi   // [assets, shares, receiver, owner]
+    ZERO_ASSETS(0x00)
+    non_zero:
+
+    // Call the before withdraw hook
+    dup2 dup2 BEFORE_WITHDRAW()         // [assets, shares, receiver, owner]
+
+    // Burn the shares, input stack: [shares, owner]
+    dup4 dup3 _BURN()                   // [assets, shares, receiver, owner]
+
+    // Emit the withdraw event
+    dup1 0x00 mstore                // [assets, shares, receiver, owner]
+    dup2 0x20 mstore                // [assets, shares, receiver, owner]
+    dup4 dup4 caller                // [msg.sender, receiver, owner, assets, shares, receiver, owner]
+    __EVENT_HASH(Withdraw)          // [event_hash, msg.sender, receiver, owner, assets, shares, receiver, owner]
+    0x40 0x00 log4                  // [assets, shares, receiver, owner]
+
+    // Transfer the assets from the receiver to the vault
+    // Store the safeTransfer selector in memory
+    __FUNC_SIG(safeTransfer)        // [selector, assets, shares, receiver, owner]
+    0xE0 shl                        // [selector, assets, shares, receiver, owner]
+    0x00 mstore                     // [assets, shares, receiver, owner]
+
+    // Store the receiver in memory as the first arg
+    dup3 0x04 mstore                // [assets, shares, receiver, owner]
+
+    // Store the assets as the second call argument in memory
+    dup1 0x24 mstore                // [assets, shares, receiver, owner]
+
+    // Load the asset as the call destination
+    [ASSET_SLOT] sload              // [asset, assets, shares, receiver, owner]
+
+    // Construct the call
+    0x00                            // [retSize, asset, assets, shares, receiver, owner]
+    0x00                            // [retOffset, retSize, asset, assets, shares, receiver, owner]
+    0x44                            // [argSize, retOffset, retSize, asset, assets, shares, receiver, owner]
+    0x00                            // [argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver, owner]
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver, owner]
+    dup6                            // [to, value, argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver, owner]
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver, owner]
+    call                            // [success, asset, assets, shares, receiver, owner]
+
+    // Verify the call succeeded
+    iszero iszero success jumpi     // [asset, assets, shares, receiver, owner]
+    0x00 dup1 revert                // []
+    success:
+
+    // Clean the stack and return the assets
+    pop swap4 pop pop pop           // [assets]
+}
 
 /// @notice Deposit assets into the ERC4626 Vault
 #define macro DEPOSIT_INNER() = takes (2) returns (1) {
