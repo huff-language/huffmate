@@ -45,7 +45,7 @@ contract ExampleCloneTest is Test {
         clone.param4();
     }
 
-    function testGas_param5() public {
+    function testGas_param5() public view {
         arrClone.param5(5);
     }
 }

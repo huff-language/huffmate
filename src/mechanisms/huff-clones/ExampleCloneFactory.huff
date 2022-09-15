@@ -13,27 +13,27 @@
     0x04 calldataload   // [address, uint256, uint64, uint8]
 
     // data len = 61 (0x3D)
-    0x3D 0x300 mstore   // [address, uint256, uint64, uint8]
+    0x3D 0x40 mstore    // [address, uint256, uint64, uint8]
 
-    // Store address << 0x60 @ 0x320
+    // Store address << 0x60 @ 0x60
     0x60 shl            // [address << 0x60, uint256, uint64, uint8]
-    0x320 mstore        // [uint256, uint64, uint8]
+    0x60 mstore         // [uint256, uint64, uint8]
 
-    // Store uint256 @ 0x334
-    0x334 mstore        // [uint64, uint8]
+    // Store uint256 @ 0x74
+    0x74 mstore         // [uint64, uint8]
 
-    // Store uint64 << 0xC0 @ 0x354
+    // Store uint64 << 0xC0 @ 0x94
     0xC0 shl            // [uint64 << 0xC0, uint8]
-    0x354 mstore        // [uint8]
+    0x94 mstore         // [uint8]
 
-    // Store uint8 << 0xF8 @ 0x35C
+    // Store uint8 << 0xF8 @ 0x9C
     0xF8 shl            // [uint8 << 0xF8]
-    0x35C mstore        // []
+    0x9C mstore         // []
 
-    0x300               // [data_ptr]
+    0x40                // [data_ptr]
     [IMPL_SLOT] sload   // [impl_addr, data_ptr]
 
-    CLONE(err)          // [instance]
+    CLONE(err, 0x00)    // [instance]
     0x00 mstore         // []
     0x20 0x00 return
 
@@ -45,21 +45,21 @@
 /// uint256 array
 #define macro CREATE_ARRAY_CLONE() = takes (0) returns (0) {
     0x24 calldataload   // [arr_len]
-    0x20 mul            // [arr_len * 0x20]
+    0x05 shl            // [arr_len * 0x20]
     0x20 add            // [arr_len * 0x20 + 0x20]
     0x24                // [0x24, arr_len * 0x20 + 0x20]
-    0x300               // [0x300, 0x24, arr_len * 0x20 + 0x20]
+    0x40                // [0x40, 0x24, arr_len * 0x20 + 0x20]
     calldatacopy        // []
 
     // Set data length in bytes
-    0x300 dup1          // [0x300, 0x300]
-    mload               // [arr_len, 0x300]
-    0x20 mul            // [arr_len * 0x20, 0x300]
-    0x300 mstore        // [0x300 (data_ptr)]
+    0x40 dup1           // [0x40, 0x40]
+    mload               // [arr_len, 0x40]
+    0x05 shl            // [arr_len * 0x20, 0x40]
+    0x40 mstore         // [0x40 (data_ptr)]
 
     [IMPL_SLOT] sload   // [impl_addr, data_ptr]
 
-    CLONE(err)          // [instance]
+    CLONE(err, 0x00)    // [instance]
     0x00 mstore         // []
     0x20 0x00 return
 
