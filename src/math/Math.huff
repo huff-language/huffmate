@@ -1,7 +1,8 @@
-/// @title SafeMath
+/// @title Math
+/// @author manas <https://github.com/manasbir>
 /// @author kadenzipfel <https://github.com/kadenzipfel>
 /// @notice Math module over Solidity's arithmetic operations
-/// @notice Adapted from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol
+/// @notice Adapted from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol
 
 #define function sqrt(uint256) pure returns(uint256)
 #define function max(uint256, uint256) pure returns(uint256)
