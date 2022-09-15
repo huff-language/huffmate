@@ -169,7 +169,7 @@
     LOAD_ELEMENT_FROM_KEYS_2D(0x00)     // [allowance, shares, assets, receiver, owner]
 
     // If the allowed is no infinite approval, set to the allowance less shares
-    dup1 type(uint256).max
+    dup1 [TYPE_UINT_256_MAX]            // [type(uint256).max, allowance, allowance, shares, assets, receiver, owner]
     eq infinite jumpi                   // [allowance, shares, assets, receiver, owner]
 
     // Set the new allowance
