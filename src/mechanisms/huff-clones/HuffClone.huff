@@ -1,0 +1,106 @@
+/// @notice Reads an immutable arg with type address
+/// @param argOffset The offset of the arg in the packed data
+/// @return arg The arg value
+#define macro GET_ARG_ADDRESS() = takes (1) returns (1) {
+    // Initial Stack: // [argOffset]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset]
+    add               // [offset + argOffset]
+    calldataload      // [cd]
+    0x60              // [0x60, cd]
+    shr               // [cd >> 0x60]
+}
+
+/// @notice Reads an immutable arg with type uint256
+/// @param argOffset The offset of the arg in the packed data
+/// @return arg The arg value
+#define macro GET_ARG_UINT_256() = takes (1) returns (1) {
+    // Initial Stack: // [argOffset]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset]
+    add               // [offset + argOffset]
+    calldataload      // [cd]
+}
+
+/// @notice Reads a uint256 array stored in the immutable args.
+/// @param argOffset The offset of the arg in the packed data
+/// @param arrLen Number of elements in the array
+/// @return arr The beginning location of the array in memory
+#define macro GET_ARG_UINT_256_ARR() = takes (2) returns (1) {
+    // Initial Stack: // [argOffset, arrLen]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset, arrLen]
+
+    // Push loop index to stack
+    0x00              // [loop_index, offset, argOffset, arrLen]
+
+    loop_body:
+        dup4 dup2     // [loop_index, arrLen, loop_index, offset, argOffset, arrLen]
+        lt iszero     // [loop_index >= arrLen, loop_index, offset, argOffset, arrLen]
+        finish jumpi
+
+        dup1          // [loop_index, loop_index, offset, argOffset, arrLen]
+        0x20 mul      // [loop_index * 0x20, loop_index, offset, argOffset, arrLen]
+
+        dup3 dup5     // [argOffset, offset, loop_index * 0x20, loop_index, offset, argOffset, arrLen]
+        add           // [offset + argOffset, loop_index * 0x20, loop_index, offset, argOffset, arrLen]
+        add           // [offset + argOffset + loop_index * 0x20, loop_index, offset, argOffset, arrLen]
+        calldataload  // [element, loop_index, offset, argOffset, arrLen]
+
+        dup2          // [loop_index, element, loop_index, offset, argOffset, arrLen]
+        0x20 mul      // [loop_index * 0x20, element, loop_index, offset, argOffset, arrLen]
+        0x40 add      // [loop_index * 0x20 + 0x20, element, loop_index, offset, argOffset, arrLen]
+        mstore        // [loop_index, offset, argOffset, arrLen]
+
+        0x01 add      // [loop_index + 1, offset, argOffset, arrLen]
+
+        loop_body jump
+    finish:
+        // Set arr size
+        0x20 mstore   // [offset, argOffset, arrLen]
+
+        // Set arr element size (0x20)
+        0x20 0x00 mstore
+
+        // Clean stack & return mem ptr to array
+        pop pop pop   // []
+        0x00          // [0x00] - Beginning offset of the array in memory
+}
+
+/// @notice Reads an immutable arg with type uint64
+/// @param argOffset The offset of the arg in the packed data
+/// @return arg The arg value
+#define macro GET_ARG_UINT_64() = takes (1) returns (1) {
+    // Initial Stack: // [argOffset]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset]
+    add               // [offset + argOffset]
+    calldataload      // [cd]
+    0xC0              // [0xC0, cd]
+    shr               // [cd >> 0xC0]
+}
+
+/// @notice Reads an immutable arg with type uint8
+/// @param argOffset The offset of the arg in the packed data
+/// @return The arg value
+#define macro GET_ARG_UINT_8() = takes (1) returns (1) {
+    // Initial Stack: // [argOffset]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset]
+    add               // [offset + argOffset]
+    calldataload      // [cd]
+    0xF8              // [0xF8, cd]
+    shr               // [cd >> 0xF8]
+}
+
+/// @return The offset of the packed immutable args in calldata
+#define macro GET_IMMUTABLE_ARGS_OFFSET() = takes (0) returns (1) {
+    0x02              // [0x02]
+    calldatasize      // [calldatasize, 0x02]
+    sub               // [calldatasize - 0x02]
+
+    calldataload      // [cd]
+    0xF0              // [0xF0, cd]
+    shr               // [cd >> 0xF0]
+
+    0x02              // [0x02, cd >> 0xF0]
+    add               // [0x02 + cd >> 0xF0]
+
+    calldatasize      // [calldatasize, 0x02 + cd >> 0xF0]
+    sub               // [calldatasize - (0x02 + cd >> 0xF0)]
+}
