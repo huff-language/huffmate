@@ -87,14 +87,109 @@
 // ------------------------------------------------------
 
 
-// TODO: mint
+/// @notice Mint
+/// @notice Mints a {receiver} x amount of {assets} proportional to the input {shares}
+/// @param shares The amount of shares to mint
+#define macro MINT() = takes (0) returns (0) {
+    0x24 calldataload       // [receiver]
+    0x04 calldataload       // [shares, receiver]
+    MINT_INNER()            // [assets]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+/// @notice Mint Internal Helper
+#define macro MINT_INNER() = takes (2) returns (1) {
+    // Input stack: [shares, receiver]
+    // Output stack: [assets]
+
+    // Preview the mint given the number of shares
+    dup1                    // [shares, shares, receiver]
+    PREVIEW_MINT_INNER()    // [assets, shares, receiver]
+
+    // Transfer the assets from the caller to the vault
+
+    // Store the safeTransferFrom selector in memory
+    __FUNC_SIG(safeTransferFrom)    // [selector, assets, shares, receiver]
+    0xE0 shl                        // [selector, assets, shares, receiver]
+    0x00 mstore                     // [assets, shares, receiver]
+
+    // Store the caller in memory as the first arg
+    caller 0x04 mstore              // [assets, shares, receiver]
+
+    // Store this address as the second call argument in memory
+    address 0x24 mstore             // [assets, shares, receiver]
+
+    // Store assets as the third call argument in memory
+    dup1 0x44 mstore                // [assets, shares, receiver]
+
+    // Load the asset as the call destination
+    [ASSET_SLOT] sload              // [asset, assets, shares, receiver]
+
+    // Construct the call
+    0x00                            // [retSize, asset, assets, shares, receiver]
+    0x00                            // [retOffset, retSize, asset, assets, shares, receiver]
+    0x64                            // [argSize, retOffset, retSize, asset, assets, shares, receiver]
+    0x00                            // [argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver]
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver]
+    dup6                            // [to, value, argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver]
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver]
+    call                            // [success, asset, assets, shares, receiver]
+
+    // Verify the call succeeded
+    iszero iszero success jumpi     // [asset, assets, shares, receiver]
+    0x00 dup1 revert                // []
+    success:
+
+    // Mint vault shares to the receiver
+    pop                             // [assets, shares, receiver]
+    dup3 dup3                       // [shares, receiver, assets, shares, receiver]
+    _MINT()                         // [assets, shares, receiver]
+
+    // Emit the deposit event
+    dup1 0x00 mstore                // [assets, shares, receiver]
+    dup2 0x20 mstore                // [assets, shares, receiver]
+    dup3 caller                     // [msg.sender, receiver, assets, shares, receiver]
+    __EVENT_HASH(Deposit)           // [event_hash, msg.sender, receiver, assets, shares, receiver]
+    0x40 0x00 log3                  // [assets, shares, receiver]
+
+    // Call the after deposit hook
+    swap1 dup2                      // [assets, shares, assets, receiver]
+    AFTER_DEPOSIT()                 // [assets, receiver]
+
+    // Return just the assets
+    swap1 pop                       // [assets]
+}
+
 // TODO: redeem
+// function redeem(
+//     uint256 shares,
+//     address receiver,
+//     address owner
+// ) public virtual returns (uint256 assets) {
+//     if (msg.sender != owner) {
+//         uint256 allowed = allowance[owner][msg.sender]; // Saves gas for limited approvals.
+
+//         if (allowed != type(uint256).max) allowance[owner][msg.sender] = allowed - shares;
+//     }
+
+//     // Check for rounding error since we round down in previewRedeem.
+//     require((assets = previewRedeem(shares)) != 0, "ZERO_ASSETS");
+
+//     beforeWithdraw(assets, shares);
+
+//     _burn(owner, shares);
+
+//     emit Withdraw(msg.sender, receiver, owner, assets, shares);
+
+//     asset.safeTransfer(receiver, assets);
+// }
 
 
 /// @notice Deposit assets into the ERC4626 Vault
-#define macro DEPOSIT_INNER() = takes (2) returns (0) {
+#define macro DEPOSIT_INNER() = takes (2) returns (1) {
     // Input stack: [assets, receiver]
-    // Output stack: []
+    // Output stack: [shares]
 
     // Validate that the assets shares are not zero
     dup1                            // [assets, assets, receiver]
@@ -143,19 +238,18 @@
     __EVENT_HASH(Deposit)           // [event_hash, msg.sender, receiver, shares, assets, receiver]
     0x40 0x00 log3                  // [shares, assets, receiver]
 
-    // Re-structure the stack
+    // Call the after deposit hook
     dup1 swap2 swap1                // [shares, assets, shares, receiver]
-
     AFTER_DEPOSIT()                 // [shares, receiver]
 
-    0x00 mstore                     // [receiver]
-    0x20 0x00 return                // []
+    // Return the shares
+    swap1 pop                       // [shares]
 }
 
 /// @notice Withdraws assets from an ERC4626 Vault
-#define macro WITHDRAWAL_INNER() = takes (3) returns (0) {
+#define macro WITHDRAWAL_INNER() = takes (3) returns (1) {
     // Input stack: [assets, receiver, owner]
-    // Output stack: []
+    // Output stack: [shares]
 
     // Get the shares from the assets
     dup1 PREVIEW_WITHDRAW_INNER()       // [shares, assets, receiver, owner]
@@ -227,8 +321,7 @@
 
     // Return shares
     pop pop                         // [shares, assets, receiver, owner]
-    0x00 mstore                     // []
-    0x20 0x00 return                // []
+    swap3 pop pop pop               // [shares]
 }
 
 
