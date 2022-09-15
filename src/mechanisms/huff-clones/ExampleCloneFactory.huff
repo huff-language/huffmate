@@ -1,6 +1,9 @@
 #include "./HuffCloneLib.huff"
 
-#define constant IMPL = FREE_STORAGE_POINTER()
+#define function createClone(address,uint256,uint64,uint8) nonpayable returns (address)
+#define function createArrClone(uint256[] calldata) nonpayable returns (address)
+
+#define constant IMPL_SLOT = FREE_STORAGE_POINTER()
 
 /// @notice Creates an `ExampleClone` contract
 #define macro CREATE_CLONE() = takes (0) returns (0) {
@@ -28,7 +31,7 @@
     0x35C mstore        // []
 
     0x300               // [data_ptr]
-    [IMPL] sload        // [impl_addr, data_ptr]
+    [IMPL_SLOT] sload   // [impl_addr, data_ptr]
 
     CLONE(err)          // [instance]
     0x00 mstore         // []
@@ -54,7 +57,7 @@
     0x20 mul            // [arr_len * 0x20, 0x300]
     0x300 mstore        // [0x300 (data_ptr)]
 
-    [IMPL] sload        // [impl_addr, data_ptr]
+    [IMPL_SLOT] sload   // [impl_addr, data_ptr]
 
     CLONE(err)          // [instance]
     0x00 mstore         // []
@@ -65,9 +68,9 @@
 }
 
 #define macro MAIN() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr
-    dup1 0x684fbe55 eq clone jumpi
-    dup1 0x2bbb631e eq arr_clone jumpi
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(createClone) eq clone jumpi
+    dup1 __FUNC_SIG(createArrClone) eq arr_clone jumpi
 
     clone:
         CREATE_CLONE()
@@ -82,6 +85,6 @@
     codecopy            // []
 
     0x00 mload
-    [IMPL]              // [impl_ptr, impl_addr]
+    [IMPL_SLOT]         // [impl_ptr, impl_addr]
     sstore              // []
 }

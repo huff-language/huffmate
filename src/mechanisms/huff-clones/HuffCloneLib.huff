@@ -26,35 +26,35 @@
     sub          // [creation_size - 0x0A, impl_addr, data_ptr]
     0x40 mstore  // [impl_addr, data_ptr]
 
-    0x6100000000000000000000000000000000000000000000000000000000000000
+    __RIGHTPAD(0x61)
     0x60 mstore  // [impl_addr, data_ptr]
 
     0x20 mload   // [run_size, impl_addr, data_ptr]
     0xF0 shl     // [run_size << 0xF0, impl_addr, data_ptr]
     0x61 mstore  // [impl_addr, data_ptr]
 
-    0x3d81600a3d39f33d3d3d3d363d3d376100000000000000000000000000000000
+    __RIGHTPAD(0x3d81600a3d39f33d3d3d3d363d3d3761)
     0x63 mstore  // [impl_addr, data_ptr]
 
     0x00 mload   // [extra_length, impl_addr, data_ptr]
     0xF0 shl     // [extra_length << F0, impl_addr, data_ptr]
     0x73 mstore  // [impl_addr, data_ptr]
 
-    0x6037363936610000000000000000000000000000000000000000000000000000
+    __RIGHTPAD(0x603736393661)
     0x75 mstore  // [impl_addr, data_ptr]
 
     0x00 mload   // [extra_length, impl_addr, data_ptr]
     0xF0 shl     // [extra_length << F0, impl_addr, data_ptr]
     0x7B mstore  // [impl_addr, data_ptr]
 
-    0x013d730000000000000000000000000000000000000000000000000000000000
+    __RIGHTPAD(0x013d73)
     0x7D mstore  // [impl_addr, data_ptr]
 
     dup1         // [impl_addr, impl_addr, data_ptr]
     0x60 shl     // [impl_addr << 0x60, impl_addr, data_ptr]
     0x80 mstore  // [impl_addr, data_ptr]
 
-    0x5af43d3d93803e603557fd5bf300000000000000000000000000000000000000
+    __RIGHTPAD(0x5af43d3d93803e603557fd5bf3)
     0x94 mstore  // [impl_addr, data_ptr]
 
     // -------------

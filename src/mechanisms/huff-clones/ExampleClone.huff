@@ -1,5 +1,11 @@
 #include "./HuffClone.huff"
 
+#define function param1() view returns (address)
+#define function param2() view returns (uint256)
+#define function param3() view returns (uint64)
+#define function param4() view returns (uint8)
+#define function param5(uint256) view returns (uint256[] memory)
+
 #define macro PARAM_1() = takes (0) returns (0) {
     0x00 GET_ARG_ADDRESS()  // [arg_addr]
     0x00 mstore             // []
@@ -39,12 +45,12 @@
 }
 
 #define macro MAIN() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr
-    dup1 0x02d91518 eq param1 jumpi
-    dup1 0x1f049b68 eq param2 jumpi
-    dup1 0x5ccea9a5 eq param3 jumpi
-    dup1 0xe79876ff eq param4 jumpi
-    dup1 0xf0b032e2 eq param5 jumpi
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(param1) eq param1 jumpi
+    dup1 __FUNC_SIG(param2) eq param2 jumpi
+    dup1 __FUNC_SIG(param3) eq param3 jumpi
+    dup1 __FUNC_SIG(param4) eq param4 jumpi
+    dup1 __FUNC_SIG(param5) eq param5 jumpi
 
     param1:
         PARAM_1()

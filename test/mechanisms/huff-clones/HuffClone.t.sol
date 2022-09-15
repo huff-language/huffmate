@@ -14,8 +14,10 @@ contract ExampleCloneTest is Test {
         IExampleClone impl = IExampleClone(HuffDeployer.deploy("mechanisms/huff-clones/ExampleClone"));
         factory = IExampleCloneFactory(HuffDeployer.deploy_with_args("mechanisms/huff-clones/ExampleCloneFactory", abi.encode(address(impl))));
         
+        // Create (address, uint256, uint64, uint8) clone
         clone = IExampleClone(factory.createClone(address(this), type(uint256).max, 8008, 69));
 
+        // Create (uint256[]) clone
         uint256[] memory a = new uint256[](5);
         for (uint i; i < 5; ++i) {
             a[i] = 256;
