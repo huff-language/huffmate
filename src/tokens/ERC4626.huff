@@ -5,6 +5,7 @@
 
 // ERC4626 is ERC20
 #include "./ERC20.huff"
+#include "../math/FixedPointMath.huff"
 
 // Events
 #define event Deposit(address indexed caller, address indexed owner, uint256 assets, uint256 shares)
@@ -19,6 +20,7 @@
 // Storage
 #define constant ASSET_SLOT = FREE_STORAGE_POINTER()
 
+#define constant TYPE_UINT_256_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 /// @notice Constructor
 #define macro INNER_4626_CONSTRUCTOR() = takes (0) returns (0) {
@@ -80,14 +82,23 @@
     0x20 0x00 return
 }
 
+// ------------------------------------------------------
+// DEPOSIT/WITHDRAWAL LOGIC
+// ------------------------------------------------------
+
+
+// TODO: mint
+// TODO: redeem
+
+
 /// @notice Deposit assets into the ERC4626 Vault
-#define macro ERC4626_DEPOSIT() = takes (2) returns (0) {
+#define macro DEPOSIT_INNER() = takes (2) returns (0) {
     // Input stack: [assets, receiver]
     // Output stack: []
 
     // Validate that the assets shares are not zero
     dup1                            // [assets, assets, receiver]
-    PREVIEW_DEPOSITS()              // [shares, assets, receiver]
+    PREVIEW_DEPOSITS_INNER()        // [shares, assets, receiver]
     dup1 iszero iszero cont jumpi   // [shares, assets, receiver]
     ZERO_SHARES(0x00)
     cont:
@@ -141,21 +152,13 @@
     0x20 0x00 return                // []
 }
 
-#define macro PREVIEW_DEPOSITS() = takes (1) returns (1) {
-    // TODO:
-}
-
-#define macro AFTER_DEPOSIT() = takes (2) returns (0) {
-    // TODO:
-}
-
 /// @notice Withdraws assets from an ERC4626 Vault
-#define macro ERC4626_WITHDRAWAL() = takes (3) returns (0) {
+#define macro WITHDRAWAL_INNER() = takes (3) returns (0) {
     // Input stack: [assets, receiver, owner]
     // Output stack: []
 
     // Get the shares from the assets
-    dup1 PREVIEW_WITHDRAW()             // [shares, assets, receiver, owner]
+    dup1 PREVIEW_WITHDRAW_INNER()       // [shares, assets, receiver, owner]
 
     // Skip ahead if msg.sender is the owner
     dup4 caller eq sender jumpi         // [shares, assets, receiver, owner]
@@ -228,18 +231,217 @@
     0x20 0x00 return                // []
 }
 
+
+// ------------------------------------------------------
+// ACCOUNTING LOGIC
+// ------------------------------------------------------
+
+#define macro TOTAL_ASSETS() = takes (0) returns (1) {
+    // Input Stack: []
+    // Output Stack: [total_assets]
+
+    // TODO: OVERRIDE
+}
+
+/// @notice Returns the amount of assets needed to mint the given amount of shares
+#define macro PREVIEW_MINT() = takes (0) returns (0) {
+    0x04 calldataload                   // [shares]
+    PREVIEW_MINT_INNER()                // [assets]
+    0x00 mstore                         // []
+    0x20 0x00 return                    // []
+}
+
+#define macro PREVIEW_MINT_INNER() = takes (1) returns (1) {
+    // Input Stack: [shares]
+    // Output Stack: [assets]
+
+    // Load the total supply
+    [TOTAL_SUPPLY_SLOT] sload               // [supply, shares]
+
+    // Return shares if supply is zero
+    dup1 iszero iszero calculate jumpi      // [supply, shares]
+    pop cont jump                           // []
+
+    // Otherwise mul div up
+    calculate:
+
+    swap1                                   // [shares, supply]
+    TOTAL_ASSETS() swap1                    // [shares, total_assets, supply]
+    MUL_DIV_UP(fail)                        // [shares]
+    cont jump
+
+    // Fail with an arithmetic overflow
+    fail:
+    [ARITHMETIC_OVERFLOW] PANIC()
+
+    // Resume withdrawal with share count
+    cont:                                   // [assets]
+}
+
+/// @notice Calculates the amount of shares that would be exchanged for a given amount of assets
+#define macro PREVIEW_DEPOSITS() = takes (1) returns (1) {
+    0x04 calldataload               // [assets]
+    PREVIEW_DEPOSITS_INNER()        // [shares]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+#define macro PREVIEW_DEPOSITS_INNER() = takes (1) returns (1) {
+    CONVERT_TO_SHARES_INNER()       // [shares]
+}
+
+/// @notice Converts assets to shares
+#define macro CONVERT_TO_SHARES() = takes (0) returns (0) {
+    0x04 calldataload               // [assets]
+    CONVERT_TO_SHARES_INNER()       // [shares]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+#define macro CONVERT_TO_SHARES_INNER() = takes (1) returns (1) {
+    // Input Stack: [assets]
+    // Output Stack: [shares]
+
+    [TOTAL_SUPPLY_SLOT] sload               // [supply, assets]
+
+    // Return assets if supply is zero
+    dup1 iszero iszero calculate jumpi      // [supply, assets]
+    pop cont jump                           // []
+
+    // Otherwise mul div down
+    calculate:
+
+    TOTAL_ASSETS() swap2                    // [assets, supply, total_assets]
+    MUL_DIV_DOWN(fail)                      // [shares]
+    cont jump
+
+    // Fail with an arithmetic overflow
+    fail:
+    [ARITHMETIC_OVERFLOW] PANIC()
+
+    // Resume withdrawal with share count
+    cont:                                   // [shares]
+}
+
+/// @notice Converts shares to assets
+#define macro CONVERT_TO_ASSETS() = takes (0) returns (0) {
+    0x04 calldataload               // [shares]
+    CONVERT_TO_ASSETS_INNER()       // [assets]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+#define macro CONVERT_TO_ASSETS_INNER() = takes (1) returns (1) {
+    // Input Stack: [shares]
+    // Output Stack: [assets]
+
+    [TOTAL_SUPPLY_SLOT] sload               // [supply, shares]
+
+    // Return assets if supply is zero
+    dup1 iszero iszero calculate jumpi      // [supply, shares]
+    pop cont jump                           // []
+
+    // Otherwise mul div down
+    calculate:
+
+    swap1                                   // [shares, supply]
+    TOTAL_ASSETS() swap1                    // [shares, total_assets, supply]
+    MUL_DIV_DOWN(fail)                      // [assets]
+    cont jump
+
+    // Fail with an arithmetic overflow
+    fail:
+    [ARITHMETIC_OVERFLOW] PANIC()
+
+    // Resume withdrawal with share count
+    cont:                                   // [assets]
+}
+
+#define macro PREVIEW_WITHDRAW_INNER() = takes (1) returns (1) {
+    // Input Stack: [assets]
+    // Output Stack: [shares]
+
+    [TOTAL_SUPPLY_SLOT] sload               // [supply, assets]
+
+    // Return assets if supply is zero
+    dup1 iszero iszero calculate jumpi      // [supply, assets]
+    pop cont jump                           // []
+
+    // Otherwise mul div up
+    calculate:
+
+    TOTAL_ASSETS() swap2                    // [assets, supply, total_assets]
+    MUL_DIV_UP(fail)                        // [shares]
+    cont jump
+
+    // Fail with an arithmetic overflow
+    fail:
+    [ARITHMETIC_OVERFLOW] PANIC()
+
+    // Resume withdrawal with share count
+    cont:                                   // [shares]
+}
+
+/// @notice Calculates the amount of assets that would be exchanged for a given amount of shares on redemption
+#define macro PREVIEW_REDEEM() = takes (0) returns (0) {
+    0x04 calldataload               // [shares]
+    CONVERT_TO_ASSETS_INNER()       // [assets]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+// ------------------------------------------------------
+// DEPOSIT/WITHDRAWAL LIMIT LOGIC
+// ------------------------------------------------------
+
+#define macro MAX_DEPOSIT() = takes (0) returns (0) {
+    [TYPE_UINT_256_MAX]             // [type(uint256).max]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+#define macro MAX_MINT() = takes (0) returns (0) {
+    [TYPE_UINT_256_MAX]             // [type(uint256).max]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+/// @notice Max Withdraw
+/// @notice Returns the maximum amount of assets available to withdraw
+#define macro MAX_WITHDRAW() = takes (0) returns (0) {
+    0x04 calldataload               // [owner]
+    [BALANCE_OF_SLOT] sload         // [balanceOf[owner]]
+    CONVERT_TO_ASSETS_INNER()       // [assets]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+/// @notice Max Redeem
+/// @notice Returns the maximum amount of shares available to redeem
+#define macro MAX_REDEEM() = takes (0) returns (0) {
+    0x04 calldataload               // [owner]
+    [BALANCE_OF_SLOT] sload         // [balanceOf[owner]]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+// ------------------------------------------------------
+// INTERNAL HOOKS LOGIC
+// ------------------------------------------------------
+
 #define macro BEFORE_WITHDRAW() = takes (2) returns (0) {
     // Input Stack: [assets, shares]
     // Output Stack: []
+    // TODO: OVERRIDE
+}
+
+#define macro AFTER_DEPOSIT() = takes (2) returns (0) {
     // TODO:
 }
 
-#define macro PREVIEW_WITHDRAW() = takes (1) returns (1) {
-    // Input Stack: [assets]
-    // Output Stack: [shares]
-    // TODO:
-}
-
+// ------------------------------------------------------
+// DISPATCH LOGIC
+// ------------------------------------------------------
 
 /// @notice An internal function dispatcher
 #define macro INNER_4626_MAIN() = takes (1) returns (1) {
