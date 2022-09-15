@@ -5,6 +5,7 @@
 
 // ERC4626 is ERC20
 #include "./ERC20.huff"
+#include "../utils/CommonErrors.huff"
 #include "../math/FixedPointMath.huff"
 
 // Events
@@ -13,6 +14,24 @@
 
 // Interface
 #define function asset() view returns (address)
+
+#define function deposit(uint256 assets, address receiver) payable returns (uint256 shares)
+#define function withdraw(uint256 assets, address receiver, address owner) payable returns (uint256 shares)
+#define function mint(uint256 shares, address receiver) payable returns (uint256 assets)
+#define function redeem(uint256 shares, address receiver, address owner) payable returns (uint256 assets)
+
+#define function totalAssets() view returns (uint256)
+#define function convertToShares(uint256 assets) view returns (uint256)
+#define function convertToAssets(uint256 shares) view returns (uint256)
+#define function previewDeposit(uint256 assets) view returns (uint256)
+#define function previewMint(uint256 shares) view returns (uint256)
+#define function previewWithdraw(uint256 assets) view returns (uint256)
+#define function previewRedeem(uint256 shares) view returns (uint256)
+
+#define function maxDeposit(address) view returns (uint256)
+#define function maxMint(address) view returns (uint256)
+#define function maxWithdraw(address owner) view returns (uint256)
+#define function maxRedeem(address owner) view returns (uint256)
 
 
 // TODO: Grab dynamic constructor args
@@ -89,7 +108,7 @@
 /// @notice Mint
 /// @notice Mints a {receiver} x amount of {assets} proportional to the input {shares}
 /// @param shares The amount of shares to mint
-#define macro MINT() = takes (0) returns (0) {
+#define macro ERC4626_MINT() = takes (0) returns (0) {
     0x24 calldataload       // [receiver]
     0x04 calldataload       // [shares, receiver]
     MINT_INNER()            // [assets]
@@ -163,7 +182,7 @@
 /// @notice Redeem
 /// @notice Redeems a {receiver} x amount of {assets} proportional to the input {shares}
 /// @param shares The amount of shares to mint
-#define macro REDEEM() = takes (0) returns (0) {
+#define macro ERC4626_REDEEM() = takes (0) returns (0) {
     0x44 calldataload       // [owner]
     0x24 calldataload       // [receiver, owner]
     0x04 calldataload       // [shares, receiver, owner]
@@ -253,6 +272,16 @@
     pop swap4 pop pop pop           // [assets]
 }
 
+/// @notice Deposit
+/// @notice Deposits the asset in exchange for shares
+#define macro ERC4626_DEPOSIT() = takes (0) returns (0) {
+    0x24 calldataload       // [receiver]
+    0x04 calldataload       // [assets, receiver]
+    DEPOSIT_INNER()         // [shares]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
 /// @notice Deposit assets into the ERC4626 Vault
 #define macro DEPOSIT_INNER() = takes (2) returns (1) {
     // Input stack: [assets, receiver]
@@ -260,7 +289,7 @@
 
     // Validate that the assets shares are not zero
     dup1                            // [assets, assets, receiver]
-    PREVIEW_DEPOSITS_INNER()        // [shares, assets, receiver]
+    PREVIEW_DEPOSIT_INNER()        // [shares, assets, receiver]
     dup1 iszero iszero cont jumpi   // [shares, assets, receiver]
     ZERO_SHARES(0x00)
     cont:
@@ -311,6 +340,17 @@
 
     // Return the shares
     swap1 pop                       // [shares]
+}
+
+/// @notice Withdraw
+/// @notice Withdraws the shares in exchange for the underlying assets
+#define macro ERC4626_WITHDRAW() = takes (0) returns (0) {
+    0x44 calldataload       // [owner]
+    0x24 calldataload       // [receiver, owner]
+    0x04 calldataload       // [assets, receiver, owner]
+    WITHDRAWAL_INNER()      // [shares]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
 }
 
 /// @notice Withdraws assets from an ERC4626 Vault
@@ -438,14 +478,14 @@
 }
 
 /// @notice Calculates the amount of shares that would be exchanged for a given amount of assets
-#define macro PREVIEW_DEPOSITS() = takes (1) returns (1) {
+#define macro PREVIEW_DEPOSIT() = takes (1) returns (1) {
     0x04 calldataload               // [assets]
-    PREVIEW_DEPOSITS_INNER()        // [shares]
+    PREVIEW_DEPOSIT_INNER()        // [shares]
     0x00 mstore                     // []
     0x20 0x00 return                // []
 }
 
-#define macro PREVIEW_DEPOSITS_INNER() = takes (1) returns (1) {
+#define macro PREVIEW_DEPOSIT_INNER() = takes (1) returns (1) {
     CONVERT_TO_SHARES_INNER()       // [shares]
 }
 
@@ -516,6 +556,14 @@
     cont:                                   // [assets]
 }
 
+/// @notice Calculates the amount of assets that would be exchanged for a given amount of shares
+#define macro PREVIEW_WITHDRAW() = takes (1) returns (1) {
+    0x04 calldataload               // [assets]
+    PREVIEW_WITHDRAW_INNER()        // [shares]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
 #define macro PREVIEW_WITHDRAW_INNER() = takes (1) returns (1) {
     // Input Stack: [assets]
     // Output Stack: [shares]
@@ -569,7 +617,7 @@
 /// @notice Returns the maximum amount of assets available to withdraw
 #define macro MAX_WITHDRAW() = takes (0) returns (0) {
     0x04 calldataload               // [owner]
-    [BALANCE_OF_SLOT] sload         // [balanceOf[owner]]
+    [BALANCE_SLOT] sload            // [balanceOf[owner]]
     CONVERT_TO_ASSETS_INNER()       // [assets]
     0x00 mstore                     // []
     0x20 0x00 return                // []
@@ -579,7 +627,7 @@
 /// @notice Returns the maximum amount of shares available to redeem
 #define macro MAX_REDEEM() = takes (0) returns (0) {
     0x04 calldataload               // [owner]
-    [BALANCE_OF_SLOT] sload         // [balanceOf[owner]]
+    [BALANCE_SLOT] sload            // [balanceOf[owner]]
     0x00 mstore                     // []
     0x20 0x00 return                // []
 }
@@ -609,10 +657,28 @@
     // Input stack: [func_selector]
     // Output stack: [func_selector]
 
-    dup1 __FUNC_SIG(decimals) eq decimals_jump jumpi    // [func_selector]
-    dup1 __FUNC_SIG(asset) eq asset_jump jumpi          // [func_selector]
+    dup1 __FUNC_SIG(decimals) eq decimals_jump jumpi                    // [func_selector]
+    dup1 __FUNC_SIG(asset) eq asset_jump jumpi                          // [func_selector]
 
-    MAIN_ERC20()                                        // [func_selector]
+    dup1 __FUNC_SIG(deposit) eq deposit_jump jumpi                      // [func_selector]
+    dup1 __FUNC_SIG(withdraw) eq withdraw_jump jumpi                    // [func_selector]
+    dup1 __FUNC_SIG(mint) eq mint_jump jumpi                            // [func_selector]
+    dup1 __FUNC_SIG(redeem) eq redeem_jump jumpi                        // [func_selector]
+
+    dup1 __FUNC_SIG(totalAssets) eq total_assets_jump jumpi             // [func_selector]
+    dup1 __FUNC_SIG(convertToShares) eq convert_to_shares_jump jumpi    // [func_selector]
+    dup1 __FUNC_SIG(convertToAssets) eq convert_to_assets_jump jumpi    // [func_selector]
+    dup1 __FUNC_SIG(previewDeposit) eq preview_deposit_jump jumpi       // [func_selector]
+    dup1 __FUNC_SIG(previewMint) eq preview_mint_jump jumpi             // [func_selector]
+    dup1 __FUNC_SIG(previewWithdraw) eq preview_withdraw_jump jumpi     // [func_selector]
+    dup1 __FUNC_SIG(previewRedeem) eq preview_redeem_jump jumpi         // [func_selector]
+
+    dup1 __FUNC_SIG(maxDeposit) eq max_deposit_jump jumpi               // [func_selector]
+    dup1 __FUNC_SIG(maxMint) eq max_mint_jump jumpi                     // [func_selector]
+    dup1 __FUNC_SIG(maxWithdraw) eq max_withdraw_jump jumpi             // [func_selector]
+    dup1 __FUNC_SIG(maxRedeem) eq max_redeem_jump jumpi                 // [func_selector]
+
+    MAIN_ERC20()                                                        // [func_selector]
 
     cont jump
 
@@ -621,6 +687,39 @@
     asset_jump:
         ERC4626_ASSET()
 
+    deposit_jump:
+        ERC4626_DEPOSIT()
+    withdraw_jump:
+        ERC4626_WITHDRAW()
+    mint_jump:
+        ERC4626_MINT()
+    redeem_jump:
+        ERC4626_REDEEM()
+
+    total_assets_jump:
+        TOTAL_ASSETS()
+    convert_to_shares_jump:
+        CONVERT_TO_SHARES()
+    convert_to_assets_jump:
+        CONVERT_TO_ASSETS()
+    preview_deposit_jump:
+        PREVIEW_DEPOSIT()
+    preview_mint_jump:
+        PREVIEW_MINT()
+    preview_withdraw_jump:
+        PREVIEW_WITHDRAW()
+    preview_redeem_jump:
+        PREVIEW_REDEEM()
+
+    max_deposit_jump:
+        MAX_DEPOSIT()
+    max_mint_jump:
+        MAX_MINT()
+    max_withdraw_jump:
+        MAX_WITHDRAW()
+    max_redeem_jump:
+        MAX_REDEEM()
+
     // Resume parent dispatching
-    cont:
+    cont:                                               // [func_selector]
 }

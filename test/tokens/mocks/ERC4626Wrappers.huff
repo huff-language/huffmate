@@ -32,7 +32,7 @@
 }
 
 #define macro READ_AFTER_HOOK_COUNTER() = takes (0) returns (0) {
-    [AFTER_HOOK_COUNTER] sload     // [counter]
+    [AFTER_HOOK_COUNTER] sload      // [counter]
     0x00 mstore                     // []
     0x20 0x00 return                // []
 }
@@ -76,7 +76,7 @@
     INNER_4626_MAIN()               // [sig]
 
     dup1 __FUNC_SIG(beforeWithdrawHookCalledCounter) eq before_jump jumpi   // [sig]
-    dup1 __FUNC_SIG(afterDepositHookCalledCounter) eq after_jump jumpi   // [sig]
+    dup1 __FUNC_SIG(afterDepositHookCalledCounter) eq after_jump jumpi      // [sig]
 
     0x00 dup1 revert
 
