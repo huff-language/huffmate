@@ -396,12 +396,11 @@
 // ACCOUNTING LOGIC
 // ------------------------------------------------------
 
-#define macro TOTAL_ASSETS() = takes (0) returns (1) {
-    // Input Stack: []
-    // Output Stack: [total_assets]
-
-    // TODO: OVERRIDE
-}
+// Input Stack: []
+// Output Stack: [total_assets]
+/// @notice Returns the total amount of assets in the Vault
+/// @notice REQUIRES OVERRIDEN IMPLEMENTATION
+// #define macro TOTAL_ASSETS() = takes (0) returns (1)
 
 /// @notice Returns the amount of assets needed to mint the given amount of shares
 #define macro PREVIEW_MINT() = takes (0) returns (0) {
@@ -589,15 +588,17 @@
 // INTERNAL HOOKS LOGIC
 // ------------------------------------------------------
 
-#define macro BEFORE_WITHDRAW() = takes (2) returns (0) {
-    // Input Stack: [assets, shares]
-    // Output Stack: []
-    // TODO: OVERRIDE
-}
+// Input Stack: [assets, shares]
+// Output Stack: []
+/// @notice Called before a withdrawal
+/// @notice REQUIRES OVERRIDEN IMPLEMENTATION
+// #define macro BEFORE_WITHDRAW() = takes (2) returns (0)
 
-#define macro AFTER_DEPOSIT() = takes (2) returns (0) {
-    // TODO:
-}
+// Input Stack: [assets, shares]
+// Output Stack: []
+/// @notice Called after a deposit
+/// @notice REQUIRES OVERRIDEN IMPLEMENTATION
+// #define macro AFTER_DEPOSIT() = takes (2) returns (0)
 
 // ------------------------------------------------------
 // DISPATCH LOGIC

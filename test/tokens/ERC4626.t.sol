@@ -4,12 +4,13 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import "foundry-huff/HuffDeployer.sol";
 
-import { ERC20 } from "solmate/tokens/ERC20.sol";
+import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 
 interface IERC20 {
     function name() external returns (string memory);
     function symbol() external returns (string memory);
     function tokenURI(uint256) external returns (string memory);
+    function totalSupply() external returns (uint256);
     function decimals() external returns (uint256);
 
     function mint(address, uint256) payable external;
@@ -32,19 +33,42 @@ interface IERC20 {
 
 interface IERC4626 is IERC20 {
     function asset() external view returns (address);
+
+    function deposit(uint256 assets, address receiver) external returns (uint256 shares);
+    function mint(uint256 shares, address receiver) external returns (uint256 assets);
+    function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares);
+    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);
+
+    function totalAssets() external view returns (uint256);
+    function convertToShares(uint256 assets) external view returns (uint256);
+    function convertToAssets(uint256 shares) external view returns (uint256);
+    function previewDeposit(uint256 assets) external view returns (uint256);
+    function previewMint(uint256 shares) external view returns (uint256);
+    function previewWithdraw(uint256 assets) external view returns (uint256);
+    function previewRedeem(uint256 shares) external view returns (uint256);
+
+    function maxDeposit(address) external view returns (uint256);
+    function maxMint(address) external view returns (uint256);
+    function maxWithdraw(address owner) external view returns (uint256);
+    function maxRedeem(address owner) external view returns (uint256);
+}
+
+interface MockERC4626 is IERC4626 {
+    function beforeWithdrawHookCalledCounter() external returns (uint256);
+    function afterDepositHookCalledCounter() external returns (uint256);
 }
 
 contract ERC4626Test is Test {
-    IERC4626 vault;
-    ERC20 underlying;
+    MockERC4626 vault;
+    TestToken underlying;
 
     function setUp() public {
         // Deploy test erc20 token
-        underlying = new TestToken(10_000 * 10**18);
+        underlying = new TestToken(10_000 ** 18);
 
         // Deploy the ERC4626
         string memory wrapper_code = vm.readFile("test/tokens/mocks/ERC4626Wrappers.huff");
-        vault = IERC4626(
+        vault = MockERC4626(
             HuffDeployer
                 .config()
                 .with_code(wrapper_code)
@@ -104,8 +128,8 @@ contract ERC4626Test is Test {
     }
 }
 
-contract TestToken is ERC20 {
-    constructor(uint256 initialSupply) ERC20("MDT", "Merk", 18) {
+contract TestToken is MockERC20 {
+    constructor(uint256 initialSupply) MockERC20("Mock Token", "TKN", 18) {
         _mint(msg.sender, initialSupply);
     }
 }
