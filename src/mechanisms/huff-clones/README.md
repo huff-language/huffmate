@@ -16,6 +16,6 @@ In other words, if you know you are not gonna need parametrization and just want
 
 Clone factory contracts should use the [`HuffCloneLib`](HuffCloneLib.huff) library. `CLONE` is the main macro for creating clones.
 
-Contracts intended to be cloned should include [`HuffClone`](/HuffClone.huff) to get access to the helper macros for reading immutable args.
+Contracts intended to be cloned should include [`HuffClone`](HuffClone.huff) to get access to the helper macros for reading immutable args.
 
-To see an example usage of the library, check out [`ExampleClone`](/ExampleClone.huff) and [`ExampleCloneFactory`](/ExampleCloneFactory.huff).
+To see an example usage of the library, check out [`ExampleClone`](ExampleClone.huff) and [`ExampleCloneFactory`](ExampleCloneFactory.huff).
