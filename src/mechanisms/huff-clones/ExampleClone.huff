@@ -26,12 +26,16 @@
 
 #define macro PARAM_5() = takes (0) returns (0) {
     0x04 calldataload           // [arr_len]
+    
+    // Store pointer in word before array
+    0x20 0x00 mstore            // [arr_len]
+
     dup1 0x00                   // [0x00, arr_len, arr_len]
-    GET_ARG_UINT_256_ARR()      // [ptr, arr_len]
+    GET_ARG_UINT_256_ARR(0x20)  // [ptr, arr_len]
     swap1                       // [arr_len, ptr]
-    0x20 mul                    // [arr_len * 0x20, ptr]
+    0x05 shl                    // [arr_len * 0x20, ptr]
     0x40 add                    // [arr_len * 0x20 + 0x40, ptr]
-    swap1 return
+    0x00 return                 // [ptr]
 }
 
 #define macro MAIN() = takes (0) returns (0) {
