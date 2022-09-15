@@ -1,3 +1,13 @@
+/// @title HuffCloneLib
+/// @notice Clones with Immutable Args Library
+///         Original implementation:
+///         https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ClonesWithImmutableArgs.sol
+/// @author wighawag <https://github.com/wighawag>
+/// @author zefram <https://github.com/boredGenius>
+/// @author hari <https://github.com/hrkrshnn>
+/// @author z0r0z <https://github.com/z0r0z>
+/// @author clabby <https://github.com/clabby>
+
 /// @notice Creates a clone proxy of the implementation contract, with immutable args
 /// @dev data cannot exceed 65535 bytes, since 2 bytes are used to store the data length
 /// @param err       The jumpdest to jump to if an error occurs

@@ -1,3 +1,13 @@
+/// @title ExampleCloneFactory
+/// @notice Clones with Immutable Args Library
+///         Original implementation:
+///         https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ExampleCloneFactory.sol
+/// @author wighawag <https://github.com/wighawag>
+/// @author zefram <https://github.com/boredGenius>
+/// @author hari <https://github.com/hrkrshnn>
+/// @author z0r0z <https://github.com/z0r0z>
+/// @author clabby <https://github.com/clabby>
+
 #include "./HuffCloneLib.huff"
 
 #define function createClone(address,uint256,uint64,uint8) nonpayable returns (address)
