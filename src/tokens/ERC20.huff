@@ -11,7 +11,7 @@
 
 // Interface
 #define function allowance(address,address) view returns (uint256)
-#define function approve(address,uint256) nonpayable returns () // these returns sb updated
+#define function approve(address,uint256) nonpayable returns ()
 #define function balanceOf(address) view returns (uint256)
 #define function DOMAIN_SEPARATOR() view returns (bytes32)
 #define function nonces(address) view returns (uint256)
@@ -47,6 +47,7 @@
 #define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
 #define constant INITIAL_DOMAIN_SEPARATOR = FREE_STORAGE_POINTER()
 #define constant NONCE_SLOT = FREE_STORAGE_POINTER()
+
 // PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 #define constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9
 #define constant X_1901 = 0x1901000000000000000000000000000000000000000000000000000000000000

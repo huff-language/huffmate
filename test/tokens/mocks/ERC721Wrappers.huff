@@ -2,15 +2,161 @@
 #define function mint(address, uint256) payable returns ()
 #define function burn(uint256) nonpayable returns ()
 
+#define function mint(address, uint256) payable returns ()
+#define function burn(uint256) nonpayable returns ()
+
+#define function safeMint(address to, uint256 tokenId, bytes memory data) payable returns ()
+#define function safeMint(address to, uint256 tokenId) payable returns ()
+
+#define event LogWord(bytes32)
+
 #define macro MINT() = takes (0) returns (0) {
     0x24 calldataload       // [tokenId]
     0x04 calldataload       // [to, tokenId]
     _MINT()
+    stop
 }
 
 #define macro BURN() = takes (0) returns (0) {
     0x04 calldataload       // [tokenId]
     _BURN()
+    stop
+}
+
+#define macro SAFE_MINT() = takes (0) returns (0) {
+    0x24 calldataload       // [tokenId]
+    0x04 calldataload       // [to, tokenId]
+    _MINT()
+
+    // Safe Logic
+    // Make sure we can transfer to the recipient
+    0x04 calldataload       // [to]
+    dup1 extcodesize        // [to.code.length, to]
+    iszero safe jumpi       // [to]
+
+    // onERC721Received Selector
+    0x150b7a02 dup1         // [onERC721Received, onERC721Received, to]
+    0xE0 shl                // [onERC721Received_shifted, onERC721Received, to]
+
+    // Store the left-shifted selector for call
+    0x20 mstore             // [onERC721Received, to]
+
+    // Store the msg.sender as the first arg
+    caller 0x24 mstore      // [onERC721Received, to]
+
+    // Store address(0) as the second arg
+    0x00                    // [address(0), onERC721Received, to]
+    0x44 mstore             // [onERC721Received, to]
+
+    // Id is the third arg
+    0x24 calldataload       // [tokenId, onERC721Received, to]
+    0x64 mstore             // [onERC721Received, to]
+
+    // Blank bytes array as 4th arg (no data)
+    0x80 0x84 mstore
+    0x00 0xA4 mstore
+
+    // Call address(to).onERC721Received(msg.sender, from, tokenId, "")
+    0x20                    // [retSize, onERC721Received, to]
+    0x00                    // [retOffset, retSize, onERC721Received, to]
+    0xA4                    // [argSize, retOffset, retSize, onERC721Received, to]
+    dup3                    // [argOffset, argSize, retOffset, retSize, onERC721Received, to]
+    dup3                    // [value, argOffset, argSize, retOffset, retSize, onERC721Received, to]
+    dup7                    // [to, value, argOffset, argSize, retOffset, retSize, onERC721Received, to]
+    gas                     // [gas, to, value, argOffset, argSize, retOffset, retSize, onERC721Received, to]
+    call                    // [success, onERC721Received, to]
+
+    // Revert if call isn't successful
+    cont jumpi              // [onERC721Received, to]
+    0x00 dup1 revert
+    cont:
+
+    // Compare the return data to the onERC721Received selector
+    0x00 mload 0xE0 shr     // [response, onERC721Received, to]
+    eq safe jumpi           // [to]
+
+    // Revert if the return data is not accepted
+    UNSAFE_RECIPIENT(0x00)
+
+    // Stop execution if safe
+    safe:
+    stop
+}
+
+#define macro SAFE_MINT_WITH_DATA() = takes (0) returns (0) {
+    0x44 calldataload       // [data]
+    0x24 calldataload       // [tokenId, data]
+    0x04 calldataload       // [to, tokenId, data]
+    _MINT()
+
+    0xb1 __EVENT_HASH(LogWord) 0x00 0x00 log2
+
+    // Make sure we can transfer to the recipient
+    0x04 calldataload       // [to]
+    dup1 extcodesize        // [to.code.length, to]
+    iszero safe jumpi       // [to]
+
+    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
+
+    // onERC721Received Selector
+    0x150b7a02 dup1         // [onERC721Received, onERC721Received, to]
+    0xE0 shl                // [onERC721Received_shifted, onERC721Received, to]
+
+    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
+    dup2 __EVENT_HASH(LogWord) 0x00 0x00 log2
+    dup3 __EVENT_HASH(LogWord) 0x00 0x00 log2
+
+    // Store the left-shifted selector for call
+    0x20 mstore             // [onERC721Received, to]
+
+    // Store the msg.sender as the first arg
+    caller 0x24 mstore      // [onERC721Received, to]
+
+    // Store address(0) as the second arg
+    0x00                    // [address(0), onERC721Received, to]
+    0x44 mstore             // [onERC721Received, to]
+
+    // Id is the third arg
+    0x24 calldataload       // [tokenId, onERC721Received, to]
+    0x64 mstore             // [onERC721Received, to]
+
+    0x64 calldataload       // [len(data), onERC721Received, to]
+    0x05 shl                // [len(data) * 0x20, onERC721Received, to]
+    0x40 add                // [len(data) * 0x20 + 0x40, onERC721Received, to]
+    dup1                    // [len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
+    0x44                    // [0x44, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
+    0x84                    // [0x84, 0x44, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
+    calldatacopy            // [len(bytes), onERC721received, to]
+
+    // Call address(to).onERC721Received(msg.sender, from, tokenId, bytes)
+    0x20                    // [retSize, len(bytes), onERC721Received, to]
+    0x00                    // [retOffset, retSize, len(bytes), onERC721Received, to]
+    swap1 swap2             // [len(bytes), retOffset, retSize, onERC721Received, to]
+    0x44 add                // [argSize, retOffset, retSize, onERC721Received, to]
+    dup3                    // [argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
+    dup3                    // [value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
+    dup7                    // [to, value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
+    gas                     // [gas, to, value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
+    call                    // [success, len(bytes), onERC721Received, to]
+
+    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
+
+    // Revert if call isn't successful
+    selector_call_success jumpi              // [len(bytes), onERC721Received, to]
+    0x00 dup1 revert
+    selector_call_success:
+
+    // Compare the return data to the onERC721Received selector
+    0x00 mload 0xE0 shr     // [response, onERC721Received, to]
+    eq safe jumpi           // [to]
+
+    // Revert if the return data is not accepted
+    UNSAFE_RECIPIENT(0x00)
+
+    // Stop execution if safe
+    safe:
+    stop
+
 }
 
 // Function Dispatch
@@ -20,6 +166,9 @@
     // Mint and Burning Functions
     dup1 __FUNC_SIG(mint)                       eq mint_jump jumpi
     dup1 __FUNC_SIG(burn)                       eq burn_jump jumpi
+
+    dup1 0xa1448194                             eq safe_mint jumpi
+    dup1 0x8832e6e3                             eq safe_mint_with_data jumpi
 
     dup1 __FUNC_SIG(approve)                    eq approve jumpi
     dup1 __FUNC_SIG(setApprovalForAll)          eq setApprovalForAll jumpi
@@ -42,6 +191,11 @@
 
     // Revert on failed dispatch
     0x00 dup1 revert
+
+    safe_mint:
+        SAFE_MINT()
+    safe_mint_with_data:
+        SAFE_MINT_WITH_DATA()
 
     mint_jump:
         MINT()
