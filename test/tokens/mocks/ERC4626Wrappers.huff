@@ -12,6 +12,7 @@
 #define macro BEFORE_WITHDRAW() = takes (2) returns (0) {
     // Input Stack: [assets, shares]
     // Output Stack: []
+    pop pop                         // []
     [BEFORE_HOOK_COUNTER] sload     // [counter]
     0x01 add                        // [counter + 1]
     [BEFORE_HOOK_COUNTER] sstore    // []
@@ -20,6 +21,7 @@
 #define macro AFTER_DEPOSIT() = takes (2) returns (0) {
     // Input Stack: [assets, shares]
     // Output Stack: []
+    pop pop                         // []
     [AFTER_HOOK_COUNTER] sload      // [counter]
     0x01 add                        // [counter + 1]
     [AFTER_HOOK_COUNTER] sstore     // []
@@ -37,7 +39,7 @@
     0x20 0x00 return                // []
 }
 
-#define macro TOTAL_ASSETS() = takes (0) returns (1) {
+#define macro TOTAL_ASSETS_INNER() = takes (0) returns (1) {
     // Input Stack: []
     // Output Stack: [total_assets]
 
@@ -65,18 +67,18 @@
     0x00 dup1 revert                // []
     success:
 
-    // Since the returndata is copied to [0x00:0x20], we can just return the value
-    0x20 0x00 return                // []
+    // Since the returndata is copied to [0x00:0x20], we can just mload
+    pop 0x00 mload                  // [total_assets]
 }
 
 
 #define macro MAIN() = takes (0) returns (0) {
     pc calldataload 0xE0 shr        // [sig]
 
-    INNER_4626_MAIN()               // [sig]
-
     dup1 __FUNC_SIG(beforeWithdrawHookCalledCounter) eq before_jump jumpi   // [sig]
     dup1 __FUNC_SIG(afterDepositHookCalledCounter) eq after_jump jumpi      // [sig]
+
+    INNER_4626_MAIN()               // [sig]
 
     0x00 dup1 revert
 

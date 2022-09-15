@@ -210,7 +210,7 @@
         dup2                                                // [value, balance, value, from, to]
         swap1                                               // [balance, value, value, from, to]
         sub                                                 // [balance - value, value, from, to]
-        dup3                                                // [from, balance-value, value, from, to]
+        dup3                                                // [from, balance - value, value, from, to]
         [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)        // [value, from, to]
 }
 
@@ -540,9 +540,9 @@
     // Emit the transfer event.
     0x00 mstore                     // [to, to]
     [ZERO_ADDRESS]                  // [address(0), to, to]
-    __EVENT_HASH(Transfer)          // [sig, from, to]
-    0x20 0x00                       // [0, 32, sig, from, to]
-    log3                            // []
+    __EVENT_HASH(Transfer)          // [sig, from, to, to]
+    0x20 0x00                       // [0, 32, sig, from, to, to]
+    log3 pop                        // []
 }
 
 

@@ -12,6 +12,8 @@
 #define event Deposit(address indexed caller, address indexed owner, uint256 assets, uint256 shares)
 #define event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)
 
+#define event LogWord(bytes32)
+
 // Interface
 #define function asset() view returns (address)
 
@@ -127,8 +129,8 @@
 
     // Transfer the assets from the caller to the vault
 
-    // Store the safeTransferFrom selector in memory
-    __FUNC_SIG(safeTransferFrom)    // [selector, assets, shares, receiver]
+    // Store the transferFrom selector in memory
+    __FUNC_SIG(transferFrom)    // [selector, assets, shares, receiver]
     0xE0 shl                        // [selector, assets, shares, receiver]
     0x00 mstore                     // [assets, shares, receiver]
 
@@ -197,7 +199,7 @@
     // Output stack: [assets]
 
     // Jump ahead if msg.sender == owner
-    dup3 caller eq ahead jumpi   // [shares, receiver, owner]
+    dup3 caller eq ahead jumpi          // [shares, receiver, owner]
 
     // Check if the caller is approved to redeem the shares
 
@@ -217,10 +219,11 @@
 
     // Jump dests for initial checks
     infinite:
+    pop                                 // [shares, receiver, owner]
     ahead:
 
     // Validate that the assets are non-zero
-    dup1 PREVIEW_REDEEM()               // [assets, shares, receiver, owner]
+    dup1 CONVERT_TO_ASSETS_INNER()      // [assets, shares, receiver, owner]
     dup1 iszero iszero non_zero jumpi   // [assets, shares, receiver, owner]
     ZERO_ASSETS(0x00)
     non_zero:
@@ -239,8 +242,8 @@
     0x40 0x00 log4                  // [assets, shares, receiver, owner]
 
     // Transfer the assets from the receiver to the vault
-    // Store the safeTransfer selector in memory
-    __FUNC_SIG(safeTransfer)        // [selector, assets, shares, receiver, owner]
+    // Store the transfer selector in memory
+    __FUNC_SIG(transfer)            // [selector, assets, shares, receiver, owner]
     0xE0 shl                        // [selector, assets, shares, receiver, owner]
     0x00 mstore                     // [assets, shares, receiver, owner]
 
@@ -289,13 +292,13 @@
 
     // Validate that the assets shares are not zero
     dup1                            // [assets, assets, receiver]
-    PREVIEW_DEPOSIT_INNER()        // [shares, assets, receiver]
+    PREVIEW_DEPOSIT_INNER()         // [shares, assets, receiver]
     dup1 iszero iszero cont jumpi   // [shares, assets, receiver]
     ZERO_SHARES(0x00)
     cont:
 
-    // Store the safeTransferFrom selector in memory
-    __FUNC_SIG(safeTransferFrom)    // [selector, shares, assets, receiver]
+    // Store the transferFrom selector in memory
+    __FUNC_SIG(transferFrom)        // [selector, shares, assets, receiver]
     0xE0 shl                        // [selector, shares, assets, receiver]
     0x00 mstore                     // [shares, assets, receiver]
 
@@ -306,25 +309,29 @@
     address 0x24 mstore             // [shares, assets, receiver]
 
     // Store assets as the third call argument in memory
-    dup1 0x44 mstore                // [shares, assets, receiver]
+    dup2 0x44 mstore                // [shares, assets, receiver]
+
+    // Load the asset
+    [ASSET_SLOT] sload              // [asset, shares, assets, receiver]
 
     // Construct the call
-    0x00                            // [retSize, shares, assets, receiver]
-    0x00                            // [retOffset, retSize, shares, assets, receiver]
-    0x64                            // [argSize, retOffset, retSize, shares, assets, receiver]
-    0x00                            // [argOffset, argSize, retOffset, retSize, shares, assets, receiver]
-    0x00                            // [value, argOffset, argSize, retOffset, retSize, shares, assets, receiver]
-    dup7                            // [to, value, argOffset, argSize, retOffset, retSize, shares, assets, receiver]
-    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, shares, assets, receiver]
-    call                            // [success, shares, assets, receiver]
+    0x00                            // [retSize, asset, shares, assets, receiver]
+    0x00                            // [retOffset, retSize, asset, shares, assets, receiver]
+    0x64                            // [argSize, retOffset, retSize, asset, shares, assets, receiver]
+    0x00                            // [argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver]
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver]
+    dup6                            // [to, value, argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver]
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver]
+    call                            // [success, asset, shares, assets, receiver]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [shares, assets, receiver]
+    iszero iszero success jumpi     // [asset, shares, assets, receiver]
     0x00 dup1 revert                // []
     success:
 
     // Mint to the receiver
-    dup3 dup2                       // [shares, receiver, shares, assets, receiver]
+    pop dup3 dup2                   // [shares, receiver, shares, assets, receiver]
+
     _MINT()                         // [shares, assets, receiver]
 
     // Emit the Deposit Event
@@ -362,7 +369,7 @@
     dup1 PREVIEW_WITHDRAW_INNER()       // [shares, assets, receiver, owner]
 
     // Skip ahead if msg.sender is the owner
-    dup4 caller eq sender jumpi         // [shares, assets, receiver, owner]
+    dup4 caller eq owner_jump jumpi     // [shares, assets, receiver, owner]
 
     // Get the allowance[owner][msg.sender]
     caller dup5                         // [owner, msg.sender, shares, assets, receiver, owner]
@@ -379,55 +386,56 @@
     STORE_ELEMENT_FROM_KEYS_2D(0x00)    // [allowance, shares, assets, receiver, owner]
 
     infinite:
+    pop                                 // [shares, assets, receiver, owner]
 
-    sender:
+    owner_jump:
 
     // Call the before withdrawal hook
-    dup2 dup4                           // [assets, shares, allowance, shares, assets, receiver, owner]
-    BEFORE_WITHDRAW()                   // [allowance, shares, assets, receiver, owner]
+    dup1 dup3                           // [assets, shares, shares, assets, receiver, owner]
+    BEFORE_WITHDRAW()                   // [shares, assets, receiver, owner]
 
     // Burn the shares
-    dup2 dup6                           // [owner, shares, allowance, shares, assets, receiver, owner]
-    _BURN()                             // [allowance, shares, assets, receiver, owner]
+    dup4 dup2                           // [shares, owner, shares, assets, receiver, owner]
+    _BURN()                             // [shares, assets, receiver, owner]
 
     // Emit the Withdraw Event
-    dup3 0x00 mstore                // [allowance, shares, assets, receiver, owner]
-    dup2 0x20 mstore                // [allowance, shares, assets, receiver, owner]
-    dup5 dup4 caller                // [msg.sender, assets, owner, allowance, shares, assets, receiver, owner]
-    __EVENT_HASH(Withdraw)          // [event_hash, msg.sender, assets, owner, allowance, shares, assets, receiver, owner]
-    0x40 0x00 log4                  // [allowance, shares, assets, receiver, owner]
+    dup2 0x00 mstore                // [shares, assets, receiver, owner]
+    dup1 0x20 mstore                // [shares, assets, receiver, owner]
+    dup4 dup3 caller                // [msg.sender, assets, owner, shares, assets, receiver, owner]
+    __EVENT_HASH(Withdraw)          // [event_hash, msg.sender, assets, owner, shares, assets, receiver, owner]
+    0x40 0x00 log4                  // [shares, assets, receiver, owner]
 
-    // Store the safeTransfer selector in memory
-    __FUNC_SIG(safeTransfer)        // [selector, allowance, shares, assets, receiver, owner]
-    0xE0 shl                        // [selector, allowance, shares, assets, receiver, owner]
-    0x00 mstore                     // [allowance, shares, assets, receiver, owner]
+    // Store the transfer selector in memory
+    __FUNC_SIG(transfer)            // [selector, shares, assets, receiver, owner]
+    0xE0 shl                        // [selector, shares, assets, receiver, owner]
+    0x00 mstore                     // [shares, assets, receiver, owner]
 
     // Store the receiver in memory as the first arg
-    dup4 0x04 mstore                // [allowance, shares, assets, receiver, owner]
+    dup3 0x04 mstore                // [shares, assets, receiver, owner]
 
     // Store this address as the second call argument in memory
-    dup3 0x24 mstore                // [allowance, shares, assets, receiver, owner]
+    dup2 0x24 mstore                // [shares, assets, receiver, owner]
 
     // Load asset from storage
-    [ASSET_SLOT] sload              // [asset, allowance, shares, assets, receiver, owner]
+    [ASSET_SLOT] sload              // [asset, shares, assets, receiver, owner]
 
     // Construct the call
-    0x00                            // [retSize, asset, allowance, shares, assets, receiver, owner]
-    0x00                            // [retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
-    0x44                            // [argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
-    0x00                            // [argOffset, argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
-    0x00                            // [value, argOffset, argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
-    dup6                            // [to, value, argOffset, argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
-    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
-    call                            // [success, asset, allowance, shares, assets, receiver, owner]
+    0x00                            // [retSize, asset, shares, assets, receiver, owner]
+    0x00                            // [retOffset, retSize, asset, shares, assets, receiver, owner]
+    0x44                            // [argSize, retOffset, retSize, asset, shares, assets, receiver, owner]
+    0x00                            // [argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver, owner]
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver, owner]
+    dup6                            // [to, value, argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver, owner]
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver, owner]
+    call                            // [success, asset, shares, assets, receiver, owner]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, allowance, shares, assets, receiver, owner]
+    iszero iszero success jumpi     // [asset, shares, assets, receiver, owner]
     0x00 dup1 revert                // []
     success:
 
     // Return shares
-    pop pop                         // [shares, assets, receiver, owner]
+    pop                             // [shares, assets, receiver, owner]
     swap3 pop pop pop               // [shares]
 }
 
@@ -440,7 +448,13 @@
 // Output Stack: [total_assets]
 /// @notice Returns the total amount of assets in the Vault
 /// @notice REQUIRES OVERRIDEN IMPLEMENTATION
-// #define macro TOTAL_ASSETS() = takes (0) returns (1)
+// #define macro TOTAL_ASSETS_INNER() = takes (0) returns (1)
+
+#define macro TOTAL_ASSETS() = takes (0) returns (0) {
+    TOTAL_ASSETS_INNER()               // [total_assets]
+    0x00 mstore                        // []
+    0x20 0x00 return                   // []
+}
 
 /// @notice Returns the amount of assets needed to mint the given amount of shares
 #define macro PREVIEW_MINT() = takes (0) returns (0) {
@@ -465,7 +479,7 @@
     calculate:
 
     swap1                                   // [shares, supply]
-    TOTAL_ASSETS() swap1                    // [shares, total_assets, supply]
+    TOTAL_ASSETS_INNER() swap1                    // [shares, total_assets, supply]
     MUL_DIV_UP(fail)                        // [shares]
     cont jump
 
@@ -510,7 +524,7 @@
     // Otherwise mul div down
     calculate:
 
-    TOTAL_ASSETS() swap2                    // [assets, supply, total_assets]
+    TOTAL_ASSETS_INNER() swap2                    // [assets, supply, total_assets]
     MUL_DIV_DOWN(fail)                      // [shares]
     cont jump
 
@@ -544,7 +558,7 @@
     calculate:
 
     swap1                                   // [shares, supply]
-    TOTAL_ASSETS() swap1                    // [shares, total_assets, supply]
+    TOTAL_ASSETS_INNER() swap1                    // [shares, total_assets, supply]
     MUL_DIV_DOWN(fail)                      // [assets]
     cont jump
 
@@ -572,21 +586,21 @@
 
     // Return assets if supply is zero
     dup1 iszero iszero calculate jumpi      // [supply, assets]
-    pop cont jump                           // []
+    pop dont_fail jump                      // []
 
     // Otherwise mul div up
     calculate:
 
-    TOTAL_ASSETS() swap2                    // [assets, supply, total_assets]
+    TOTAL_ASSETS_INNER() swap2              // [assets, supply, total_assets]
     MUL_DIV_UP(fail)                        // [shares]
-    cont jump
+    dont_fail jump
 
     // Fail with an arithmetic overflow
     fail:
     [ARITHMETIC_OVERFLOW] PANIC()
 
     // Resume withdrawal with share count
-    cont:                                   // [shares]
+    dont_fail:                              // [shares]
 }
 
 /// @notice Calculates the amount of assets that would be exchanged for a given amount of shares on redemption
