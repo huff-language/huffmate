@@ -32,36 +32,3 @@
 #define fn UNLOCK() = takes (0) returns (0) {
     [_UNLOCKED] [LOCKED_SLOT] sstore
 }
-
-// Tests
-
-#define test TEST_LOCK() = takes (0) returns (0) {
-    // Make sure our slot is set to the UNLOCKED state
-    UNLOCK()
-
-    // Lock
-    LOCK()
-    [LOCKED_SLOT] sload
-
-    // We expect the locked slot to be set to 2 - the LOCKED state
-    0x02 eq succeed jumpi
-    0x00 dup1 revert
-
-    succeed:
-}
-
-#define test TEST_UNLOCK() = takes (0) returns (0) {
-    // Make sure our slot is set to the LOCKED state
-    LOCK()
-
-    // Unlock
-    UNLOCK()
-    [LOCKED_SLOT] sload
-
-    // We expect the locked slot to be set to 1 - the UNLOCKED state
-    0x01 eq succeed jumpi
-    0x00 dup1 revert
-
-    succeed:
-}
-
