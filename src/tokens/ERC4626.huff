@@ -11,6 +11,8 @@
 #define event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)
 
 // Interface
+#define function asset() view returns (address)
+
 
 // TODO: Grab dynamic constructor args
 
@@ -59,7 +61,7 @@
     COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
 
-    // TODO: here is where we should set the name, and symbol storage variables
+    // TODO: here is where we should set the name + symbol storage variables
 
     // Allow execution to continue for parent construction
 }
@@ -71,18 +73,190 @@
     0x20 0x00 return
 }
 
+/// @notice Returns the ERC4626 asset
+#define macro ERC4626_ASSET() = takes (0) returns (0) {
+    [ASSET_SLOT] sload
+    0x00 mstore
+    0x20 0x00 return
+}
+
+/// @notice Deposit assets into the ERC4626 Vault
+#define macro ERC4626_DEPOSIT() = takes (2) returns (0) {
+    // Input stack: [assets, receiver]
+    // Output stack: []
+
+    // Validate that the assets shares are not zero
+    dup1                            // [assets, assets, receiver]
+    PREVIEW_DEPOSITS()              // [shares, assets, receiver]
+    dup1 iszero iszero cont jumpi   // [shares, assets, receiver]
+    ZERO_SHARES(0x00)
+    cont:
+
+    // Store the safeTransferFrom selector in memory
+    __FUNC_SIG(safeTransferFrom)    // [selector, shares, assets, receiver]
+    0xE0 shl                        // [selector, shares, assets, receiver]
+    0x00 mstore                     // [shares, assets, receiver]
+
+    // Store the caller in memory as the first arg
+    caller 0x04 mstore              // [shares, assets, receiver]
+
+    // Store this address as the second call argument in memory
+    address 0x24 mstore             // [shares, assets, receiver]
+
+    // Store assets as the third call argument in memory
+    dup1 0x44 mstore                // [shares, assets, receiver]
+
+    // Construct the call
+    0x00                            // [retSize, shares, assets, receiver]
+    0x00                            // [retOffset, retSize, shares, assets, receiver]
+    0x64                            // [argSize, retOffset, retSize, shares, assets, receiver]
+    0x00                            // [argOffset, argSize, retOffset, retSize, shares, assets, receiver]
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, shares, assets, receiver]
+    dup7                            // [to, value, argOffset, argSize, retOffset, retSize, shares, assets, receiver]
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, shares, assets, receiver]
+    call                            // [success, shares, assets, receiver]
+
+    // Verify the call succeeded
+    iszero iszero success jumpi     // [shares, assets, receiver]
+    0x00 dup1 revert                // []
+    success:
+
+    // Mint to the receiver
+    dup3 dup2                       // [shares, receiver, shares, assets, receiver]
+    _MINT()                         // [shares, assets, receiver]
+
+    // Emit the Deposit Event
+    dup2 0x00 mstore                // [shares, assets, receiver]
+    dup1 0x20 mstore                // [shares, assets, receiver]
+    dup3 caller                     // [msg.sender, receiver, shares, assets, receiver]
+    __EVENT_HASH(Deposit)           // [event_hash, msg.sender, receiver, shares, assets, receiver]
+    0x40 0x00 log3                  // [shares, assets, receiver]
+
+    // Re-structure the stack
+    dup1 swap2 swap1                // [shares, assets, shares, receiver]
+
+    AFTER_DEPOSIT()                 // [shares, receiver]
+
+    0x00 mstore                     // [receiver]
+    0x20 0x00 return                // []
+}
+
+#define macro PREVIEW_DEPOSITS() = takes (1) returns (1) {
+    // TODO:
+}
+
+#define macro AFTER_DEPOSIT() = takes (2) returns (0) {
+    // TODO:
+}
+
+/// @notice Withdraws assets from an ERC4626 Vault
+#define macro ERC4626_WITHDRAWAL() = takes (3) returns (0) {
+    // Input stack: [assets, receiver, owner]
+    // Output stack: []
+
+    // Get the shares from the assets
+    dup1 PREVIEW_WITHDRAW()             // [shares, assets, receiver, owner]
+
+    // Skip ahead if msg.sender is the owner
+    dup4 caller eq sender jumpi         // [shares, assets, receiver, owner]
+
+    // Get the allowance[owner][msg.sender]
+    caller dup5                         // [owner, msg.sender, shares, assets, receiver, owner]
+    [APPROVAL_SLOT]                     // [slot, owner, msg.sender, shares, assets, receiver, owner]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)     // [allowance, shares, assets, receiver, owner]
+
+    // If the allowed is no infinite approval, set to the allowance less shares
+    dup1 type(uint256).max
+    eq infinite jumpi                   // [allowance, shares, assets, receiver, owner]
+
+    // Set the new allowance
+    dup2 dup2 sub                       // [new_allowance, allowance, shares, assets, receiver, owner]
+    caller dup6 [APPROVAL_SLOT]         // [slot, owner, msg.sender, new_allowance, allowance, shares, assets, receiver, owner]
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)    // [allowance, shares, assets, receiver, owner]
+
+    infinite:
+
+    sender:
+
+    // Call the before withdrawal hook
+    dup2 dup4                           // [assets, shares, allowance, shares, assets, receiver, owner]
+    BEFORE_WITHDRAW()                   // [allowance, shares, assets, receiver, owner]
+
+    // Burn the shares
+    dup2 dup6                           // [owner, shares, allowance, shares, assets, receiver, owner]
+    _BURN()                             // [allowance, shares, assets, receiver, owner]
+
+    // Emit the Withdraw Event
+    dup3 0x00 mstore                // [allowance, shares, assets, receiver, owner]
+    dup2 0x20 mstore                // [allowance, shares, assets, receiver, owner]
+    dup5 dup4 caller                // [msg.sender, assets, owner, allowance, shares, assets, receiver, owner]
+    __EVENT_HASH(Withdraw)          // [event_hash, msg.sender, assets, owner, allowance, shares, assets, receiver, owner]
+    0x40 0x00 log4                  // [allowance, shares, assets, receiver, owner]
+
+    // Store the safeTransfer selector in memory
+    __FUNC_SIG(safeTransfer)        // [selector, allowance, shares, assets, receiver, owner]
+    0xE0 shl                        // [selector, allowance, shares, assets, receiver, owner]
+    0x00 mstore                     // [allowance, shares, assets, receiver, owner]
+
+    // Store the receiver in memory as the first arg
+    dup4 0x04 mstore                // [allowance, shares, assets, receiver, owner]
+
+    // Store this address as the second call argument in memory
+    dup3 0x24 mstore                // [allowance, shares, assets, receiver, owner]
+
+    // Load asset from storage
+    [ASSET_SLOT] sload              // [asset, allowance, shares, assets, receiver, owner]
+
+    // Construct the call
+    0x00                            // [retSize, asset, allowance, shares, assets, receiver, owner]
+    0x00                            // [retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
+    0x44                            // [argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
+    0x00                            // [argOffset, argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
+    dup6                            // [to, value, argOffset, argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, allowance, shares, assets, receiver, owner]
+    call                            // [success, asset, allowance, shares, assets, receiver, owner]
+
+    // Verify the call succeeded
+    iszero iszero success jumpi     // [asset, allowance, shares, assets, receiver, owner]
+    0x00 dup1 revert                // []
+    success:
+
+    // Return shares
+    pop pop                         // [shares, assets, receiver, owner]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+#define macro BEFORE_WITHDRAW() = takes (2) returns (0) {
+    // Input Stack: [assets, shares]
+    // Output Stack: []
+    // TODO:
+}
+
+#define macro PREVIEW_WITHDRAW() = takes (1) returns (1) {
+    // Input Stack: [assets]
+    // Output Stack: [shares]
+    // TODO:
+}
+
+
 /// @notice An internal function dispatcher
 #define macro INNER_4626_MAIN() = takes (1) returns (1) {
     // Input stack: [func_selector]
     // Output stack: [func_selector]
 
     dup1 __FUNC_SIG(decimals) eq decimals_jump jumpi    // [func_selector]
+    dup1 __FUNC_SIG(asset) eq asset_jump jumpi          // [func_selector]
+
     MAIN_ERC20()                                        // [func_selector]
 
     cont jump
 
     decimals_jump:
         ERC4626_DECIMALS()
+    asset_jump:
+        ERC4626_ASSET()
 
     // Resume parent dispatching
     cont:

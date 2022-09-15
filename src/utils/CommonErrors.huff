@@ -41,6 +41,17 @@
 #define constant INVALID_PROOF_ERROR = 0x494e56414c49445f50524f4f4600000000000000000000000000000000000000
 #define constant INVALID_PROOF_LENGTH = 0x0d
 
+#define constant ZERO_SHARES_ERROR = 0x5a45524f5f534841524553000000000000000000000000000000000000000000
+#define constant ZERO_SHARES_LENGTH = 0x0b
+
+/// @notice Reverts with an "ZERO_SHARES" message if the condition is false
+#define macro ZERO_SHARES(condition) = takes (0) returns (0) {
+    [ZERO_SHARES_ERROR]             // ["ZERO_SHARES"]
+    [ZERO_SHARES_LENGTH]            // [11 (length), "ZERO_SHARES"]
+    <condition>                     // [condition, 11 (length), "ZERO_SHARES"]
+    REQUIRE()                       // []
+}
+
 /// @notice Reverts with an "ALREADY_CLAIMED" message if the condition is false
 #define macro ALREADY_CLAIMED(condition) = takes (0) returns (0) {
     [ALREADY_CLAIMED_ERROR]         // ["ALREADY_CLAIMED"]
@@ -56,7 +67,6 @@
     <condition>                     // [condition, 13 (length), "INVALID_PROOF"]
     REQUIRE()                       // []
 }
-
 
 /// @notice Reverts with an "NOT_AUTHORIZED" message if the condition is false
 #define macro UNAUTHORIZED(condition) = takes (0) returns (0) {
