@@ -1243,6 +1243,8 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
 
             uint256 mintAmount = bound(amounts[i], 0, remainingMintAmountForId);
 
+            // We only want EOAs
+            vm.assume(address(to).code.length == 0);
             token.mint(to, id, mintAmount, mintData);
 
             userMintAmounts[to][id] += mintAmount;
