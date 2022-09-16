@@ -68,7 +68,7 @@ jobs:
         uses: huff-language/huff-toolchain@v2
         with:
           version: nightly
-      - name: Run Huff Tests
+      - name: Huff Tests
         uses: abigger87/huff-tests@v2.0.0
         with:
           with-forge-tests: false
