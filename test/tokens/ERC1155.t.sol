@@ -1227,6 +1227,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         for (uint256 i = 0; i < minLength; i++) {
             tos[i] = tos[i] == address(0) ? address(0xBEEF) : tos[i];
             tos[i] = tos[i] == address(this) ? address(0xBEEF) : tos[i];
+            tos[i] = tos[i] == address(token) ? address(0xBEEF) : tos[i];
         }
 
         address[] memory normalizedTos = new address[](minLength);

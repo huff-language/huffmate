@@ -10,7 +10,7 @@
     swap5 swap1 swap4   // [to, amount, 0x00, 0x00, 0x00, 0x00]
     gas call            // [call_success]
     success jumpi       // []
-    
+
     // Revert with `ETHTransferFailed()` error
     0xb12d13eb 0x00 mstore
     0x04 0x1c revert
@@ -46,10 +46,10 @@
 
     and                 // [success & (data == 0x01 | returndatasize == 0)]
     success jumpi       // []
-    
+
     0x7939f424 0x00 mstore
     0x04 0x1c revert
-    
+
     success:
     // Return stack:       []
 }
