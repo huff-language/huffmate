@@ -503,7 +503,7 @@ contract SafeTransferLibTest is Test {
         SafeTransferLib.safeTransfer(address(token), to, amount);
         uint256 postBal = ERC20(token).balanceOf(to);
 
-        if (to == address(this)) {
+        if (to == address(SafeTransferLib)) {
             assertEq(preBal, postBal);
         } else {
             assertEq(postBal - preBal, amount);
