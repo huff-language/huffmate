@@ -69,8 +69,9 @@ jobs:
         with:
           version: nightly
       - name: Run Huff Tests
-        uses: cheethas/huff-tests-action@v2
+        uses: abigger87/huff-tests-action@v2
         with:
           with-forge-tests: false
-          test-extension: "src/**/*.huff"
+          test-location: "src"
+          test-extension: "*.t.huff"
 

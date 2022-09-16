@@ -5,10 +5,14 @@
 
 #include "./CommonErrors.huff"
 
+// Interface
+#define function lock() nonpayable returns ()
+#define function unlock() nonpayable returns ()
+
 // Constants
+#define constant LOCKED_SLOT = FREE_STORAGE_POINTER()
 #define constant _UNLOCKED = 0x01
 #define constant _LOCKED = 0x02
-#define constant LOCKED_SLOT = FREE_STORAGE_POINTER()
 
 /// @title Lock
 /// @notice Locks the contract to prevent reentrancy
@@ -31,6 +35,22 @@
 /// @notice Unlocks the contract
 #define fn UNLOCK() = takes (0) returns (0) {
     [_UNLOCKED] [LOCKED_SLOT] sstore
+}
+
+#define macro REENTRANCY_GUARD_MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+
+    dup1 __FUNC_SIG(lock) eq lock_jump jumpi
+    dup1 __FUNC_SIG(unlock) eq unlock_jump jumpi
+
+    reentrancy_sig_no_match_found jump
+
+    lock_jump:
+        LOCK()
+    unlock_jump:
+        UNLOCK()
+
+    reentrancy_sig_no_match_found:
 }
 
 /// @notice Test Unlocking
