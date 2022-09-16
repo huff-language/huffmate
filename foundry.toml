@@ -27,6 +27,7 @@ fs_permissions = [
     { access = "read", path = "./test/utils/mocks/MerkleProofLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/MulticallableWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ReentrancyGuardWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/SafeTransferLibWrappers.huff" }
 ]
 remappings = [
     "forge-std/=lib/forge-std/src/",
