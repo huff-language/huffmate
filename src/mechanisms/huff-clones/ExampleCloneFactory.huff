@@ -1,12 +1,12 @@
 /// @title ExampleCloneFactory
-/// @notice Clones with Immutable Args Library
-///         Original implementation:
-///         https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ExampleCloneFactory.sol
+/// @notice SPDX-License-Identifier: MIT
 /// @author wighawag <https://github.com/wighawag>
 /// @author zefram <https://github.com/boredGenius>
 /// @author hari <https://github.com/hrkrshnn>
 /// @author z0r0z <https://github.com/z0r0z>
 /// @author clabby <https://github.com/clabby>
+/// @notice Clones with Immutable Args Library
+/// @notice Adapted from wighawag (https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ExampleCloneFactory.sol)
 
 #include "./HuffCloneLib.huff"
 

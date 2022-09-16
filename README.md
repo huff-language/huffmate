@@ -1,8 +1,16 @@
 <img align="right" width="150" height="150" top="100" src="./assets/huff.jpg">
 
-# huffmate • [![ci](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml/badge.svg)](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml) [![license](https://img.shields.io/badge/License-Apache_2.0-blue.svg?label=license)](https://opensource.org/licenses/Apache-2.0) ![Discord](https://img.shields.io/discord/980519274600882306)
+# huffmate • [![ci](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml/badge.svg)](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml) [![license](https://img.shields.io/badge/License-MIT-blue.svg?label=license)](https://opensource.org/licenses/MIT) ![Discord](https://img.shields.io/discord/980519274600882306)
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
+
+> **Warning**
+>
+> These contracts are **unaudited** and are not recommended for use in production.
+>
+> Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
+> We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
+
 
 ## Warning: Be cautious
 
@@ -51,8 +59,7 @@ tokens
 ├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
 ├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
 utils
-├─ Calls — TODO
-├─ Data — TODO
+├─ Calls — "Minimal wrappers for constructing calls to other contracts"
 ├─ BitPackLib — "Efficient bit packing library"
 ├─ CustomErrors — "Wrappers for reverting with common error messages"
 ├─ ERC1155Receiver — "A minimal interface for receiving ERC1155 tokens"
@@ -67,19 +74,18 @@ utils
 ├─ SSTORE2 — TODO
 ```
 
-### Safety
-
-Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
-
-We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
 ### Acknowledgements
 
 These contracts were inspired by or directly modified from many sources, primarily:
 
-- [solmate](https://github.com/Rari-Capital/solmate)
+- [solmate](https://github.com/transmissions11/solmate)
 - [solady](https://github.com/Vectorized/solady)
 - [huff-examples](https://github.com/huff-language/huff-examples)
+- [huff-rs](https://github.com/huff-language/huff-rs)
+- [huff-clones](https://github.com/clabby/huff-clones)
+- [huff-tests](https://github.com/abigger87/huff-tests)
+- [erc721h](https://github.com/philogy/erc721h)
 - [Gnosis](https://github.com/gnosis/gp-v2-contracts)
 - [Uniswap](https://github.com/Uniswap/uniswap-lib)
 - [Dappsys](https://github.com/dapphub/dappsys)

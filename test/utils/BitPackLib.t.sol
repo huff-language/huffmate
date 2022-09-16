@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
+import "foundry-huff/HuffDeployer.sol";
 
 interface IBitPackLib {
     function packValue(bytes32, uint256, uint256, uint256) external pure returns (bytes32);

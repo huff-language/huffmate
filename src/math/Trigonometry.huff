@@ -1,12 +1,10 @@
 /// @title Trigonometry
-/// @notice Basic trigonometry functions where inputs and outputs are integers. Inputs are 
-///         specified in radians scaled by 1e18, and similarly outputs are scaled by 1e18.
-///
-///         Huff implementation based off of `solidity-trigonometry` by `mds1`:
-///         https://github.com/mds1/solidity-trigonometry/blob/main/src/Trigonometry.sol
-///
+/// @notice SPDX-License-Identifier: MIT
 /// @author mds1 <https://github.com/mds1>
 /// @author clabby <https://github.com/clabby>
+/// @notice Basic trigonometry functions where inputs and outputs are integers.
+///         Inputs are specified in radians scaled by 1e18, and similarly outputs are scaled by 1e18.
+/// @notice Adapted from mds1 (https://github.com/mds1/solidity-trigonometry/blob/main/src/Trigonometry.sol)
 
 ////////////////////////////////////////////////////////////////
 //                         CONSTANTS                          //
@@ -111,7 +109,7 @@
     swap3 pop             // [is_negative_quadrant, is_odd_quadrant, index, interp, angle]
 
     is_odd_q:
-    
+
     // We are looking for two consecutive indices in our lookup table
     // Since EVM is left aligned, to read n bytes of data from idx i, we must read from `i * data_len` + `n`
     // therefore, to read two entries of size entry_bytes `index * entry_bytes` + `entry_bytes * 2`
@@ -124,7 +122,7 @@
     add                   // [sin_table_start + offset1_2, is_odd_quadrant, is_negative_quadrant, interp, angle]
     0x20 swap1            // [sin_table_start + offset1_2, 0x20, is_odd_quadrant, is_negative_quadrant, interp, angle]
     0x00 codecopy         // [is_odd_quadrant, is_negative_quadrant, interp, angle]
-    
+
     0x00 mload            // [x1_2, is_odd_quadrant, is_negative_quadrant, interp, angle]
 
     // We now read the last two numbers of size entry_bytes from x1_2
@@ -139,7 +137,7 @@
     // 0x00...12345678abcdefgh & 0xFFFFFFFF = 0xabcdefgh
     swap1 [ENTRY_MASK]    // [ENTRY_MASK, x1_2, x1, is_odd_quadrant, is_negative_quadrant, interp, angle]
     and                   // [x2, x1, is_odd_quadrant, is_negative_quadrant, interp, angle]
-    
+
     // Approximate angle by interpolating in the table, accounting for the quadrant
     dup2 dup2 sub         // [x2 - x1, x2, x1, is_odd_quadrant, is_negative_quadrant, interp, angle]
     dup6 mul              // [interp * (x2 - x1), x2, x1, is_odd_quadrant, is_negative_quadrant, interp, angle]

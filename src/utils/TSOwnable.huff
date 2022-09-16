@@ -1,11 +1,12 @@
 /// @title TSOwnable
-/// @dev An Ownable Implementation using Two-Step Transfer Pattern
+/// @notice SPDX-License-Identifier: MIT
 /// @author merkleplant (modified by @devtooligan)
+/// @notice An Ownable Implementation using Two-Step Transfer Pattern
 
+#include "./Address.huff"
+#include "./Errors.huff"
+#include "../auth/NonPayable.huff"
 
-// TODO: Add require reason strings
-
-// -----------------------------------------------------------------------------
 // External Interface
 
 /// @notice Returns the current owner address.
@@ -28,7 +29,6 @@
 /// @notice Emitted when new pending owner set.
 #define event NewPendingOwner(address,address)
 
-// -----------------------------------------------------------------------------
 // Event Signatures
 
 // cast keccak "NewOwner(address,address)"
@@ -38,43 +38,43 @@
 #define constant EVENT_NEW_PENDING_OWNER
     = 0xb3d55174552271a4f1aaf36b72f50381e892171636b3fb5447fe00e995e7a37b
 
-// -----------------------------------------------------------------------------
 // Storage
-
 #define constant OWNER_SLOT = FREE_STORAGE_POINTER()
 #define constant PENDING_OWNER_SLOT = FREE_STORAGE_POINTER()
 
-// -----------------------------------------------------------------------------
+// Error Constants
+
+#define constant ONLY_OWNER_ERROR = 0x4F4E4C595F4F574E455200000000000000000000000000000000000000000000
+#define constant ONLY_OWNER_LENGTH = 0x0a
+
+#define constant ONLY_PENDING_OWNER_ERROR = 0x4F4E4C595F50454E44494E475F4F574E45520000000000000000000000000000
+#define constant ONLY_PENDING_OWNER_LENGTH = 0x12
+
+#define constant ALREADY_OWNER_ERROR = 0x414C52454144595F4F574E455200000000000000000000000000000000000000
+#define constant ALREADY_OWNER_LENGTH = 0x0d
+
 // Constructor
 
 #define macro CONSTRUCTOR_TSOWNABLE() = takes (0) returns (0) {
     caller [OWNER_SLOT] sstore  // Store msg.sender as owner
 }
 
-// -----------------------------------------------------------------------------
-// Helpers
-
-#define macro ADDRESS_MASK() = takes (1) returns (1) {
-	0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff
-	and
-}
-
-// -----------------------------------------------------------------------------
 // Access Handler
 
 #define macro ONLY_OWNER() = takes(0) returns (0) {
-    [OWNER_SLOT] sload caller eq is_owner jumpi
-        0x00 0x00 revert
-    is_owner:
+    [ONLY_OWNER_ERROR]                  // ["ONLY_OWNER"]
+    [ONLY_OWNER_LENGTH]                 // [10 (length), "ONLY_OWNER"]
+    [OWNER_SLOT] sload caller eq        // [isOwner, 10 (length), "ONLY_OWNER"]
+    REQUIRE()
 }
 
 #define macro ONLY_PENDING_OWNER() = takes (0) returns (0) {
-    [PENDING_OWNER_SLOT] sload caller eq is_pending_owner jumpi
-        0x00 0x00 revert
-    is_pending_owner:
+    [ONLY_PENDING_OWNER_ERROR]                  // ["ONLY_PENDING_OWNER"]
+    [ONLY_PENDING_OWNER_LENGTH]                 // [18 (length), "ONLY_PENDING_OWNER"]
+    [PENDING_OWNER_SLOT] sload caller eq        // [isPendingOwner, 18 (length), "ONLY_PENDING_OWNER"]
+    REQUIRE()
 }
 
-// -----------------------------------------------------------------------------
 // Mutating Functions
 
 #define macro OWNABLE_SET_PENDING_OWNER() = takes (0) returns (0) {
@@ -82,10 +82,13 @@
     ONLY_OWNER()
 
     // Read argument and mask to address
-    0x04 calldataload ADDRESS_MASK()
+    0x04 calldataload MASK_ADDRESS()            // [newOwner]
 
     // Revert if address equals owner
-    dup1 caller eq throw_error jumpi
+    [ALREADY_OWNER_ERROR]                       // ["ALREADY_OWNER", newOwner]
+    [ALREADY_OWNER_LENGTH]                      // [13 (length), "ALREADY_OWNER", newOwner]
+    dup3 caller eq                              // [isAlreadyOwner, 13 (length), "ALREADY_OWNER", newOwner]
+    REQUIRE()                                   // [newOwner]
 
     // Duplicate address on stack
     dup1
@@ -96,10 +99,6 @@
 
     // Store address as pending owner
     [PENDING_OWNER_SLOT] sstore
-
-    stop
-    throw_error:
-        0x00 0x00 revert
 }
 
 #define macro OWNABLE_ACCEPT_OWNERSHIP() = takes (0) returns (0) {
@@ -119,7 +118,6 @@
     stop
 }
 
-// -----------------------------------------------------------------------------
 // View Functions
 
 #define macro OWNABLE_GET_OWNER() = takes (0) returns (0) {
@@ -136,19 +134,7 @@
     0x20 0x00 return
 }
 
-/* Utility Functions */
-#define macro NON_PAYABLE() = takes(0) returns (0) {
-    callvalue iszero                                                           // [msg.value == 0]
-    novalue jumpi                                                              // []
-
-    // TODO: Add revert string
-    0x00 0x00 revert
-    novalue:
-}
-
-// -----------------------------------------------------------------------------
 // Function Dispatching
-
 #define macro MAIN_TSOWNABLE() = takes (0) returns (0) {
 
     // cast sig "setPendingOwner(address)"
