@@ -1047,6 +1047,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         transferAmount = bound(transferAmount, 0, mintAmount);
 
         address from = address(0xABCD);
+        if (to == address(from)) to = address(0xBEEF);
 
         token.mint(from, id, mintAmount, mintData);
 
