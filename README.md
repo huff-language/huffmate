@@ -84,6 +84,7 @@ These contracts were inspired by or directly modified from many sources, primari
 - [huff-examples](https://github.com/huff-language/huff-examples)
 - [huff-rs](https://github.com/huff-language/huff-rs)
 - [huff-clones](https://github.com/clabby/huff-clones)
+- [huff-tests](https://github.com/abigger87/huff-tests)
 - [erc721h](https://github.com/philogy/erc721h)
 - [Gnosis](https://github.com/gnosis/gp-v2-contracts)
 - [Uniswap](https://github.com/Uniswap/uniswap-lib)
