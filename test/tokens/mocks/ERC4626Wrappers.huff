@@ -1,0 +1,89 @@
+
+#define function beforeWithdrawHookCalledCounter() nonpayable returns (uint256)
+#define function afterDepositHookCalledCounter() nonpayable returns (uint256)
+
+#define constant BEFORE_HOOK_COUNTER = FREE_STORAGE_POINTER()
+#define constant AFTER_HOOK_COUNTER = FREE_STORAGE_POINTER()
+
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    INNER_4626_CONSTRUCTOR()        // []
+}
+
+#define macro BEFORE_WITHDRAW() = takes (2) returns (0) {
+    // Input Stack: [assets, shares]
+    // Output Stack: []
+    pop pop                         // []
+    [BEFORE_HOOK_COUNTER] sload     // [counter]
+    0x01 add                        // [counter + 1]
+    [BEFORE_HOOK_COUNTER] sstore    // []
+}
+
+#define macro AFTER_DEPOSIT() = takes (2) returns (0) {
+    // Input Stack: [assets, shares]
+    // Output Stack: []
+    pop pop                         // []
+    [AFTER_HOOK_COUNTER] sload      // [counter]
+    0x01 add                        // [counter + 1]
+    [AFTER_HOOK_COUNTER] sstore     // []
+}
+
+#define macro READ_BEFORE_HOOK_COUNTER() = takes (0) returns (0) {
+    [BEFORE_HOOK_COUNTER] sload     // [counter]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+#define macro READ_AFTER_HOOK_COUNTER() = takes (0) returns (0) {
+    [AFTER_HOOK_COUNTER] sload      // [counter]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+#define macro TOTAL_ASSETS_INNER() = takes (0) returns (1) {
+    // Input Stack: []
+    // Output Stack: [total_assets]
+
+    // Store the asset.balanceOf(address(this)) args in memory
+    __FUNC_SIG(balanceOf)
+    0xE0 shl
+    0x20 mstore
+    address 0x24 mstore
+
+    // Get the asset variable
+    [ASSET_SLOT] sload             // [asset]
+
+    // Construct the call
+    0x20                            // [retSize, asset]
+    0x00                            // [retOffset, retSize, asset]
+    0x24                            // [argSize, retOffset, retSize, asset]
+    0x20                            // [argOffset, argSize, retOffset, retSize, asset]
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, asset]
+    dup6                            // [to, value, argOffset, argSize, retOffset, retSize, asset]
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset]
+    call                            // [success, asset]
+
+    // Verify the call succeeded
+    iszero iszero success jumpi     // [asset]
+    0x00 dup1 revert                // []
+    success:
+
+    // Since the returndata is copied to [0x00:0x20], we can just mload
+    pop 0x00 mload                  // [total_assets]
+}
+
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr        // [sig]
+
+    dup1 __FUNC_SIG(beforeWithdrawHookCalledCounter) eq before_jump jumpi   // [sig]
+    dup1 __FUNC_SIG(afterDepositHookCalledCounter) eq after_jump jumpi      // [sig]
+
+    INNER_4626_MAIN()               // [sig]
+
+    0x00 dup1 revert
+
+    before_jump:
+        READ_BEFORE_HOOK_COUNTER()
+    after_jump:
+        READ_AFTER_HOOK_COUNTER()
+}

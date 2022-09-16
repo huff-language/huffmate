@@ -59,7 +59,7 @@ tokens
 ├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
 ├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
 ├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
-├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
+├─ ERC4626 — "Minimal ERC4626 tokenized Vault implementation"
 utils
 ├─ Calls — "Minimal wrappers for constructing calls to other contracts"
 ├─ BitPackLib — "Efficient bit packing library"
