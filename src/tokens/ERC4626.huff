@@ -1,4 +1,5 @@
 /// @title ERC4626
+/// @notice SPDX-License-Identifier: MIT
 /// @author asnared <https://github.com/abigger87>
 /// @notice Minimal ERC4626 tokenized Vault implementation.
 /// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/mixins/ERC4626.sol)
@@ -107,7 +108,7 @@
 
 /// @notice Mint
 /// @notice Mints a {receiver} x amount of {assets} proportional to the input {shares}
-/// @param shares The amount of shares to mint
+/// @param {shares} [uint256] The amount of shares to mint
 #define macro ERC4626_MINT() = takes (0) returns (0) {
     0x24 calldataload       // [receiver]
     0x04 calldataload       // [shares, receiver]
@@ -181,7 +182,9 @@
 
 /// @notice Redeem
 /// @notice Redeems a {receiver} x amount of {assets} proportional to the input {shares}
-/// @param shares The amount of shares to mint
+/// @param {shares} [uint256] The amount of shares to redeem
+/// @param {receiver} [address] The address to receive the assets
+/// @param {owner} [address] The address that owns the shares
 #define macro ERC4626_REDEEM() = takes (0) returns (0) {
     0x44 calldataload       // [owner]
     0x24 calldataload       // [receiver, owner]
@@ -275,6 +278,8 @@
 
 /// @notice Deposit
 /// @notice Deposits the asset in exchange for shares
+/// @param {assets} [uint256] The amount of assets to deposit
+/// @param {receiver} [address] The address to receive the shares
 #define macro ERC4626_DEPOSIT() = takes (0) returns (0) {
     0x24 calldataload       // [receiver]
     0x04 calldataload       // [assets, receiver]
@@ -349,6 +354,9 @@
 
 /// @notice Withdraw
 /// @notice Withdraws the shares in exchange for the underlying assets
+/// @param {assets} [uint256] The amount of shares to withdraw
+/// @param {receiver} [address] The address to receive the assets
+/// @param {owner} [address] The address that owns the shares
 #define macro ERC4626_WITHDRAW() = takes (0) returns (0) {
     0x44 calldataload       // [owner]
     0x24 calldataload       // [receiver, owner]
@@ -448,6 +456,7 @@
 /// @notice REQUIRES OVERRIDEN IMPLEMENTATION
 // #define macro TOTAL_ASSETS_INNER() = takes (0) returns (1)
 
+/// @notice Returns the total amount of assets in the Vault
 #define macro TOTAL_ASSETS() = takes (0) returns (0) {
     TOTAL_ASSETS_INNER()               // [total_assets]
     0x00 mstore                        // []
@@ -455,6 +464,7 @@
 }
 
 /// @notice Returns the amount of assets needed to mint the given amount of shares
+/// @param {shares} [uint256] The amount of shares to mint
 #define macro PREVIEW_MINT() = takes (0) returns (0) {
     0x04 calldataload                   // [shares]
     PREVIEW_MINT_INNER()                // [assets]
@@ -477,7 +487,7 @@
     calculate:
 
     swap1                                   // [shares, supply]
-    TOTAL_ASSETS_INNER() swap1                    // [shares, total_assets, supply]
+    TOTAL_ASSETS_INNER() swap1              // [shares, total_assets, supply]
     MUL_DIV_UP(fail)                        // [shares]
     cont jump
 
@@ -490,9 +500,10 @@
 }
 
 /// @notice Calculates the amount of shares that would be exchanged for a given amount of assets
+/// @param {assets} [uint256] The amount of assets to exchange
 #define macro PREVIEW_DEPOSIT() = takes (1) returns (1) {
     0x04 calldataload               // [assets]
-    PREVIEW_DEPOSIT_INNER()        // [shares]
+    PREVIEW_DEPOSIT_INNER()         // [shares]
     0x00 mstore                     // []
     0x20 0x00 return                // []
 }
@@ -502,6 +513,7 @@
 }
 
 /// @notice Converts assets to shares
+/// @param {assets} [uint256] The amount of assets to convert
 #define macro CONVERT_TO_SHARES() = takes (0) returns (0) {
     0x04 calldataload               // [assets]
     CONVERT_TO_SHARES_INNER()       // [shares]
@@ -535,6 +547,7 @@
 }
 
 /// @notice Converts shares to assets
+/// @param {shares} [uint256] The amount of shares to convert
 #define macro CONVERT_TO_ASSETS() = takes (0) returns (0) {
     0x04 calldataload               // [shares]
     CONVERT_TO_ASSETS_INNER()       // [assets]
@@ -568,7 +581,8 @@
     cont:                                   // [assets]
 }
 
-/// @notice Calculates the amount of assets that would be exchanged for a given amount of shares
+/// @notice Calculates the amount of shares that would be exchanged for a given amount of assets
+/// @param {assets} [uint256] The amount of assets to exchange
 #define macro PREVIEW_WITHDRAW() = takes (1) returns (1) {
     0x04 calldataload               // [assets]
     PREVIEW_WITHDRAW_INNER()        // [shares]
@@ -602,6 +616,7 @@
 }
 
 /// @notice Calculates the amount of assets that would be exchanged for a given amount of shares on redemption
+/// @param {shares} [uint256] The amount of shares to exchange
 #define macro PREVIEW_REDEEM() = takes (0) returns (0) {
     0x04 calldataload               // [shares]
     CONVERT_TO_ASSETS_INNER()       // [assets]
@@ -613,12 +628,16 @@
 // DEPOSIT/WITHDRAWAL LIMIT LOGIC
 // ------------------------------------------------------
 
+/// @notice Max Deposit
+/// @notice Returns the maximum amount of assets available to deposit
 #define macro MAX_DEPOSIT() = takes (0) returns (0) {
     [TYPE_UINT_256_MAX]             // [type(uint256).max]
     0x00 mstore                     // []
     0x20 0x00 return                // []
 }
 
+/// @notice Max Mint
+/// @notice Returns the maximum amount of shares available to mint
 #define macro MAX_MINT() = takes (0) returns (0) {
     [TYPE_UINT_256_MAX]             // [type(uint256).max]
     0x00 mstore                     // []
@@ -627,6 +646,7 @@
 
 /// @notice Max Withdraw
 /// @notice Returns the maximum amount of assets available to withdraw
+/// @param {owner} [address] The address of the account to withdraw assets from
 #define macro MAX_WITHDRAW() = takes (0) returns (0) {
     0x04 calldataload               // [owner]
     [BALANCE_SLOT] sload            // [balanceOf[owner]]
@@ -637,6 +657,7 @@
 
 /// @notice Max Redeem
 /// @notice Returns the maximum amount of shares available to redeem
+/// @param {owner} [address] The address of the account to redeem shares from
 #define macro MAX_REDEEM() = takes (0) returns (0) {
     0x04 calldataload               // [owner]
     [BALANCE_SLOT] sload            // [balanceOf[owner]]
