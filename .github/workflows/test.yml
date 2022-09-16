@@ -69,7 +69,7 @@ jobs:
         with:
           version: nightly
       - name: Run Huff Tests
-        uses: abigger87/huff-tests-action@v2
+        uses: abigger87/huff-tests@v2.0.0
         with:
           with-forge-tests: false
           test-location: "src"
