@@ -12,10 +12,11 @@ fs_permissions = [
     { access = "read", path = "./test/math/mocks/MathWrappers.huff" },
     { access = "read", path = "./test/math/mocks/TrigonometryWrappers.huff" },
 
-    { access = "read", path = "./test/tokens/mocks/ERC1155Wrappers.huff" },
+    { access = "read", path = "./test/tokens/mocks/ERC20MintableWrappers.huff" },
     { access = "read", path = "./test/tokens/mocks/ERC20Wrappers.huff" },
     { access = "read", path = "./test/tokens/mocks/ERC721Wrappers.huff" },
-    { access = "read", path = "./test/tokens/mocks/ERC20MintableWrappers.huff" },
+    { access = "read", path = "./test/tokens/mocks/ERC1155Wrappers.huff" },
+    { access = "read", path = "./test/tokens/mocks/ERC4626Wrappers.huff" },
 
     { access = "read", path = "./test/utils/mocks/BitPackLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/CallWrappers.huff" },
