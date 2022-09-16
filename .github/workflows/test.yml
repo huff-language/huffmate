@@ -72,5 +72,5 @@ jobs:
         uses: cheethas/huff-tests-action@v2
         with:
           with-forge-tests: false
-          test-extension: ".t.huff"
+          test-extension: "*.t.huff"
 

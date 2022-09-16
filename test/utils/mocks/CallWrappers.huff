@@ -1,0 +1,75 @@
+
+#define function callFunc() payable returns ()
+#define function staticcallFunc() payable returns ()
+#define function callcodeFunc() payable returns ()
+
+#define macro CALL_WRAPPER() = takes (0) returns (0) {
+    // Store 0xba5ed in memory
+    0xba5ed dup1 0x00 mstore                        // [0xba5ed]
+
+    // Static Call
+    CALL(0x01, 0x00, 0x01, 0x00, 0x00, 0x04, 0xFFFFFFFF)     // [success, 0xba5ed]
+
+    // Revert if call is unsuccessful
+    iszero iszero cont jumpi
+    0x00 dup1 revert
+    cont:
+
+    // Load the result
+    0x00 mload                                      // [res, 0xba5ed]
+
+    // Compare the results and revert if unequal
+    eq success jumpi                                // []
+    0x00 dup1 revert
+    success:
+
+    stop
+}
+
+#define macro STATICCALL_WRAPPER() = takes (0) returns (0) {
+    // Store 0xba5ed in memory
+    0xba5ed dup1 0x00 mstore                        // [0xba5ed]
+
+    // Static Call
+    STATICCALL(0x01, 0x00, 0x01, 0x00, 0x04, 0xFFFFFFFF)     // [success, 0xba5ed]
+
+    // Revert if call is unsuccessful
+    iszero iszero cont jumpi
+    0x00 dup1 revert
+    cont:
+
+    // Load the result
+    0x00 mload                                      // [res, 0xba5ed]
+
+    // Compare the results and revert if unequal
+    eq success jumpi                                // []
+    0x00 dup1 revert
+    success:
+
+    stop
+}
+
+#define macro CALLCODE_WRAPPER() = takes (0) returns (0) {
+    // TODO
+
+    stop
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    // Load the function selector
+    pc calldataload 0xE0 shr                                // [sig]
+
+    // Match on the function selector
+    dup1 __FUNC_SIG(callFunc) eq call_jump jumpi                // [sig]
+    dup1 __FUNC_SIG(staticcallFunc) eq staticcall_jump jumpi     // [sig]
+    dup1 __FUNC_SIG(callcodeFunc) eq callcode_jump jumpi        // [sig]
+
+    0x00 dup1 revert
+
+    call_jump:
+        CALL_WRAPPER()
+    staticcall_jump:
+        STATICCALL_WRAPPER()
+    callcode_jump:
+        CALLCODE_WRAPPER()
+}

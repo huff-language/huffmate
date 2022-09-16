@@ -1,5 +1,6 @@
 /// @title Calls
 /// @author asnared <https://github.com/abigger87>
+/// @author Franfran <https://github.com/iFrostizz>
 /// @notice Calls is a library of utility functions for calling contracts
 
 /// @notice Calls a contract with the given arguments
@@ -19,7 +20,7 @@
     arg_offset,
     value,
     to,
-    gas
+    maxgas
 ) = takes (0) returns (1) {
     <ret_size>              // [retSize]
     <ret_offset>            // [retOffset, retSize]
@@ -27,7 +28,7 @@
     <arg_offset>            // [argOffset, argSize, retOffset, retSize]
     <value>                 // [value, argOffset, argSize, retOffset, retSize]
     <to>                    // [to, value, argOffset, argSize, retOffset, retSize]
-    <gas>                   // [gas, to, value, argOffset, argSize, retOffset, retSize]
+    <maxgas>                // [gas, to, value, argOffset, argSize, retOffset, retSize]
     call                    // [success]
 }
 
@@ -49,14 +50,14 @@
     arg_size,
     arg_offset,
     to,
-    gas
+    maxgas
 ) = takes (0) returns (1) {
     <ret_size>              // [retSize]
     <ret_offset>            // [retOffset, retSize]
     <arg_size>              // [argSize, retOffset, retSize]
     <arg_offset>            // [argOffset, argSize, retOffset, retSize]
     <to>                    // [to, argOffset, argSize, retOffset, retSize]
-    <gas>                   // [gas, to, argOffset, argSize, retOffset, retSize]
+    <maxgas>                // [gas, to, argOffset, argSize, retOffset, retSize]
     staticcall              // [success]
 }
 
@@ -80,7 +81,7 @@
     arg_offset,
     value,
     to,
-    gas
+    maxgas
 ) = takes (0) returns (1) {
     <ret_size>              // [retSize]
     <ret_offset>            // [retOffset, retSize]
@@ -88,7 +89,7 @@
     <arg_offset>            // [argOffset, argSize, retOffset, retSize]
     <value>                 // [value, argOffset, argSize, retOffset, retSize]
     <to>                    // [to, argOffset, argSize, retOffset, retSize]
-    <gas>                   // [gas, to, argOffset, argSize, retOffset, retSize]
+    <maxgas>                // [gas, to, argOffset, argSize, retOffset, retSize]
     callcode                // [success]
 }
 
@@ -98,7 +99,7 @@
     0xba5ed dup1 0x00 mstore                        // [0xba5ed]
 
     // Static Call
-    CALL(1, 0x00, 1, 0x00, 0x00, 4, 0xFFFFFFFF)     // [success, 0xba5ed]
+    CALL(0x01, 0x00, 0x01, 0x00, 0x00, 0x04, 0xFFFFFFFF)     // [success, 0xba5ed]
 
     // Revert if call is unsuccessful
     iszero iszero cont jumpi
@@ -120,7 +121,7 @@
     0xba5ed dup1 0x00 mstore                        // [0xba5ed]
 
     // Static Call
-    STATICCALL(1, 0x00, 1, 0x00, 4, 0xFFFFFFFF)     // [success, 0xba5ed]
+    STATICCALL(0x01, 0x00, 0x01, 0x00, 0x04, 0xFFFFFFFF)     // [success, 0xba5ed]
 
     // Revert if call is unsuccessful
     iszero iszero cont jumpi

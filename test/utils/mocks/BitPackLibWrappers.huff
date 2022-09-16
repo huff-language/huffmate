@@ -40,7 +40,7 @@
 
 #define macro MAIN() = takes (0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
-    0x00 calldataload 0xE0 shr
+    pc calldataload 0xE0 shr
     dup1 0x20cf269e eq packValue jumpi
     dup1 0x0ec88d16 eq unpackValueFromRight jumpi
     dup1 0xf59c8b86 eq unpackValueFromLeft jumpi
