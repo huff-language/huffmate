@@ -55,6 +55,9 @@
 #define constant ONLY_PENDING_OWNER_ERROR = 0x4F4E4C595F50454E44494E475F4F574E45520000000000000000000000000000
 #define constant ONLY_PENDING_OWNER_LENGTH = 0x12
 
+#define constant ALREADY_OWNER_ERROR = 0x414C52454144595F4F574E455200000000000000000000000000000000000000
+#define constant ALREADY_OWNER_LENGTH = 0x0d
+
 // -----------------------------------------------------------------------------
 // Constructor
 
@@ -87,10 +90,13 @@
     ONLY_OWNER()
 
     // Read argument and mask to address
-    0x04 calldataload MASK_ADDRESS()
+    0x04 calldataload MASK_ADDRESS()            // [newOwner]
 
     // Revert if address equals owner
-    dup1 caller eq throw_error jumpi
+    [ALREADY_OWNER_ERROR]                       // ["ALREADY_OWNER", newOwner]
+    [ALREADY_OWNER_LENGTH]                      // [13 (length), "ALREADY_OWNER", newOwner]
+    dup3 caller eq                              // [isAlreadyOwner, 13 (length), "ALREADY_OWNER", newOwner]
+    REQUIRE()                                   // [newOwner]
 
     // Duplicate address on stack
     dup1
@@ -101,10 +107,6 @@
 
     // Store address as pending owner
     [PENDING_OWNER_SLOT] sstore
-
-    stop
-    throw_error:
-        0x00 0x00 revert
 }
 
 #define macro OWNABLE_ACCEPT_OWNERSHIP() = takes (0) returns (0) {
