@@ -4,8 +4,7 @@
 
 #include "./Address.huff"
 #include "./Errors.huff"
-
-// TODO: Add require reason strings
+#include "../auth/NonPayable.huff"
 
 // -----------------------------------------------------------------------------
 // External Interface
@@ -141,16 +140,6 @@
     [PENDING_OWNER_SLOT] sload
     0x00 mstore
     0x20 0x00 return
-}
-
-/* Utility Functions */
-#define macro NON_PAYABLE() = takes(0) returns (0) {
-    callvalue iszero                                                           // [msg.value == 0]
-    novalue jumpi                                                              // []
-
-    // TODO: Add revert string
-    0x00 0x00 revert
-    novalue:
 }
 
 // -----------------------------------------------------------------------------
