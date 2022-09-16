@@ -1,0 +1,59 @@
+#define function safeTransferETH(address, uint256) payable returns ()
+#define function safeTransferFrom(address, address, address, uint256) nonpayable returns () 
+#define function safeTransfer(address, address, uint256) nonpayable returns ()
+#define function safeApprove(address, address, uint256) nonpayable returns ()
+
+#define macro SAFE_TRANSFER_ETH_WRAPPER() = {
+    0x24 calldataload // [amount]
+    0x04 calldataload // [to, amount]
+
+    SAFE_TRANSFER_ETH()
+    stop
+}
+
+#define macro SAFE_TRANSFER_FROM_WRAPPER() = {
+    0x04 calldataload // [token]
+    0x64 calldataload // [amount, token]
+    0x44 calldataload // [to, amount, token]
+    0x24 calldataload // [from, to, amount, token]
+
+    SAFE_TRANSFER_FROM(0x00)
+    stop
+}
+
+#define macro SAFE_TRANSFER_WRAPPER() = {
+    0x04 calldataload // [token]
+    0x44 calldataload // [amount, token]
+    0x24 calldataload // [to, amount, token]
+    
+    SAFE_TRANSFER(0x00)
+    stop
+}
+
+#define macro SAFE_APPROVE_WRAPPER() = {
+    0x04 calldataload // [token]
+    0x44 calldataload // [amount, token]
+    0x24 calldataload // [to, amount, token]
+    
+    SAFE_APPROVE(0x00)
+    stop
+}
+
+#define macro MAIN() = {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(safeTransferETH) eq steth jumpi
+    dup1 __FUNC_SIG(safeTransferFrom) eq stf jumpi
+    dup1 __FUNC_SIG(safeTransfer) eq st jumpi
+    dup1 __FUNC_SIG(safeApprove) eq sa jumpi
+
+    0x00 dup1 revert
+
+    steth:
+        SAFE_TRANSFER_ETH_WRAPPER()
+    stf:
+        SAFE_TRANSFER_FROM_WRAPPER()
+    st:
+        SAFE_TRANSFER_WRAPPER()
+    sa:
+        SAFE_APPROVE_WRAPPER()
+}
