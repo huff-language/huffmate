@@ -494,6 +494,16 @@ contract SafeTransferLibTest is Test {
         SafeTransferLib.safeTransferETH(address(this), amount);
     }
 
+    function testSelfTransferStandardErc20(uint256 amount) public {
+        address to = address(SafeTransferLib);
+
+        uint256 preBal = erc20.balanceOf(to);
+        SafeTransferLib.safeTransfer(address(erc20), to, amount);
+        uint256 postBal = erc20.balanceOf(to);
+
+        assertEq(preBal, postBal);
+    }
+
     function verifySafeTransfer(
         address token,
         address to,
