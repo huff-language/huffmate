@@ -120,19 +120,22 @@
     0x24 calldataload       // [tokenId, onERC721Received, to]
     0x64 mstore             // [onERC721Received, to]
 
+    // Store the pointer to the data length
+    0x80 0x84 mstore        // [onERC721Received, to]
+
     0x64 calldataload       // [len(data), onERC721Received, to]
     0x05 shl                // [len(data) * 0x20, onERC721Received, to]
-    0x40 add                // [len(data) * 0x20 + 0x40, onERC721Received, to]
-    dup1                    // [len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
-    0x44                    // [0x44, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
-    0x84                    // [0x84, 0x44, len(data) * 0x20 + 0x40, len(data) * 0x20 + 0x40, onERC721received, to]
+    0x20 add                // [len(data) * 0x20 + 0x20, onERC721Received, to]
+    dup1                    // [len(data) * 0x20 + 0x20, len(data) * 0x20 + 0x20, onERC721received, to]
+    0x64                    // [0x64, len(data) * 0x20 + 0x20, len(data) * 0x20 + 0x20, onERC721received, to]
+    0xA4                    // [0x84, 0x64, len(data) * 0x20 + 0x20, len(data) * 0x20 + 0x20, onERC721received, to]
     calldatacopy            // [len(bytes), onERC721received, to]
 
     // Call address(to).onERC721Received(msg.sender, from, tokenId, bytes)
     0x20                    // [retSize, len(bytes), onERC721Received, to]
     0x00                    // [retOffset, retSize, len(bytes), onERC721Received, to]
     swap1 swap2             // [len(bytes), retOffset, retSize, onERC721Received, to]
-    0x44 add                // [argSize, retOffset, retSize, onERC721Received, to]
+    0x84 add                // [argSize, retOffset, retSize, onERC721Received, to]
     dup3                    // [argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
     dup3                    // [value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
     dup7                    // [to, value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
