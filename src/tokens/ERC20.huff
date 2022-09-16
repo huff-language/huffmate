@@ -92,7 +92,7 @@
 
 /// @notice Transfer
 /// @notice Non-Payable function that transfers an amount of tokens from the sender to a recipient.
-#define macro TRANSFER() = takes (0) returns (1) {
+#define macro TRANSFER() = takes (0) returns (0) {
     NON_PAYABLE()
 
     // Setup the stack for the transfer function.
@@ -117,7 +117,7 @@
 
 /// @notice Transfer From
 /// @notice Non-Payable function that transfers an amount of tokens from an address to a recipient.
-#define macro TRANSFER_FROM() = takes (0) returns (1) {
+#define macro TRANSFER_FROM() = takes (0) returns (0) {
     NON_PAYABLE()                           // []
 
     // Setup the stack for the transfer function.
