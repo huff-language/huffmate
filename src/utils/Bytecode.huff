@@ -1,0 +1,11 @@
+/// @title Bytecode
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice Low-level bytecode utilities
+/// @notice Adapted from 0xsequence/sstore2 (https://github.com/0xsequence/sstore2/blob/master/contracts/utils/Bytecode.sol)
+
+#define error InvalidCodeAtRange(uint256 _size, uint256 _start, uint256 _end)
+
+#define macro CREATION_CODE_FOR() = takes (0) returns (0) {
+
+}

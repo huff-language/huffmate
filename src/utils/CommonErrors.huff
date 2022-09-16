@@ -1,7 +1,7 @@
 /// @title Custom Errors
+/// @notice SPDX-License-Identifier: MIT
 /// @author asnared <https://github.com/abigger87>
 /// @notice Wrappers for reverting with common error messages
-/// @license Apache License, Version 2.0
 
 #include "./Errors.huff"
 

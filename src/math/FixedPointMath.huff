@@ -1,9 +1,8 @@
 /// @title FixedPointMath
-/// @notice Fixed-point number arithmetic
-///         Original implementation:
-///         https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol
-/// @author solmate <https://github.com/transmissions11/solmate>
+/// @notice SPDX-License-Identifier: MIT
 /// @author clabby <https://github.com/clabby>
+/// @notice Minimal module for fixed-point number arithmetic
+/// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol)
 
 #define constant WAD = 0x0de0b6b3a7640000
 
@@ -159,7 +158,7 @@
     // * the 1e18 / 2**96 factor for base conversion.
     // We do this all at once, with an intermediate result in 2**213
     // basis, so the final right shift is always by a positive amount.
-    
+
     0x029d9dc38563c32e5c2f6dc192ee70ef65f9978af3
     mul                     // [0x029d9... * r, y, k, x]
     dup3                    // [k, 0x029d9... * r, y, k, x]
@@ -459,7 +458,7 @@
             // If n is even, continue loop
             iszero loop jumpi
             // If n is odd, continue logic
-            
+
             // Multiply x * result
             dup1                // [result, result, scalar >> 1, x, n, scalar]
             dup4                // [x, result, result, scalar >> 1, x, n, scalar]
@@ -486,7 +485,7 @@
             swap2               // [x != 0 & result != (x * result / x), x * result, (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
             swap1               // [x * result, x != 0 & result != (x * result / x), (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
             dup3 lt             // [(scalar >> 1) + (x * result) < x * result, x != 0 & result != (x * result / x), (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
-            
+
             // Revert if ((scalar >> 1) + (x * result)) < x * result OR x != 0 & result != (x * result / x)
             or <fail> jumpi     // [(scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
 
@@ -523,7 +522,7 @@
     dup3                        // [y, 0x1000..., z, y, x]
     lt                          // [y < 0x1000..., z, y, x]
     continue_1 jumpi            // [z, y, x]
-    
+
     0x40 shl                    // [z << 0x40, y, x]
     swap1                       // [y, z << 0x40, x]
     0x80 shr                    // [y >> 0x80, z << 0x40, x]
@@ -535,7 +534,7 @@
     dup3                        // [y, 0x1000..., z, y, x]
     lt                          // [y < 0x1000..., z, y, x]
     continue_2 jumpi            // [z, y, x]
-    
+
     0x20 shl                    // [z << 0x20, y, x]
     swap1                       // [y, z << 0x20, x]
     0x40 shr                    // [y >> 0x40, z << 0x20, x]
@@ -547,7 +546,7 @@
     dup3                        // [y, 0x1000..., z, y, x]
     lt                          // [y < 0x1000..., z, y, x]
     continue_3 jumpi            // [z, y, x]
-    
+
     0x10 shl                    // [z << 0x10, y, x]
     swap1                       // [y, z << 0x10, x]
     0x20 shr                    // [y >> 0x20, z << 0x10, x]
@@ -559,7 +558,7 @@
     dup3                        // [y, 0x1000..., z, y, x]
     lt                          // [y < 0x1000..., z, y, x]
     continue_4 jumpi            // [z, y, x]
-    
+
     0x08 shl                    // [z << 0x08, y, x]
     swap1                       // [y, z << 0x08, x]
     0x10 shr                    // [y >> 0x10, z << 0x08, x]

@@ -1,0 +1,75 @@
+/// @title ExampleClone
+/// @notice SPDX-License-Identifier: MIT
+/// @author wighawag <https://github.com/wighawag>
+/// @author zefram <https://github.com/boredGenius>
+/// @author hari <https://github.com/hrkrshnn>
+/// @author z0r0z <https://github.com/z0r0z>
+/// @author clabby <https://github.com/clabby>
+/// @notice Clones with Immutable Args Library
+/// @notice Adapted from wighawag (https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ExampleClone.sol)
+
+#include "./HuffClone.huff"
+
+#define function param1() view returns (address)
+#define function param2() view returns (uint256)
+#define function param3() view returns (uint64)
+#define function param4() view returns (uint8)
+#define function param5(uint256) view returns (uint256[] memory)
+
+#define macro PARAM_1() = takes (0) returns (0) {
+    0x00 GET_ARG_ADDRESS()  // [arg_addr]
+    0x00 mstore             // []
+    0x20 0x00 return
+}
+
+#define macro PARAM_2() = takes (0) returns (0) {
+    0x14 GET_ARG_UINT_256() // [arg_uint]
+    0x00 mstore             // []
+    0x20 0x00 return
+}
+
+#define macro PARAM_3() = takes (0) returns (0) {
+    0x34 GET_ARG_UINT_64()  // [arg_uint]
+    0x00 mstore             // []
+    0x20 0x00 return
+}
+
+#define macro PARAM_4() = takes (0) returns (0) {
+    0x3C GET_ARG_UINT_8()   // [arg_uint]
+    0x00 mstore             // []
+    0x20 0x00 return
+}
+
+#define macro PARAM_5() = takes (0) returns (0) {
+    0x04 calldataload           // [arr_len]
+
+    // Store pointer in word before array
+    0x20 0x00 mstore            // [arr_len]
+
+    dup1 0x00                   // [0x00, arr_len, arr_len]
+    GET_ARG_UINT_256_ARR(0x20)  // [ptr, arr_len]
+    swap1                       // [arr_len, ptr]
+    0x05 shl                    // [arr_len * 0x20, ptr]
+    0x40 add                    // [arr_len * 0x20 + 0x40, ptr]
+    0x00 return                 // [ptr]
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(param1) eq param1 jumpi
+    dup1 __FUNC_SIG(param2) eq param2 jumpi
+    dup1 __FUNC_SIG(param3) eq param3 jumpi
+    dup1 __FUNC_SIG(param4) eq param4 jumpi
+    dup1 __FUNC_SIG(param5) eq param5 jumpi
+
+    param1:
+        PARAM_1()
+    param2:
+        PARAM_2()
+    param3:
+        PARAM_3()
+    param4:
+        PARAM_4()
+    param5:
+        PARAM_5()
+}

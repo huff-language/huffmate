@@ -19,6 +19,7 @@ fs_permissions = [
     { access = "read", path = "./test/tokens/mocks/ERC4626Wrappers.huff" },
 
     { access = "read", path = "./test/utils/mocks/BitPackLibWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/CallWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ErrorWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/JumpTableUtilWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/LibBitWrappers.huff" },

@@ -1,4 +1,5 @@
 /// @title Merkle Distributor
+/// @notice SPDX-License-Identifier: MIT
 /// @author Ben Leimberger <https://github.com/benleim>
 /// @author Magna <https://github.com/magna-eng>
 /// @author asnared <https://github.com/abigger87>

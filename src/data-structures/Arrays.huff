@@ -1,12 +1,12 @@
 /// @title Arrays
+/// @notice SPDX-License-Identifier: MIT
 /// @author exp-table <https://github.com/exp-table>
 /// @notice Array utility library for Solidity contracts
-/// @notice Adapted from <https://github.com/huff-language/huff-examples/blob/main/erc20/contracts/utils/HashMap.huff>
 
-// Sets an array in storage from calldata.
-// Note that since no assumptions is made regarding the context in which
-// this function is called, the position of the encoded array in the calldata
-// has to be specified.
+/// @notice Sets an array in storage from calldata.
+///         Note that since no assumptions is made regarding the context in which
+///         this function is called, the position of the encoded array in the calldata
+///         has to be specified.
 #define macro SET_ARRAY_FROM_CALLDATA() = takes(2) returns (0) {
     // Input stack: [calldata_start, slot]
     // skip size of one individual element
@@ -41,6 +41,7 @@
     end:
 }
 
+/// @notice Returns an array in memory specified at {mem_ptr}
 #define macro RETURN_ARRAY(mem_ptr) = takes(1) returns (0) {
     // Input stack: [slot]
 

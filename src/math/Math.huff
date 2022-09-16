@@ -1,14 +1,18 @@
-/// @title SafeMath
+/// @title Math
+/// @notice SPDX-License-Identifier: MIT
+/// @author manas <https://github.com/manasbir>
 /// @author kadenzipfel <https://github.com/kadenzipfel>
 /// @notice Math module over Solidity's arithmetic operations
-/// @notice Adapted from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol
+/// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol)
 
+// Interface
 #define function sqrt(uint256) pure returns(uint256)
 #define function max(uint256, uint256) pure returns(uint256)
 #define function min(uint256, uint256) pure returns(uint256)
 #define function average(uint256, uint256) pure returns(uint256)
 #define function ceilDiv(uint256, uint256) pure returns(uint256)
 
+/// @notice Calculates the square root of a stack input
 #define macro SQRT() = takes (1) returns (1) {
     // input stack          // [num]
     // if num == 0 return 0
@@ -177,6 +181,7 @@
     is_zero:
 }
 
+/// @notice Returns the maximum value of two values on the stack
 #define macro MAX() = takes (2) returns (1) {
     // input stack:     // [num1, num2]
     dup2                // [num2, num1, num2]
@@ -190,6 +195,7 @@
     pop                 // [min(num2, num1)]
 }
 
+/// @notice Returns the ceiling of the division of two values on the stack
 #define macro CEIL_DIV() = takes (2) returns (1) {
     // input stack:     // [num1, num2]
     dup1 iszero         // [is_zero, num1, num2]
@@ -214,6 +220,7 @@
     dest:
 }
 
+/// @notice Returns the minimum value of two values on the stack
 #define macro MIN() = takes (2) returns (1) {
     // input stack:     // [num1, num2]
     dup2 dup2 gt        // [is_greater_than, num1, num2]
@@ -225,6 +232,7 @@
         pop                 // [max(num1, num2)]
 }
 
+/// @notice Returns the average of two values on the stack
 #define macro AVG() = takes (2) returns (1) {
     // input stack:     // [num1, num2]
     dup2 dup2 and       // [num1 & num2, num1, num2]

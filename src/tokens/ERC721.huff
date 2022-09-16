@@ -1,4 +1,5 @@
 /// @title ERC721
+/// @notice SPDX-License-Identifier: MIT
 /// @author asnared <https://github.com/abigger87>
 /// @author kadenzipfel <https://github.com/kadenzipfel>
 /// @notice Modern and heavily gas golfed ERC-721 implementation
@@ -6,7 +7,7 @@
 
 // Imports
 #include "../utils/CommonErrors.huff"
-#include "../utils/NonPayable.huff"
+#include "../auth/NonPayable.huff"
 #include "../data-structures/Hashmap.huff"
 
 // Interface
@@ -36,12 +37,10 @@
 #define event Approval(address,address,uint256)
 #define event ApprovalForAll(address,address,bool)
 
-#define event LogWord(address)
-
 // Storage Slots
-#define constant OWNER_LOCATION = FREE_STORAGE_POINTER() // ownerOf
-#define constant BALANCE_LOCATION = FREE_STORAGE_POINTER() // balanceOf
-#define constant SINGLE_APPROVAL_LOCATION = FREE_STORAGE_POINTER() // getApproved
+#define constant OWNER_LOCATION = FREE_STORAGE_POINTER()
+#define constant BALANCE_LOCATION = FREE_STORAGE_POINTER()
+#define constant SINGLE_APPROVAL_LOCATION = FREE_STORAGE_POINTER()
 
 // Metadata
 // META_NAME = "Token"
@@ -51,7 +50,6 @@
 // META_SYMBOL = "TKN"
 #define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
 #define constant META_SYMBOL_LENGTH = 0x03
-
 
 /// >>>>>>>>>>>>>>>>>>>>>  VIEW FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
 
@@ -121,29 +119,31 @@
     0x40 0x00 return
 }
 
+/// @notice Checks if the given interface is supported
 #define macro SUPPORTS_INTERFACE() = takes (0) returns (0) {
     // grab interfaceId
     0x04 calldataload       // [interfaceId]
-    0xe0
-    shr
+    0xe0 shr                // [right_aligned_interfaceId]
 
-    // check if erc165 interfaceId
+    // Check if erc165 interfaceId
     dup1                    // [interfaceId, interfaceId]
     0x01ffc9a7 eq           // [is_erc165, interfaceId]
     is_interface jumpi
 
-    // check if erc721 interfaceId
+    // Check if erc721 interfaceId
     dup1                    // [interfaceId, interfaceId]
     0x80ac58cd eq           // [is_erc721, interfaceId]
     is_interface jumpi
 
-    // check if erc721Metadata interfaceId
+    // Check if erc721Metadata interfaceId
     0x5b5e139f eq           // [is_erc721Metadata]
     is_interface jumpi
 
+    // Return false (0x00)
     0x00 mstore             // []
     0x20 0x00 return        // []
 
+    // Return true (0x01)
     is_interface:
         pop                 // []
         0x01 0x00 mstore    // []
@@ -157,13 +157,13 @@
 /// @dev The Mint function is payable
 #define macro _MINT() = takes (2) returns (0) {
     // Input stack:                                 // [to, tokenId]
+    // Output stack:                                // []
 
     // Check that the recipient is valid
     dup1 iszero invalid_recipient jumpi             // [to, tokenId]
 
     // Create the minting params
-    0x00                                            // [from (0x00), to, tokenId]
-    dup3                                            // [tokenId, from (0x00), to, tokenId]
+    0x00 dup3                                       // [tokenId, from (0x00), to, tokenId]
 
     // Check token ownership
     [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, from (0x00), to, tokenId]
@@ -174,16 +174,18 @@
 
     // Emit the transfer event.
     __EVENT_HASH(Transfer)                          // [sig, from (0x00), to, tokenId]
-    0x00 0x00                                       // [0, 0, sig, from (0x00), to, tokenId]
-    log4                                            // []
+    0x00 0x00 log4                                  // []
 
-    stop
+    // Continue Executing
+    cont jump
 
     invalid_recipient:
         INVALID_RECIPIENT(0x00)
 
     unauthorized:
         ALREADY_MINTED(0x00)
+
+    cont:
 }
 
 /// @notice Burn
@@ -222,10 +224,13 @@
     0x00 0x00                                       // [0, 0, sig, owner, to (0x00), tokenId]
     log4                                            // []
 
-    stop
+    // Continue Executing
+    cont jump
 
     not_minted:
         NOT_MINTED(0x00)
+
+    cont:
 }
 
 /// >>>>>>>>>>>>>>>>>>>>>  EXTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
@@ -233,30 +238,28 @@
 /// @notice Approve
 /// @notice Approves a spender for a specific token
 #define macro APPROVE() = takes (0) returns (0) {
-    // get owner
+    // Load the token owner
     0x24 calldataload dup1          // [tokenId, tokenId]
     [OWNER_LOCATION]
     LOAD_ELEMENT_FROM_KEYS(0x00)    // [owner, tokenId]
-    dup1 caller                     // [msg.sender, owner, owner, tokenId]
-    eq                              // [is_sender_owner, owner, tokenId]
+    dup1 caller eq                  // [is_sender_owner, owner, tokenId]
 
-    // check if approved for all
+    // Check if approved for all
     caller dup3                     // [owner, msg.sender, is_sender_owner, owner, tokenId]
     LOAD_ELEMENT_FROM_KEYS(0x00)    // [is_approved_for_all, is_sender_owner, owner, tokenId]]
     or cont jumpi                   // [owner, tokenId]
         not_authorized jump
     cont:
 
-    // store approval
+    // Store approval
     0x04 calldataload dup1 dup4     // [tokenId, spender, spender, owner, tokenId]
     [SINGLE_APPROVAL_LOCATION]
     STORE_ELEMENT_FROM_KEYS(0x00)   // [spender, owner, tokenId]
     swap1                           // [owner, spender, tokenId]
 
-    // emit the approval event
+    // Emit the approval event
     __EVENT_HASH(Approval)                          // [sig, owner, spender, tokenId]
-    0x00 0x00                                       // [0, 0, sig, owner, spender, tokenId]
-    log4                                            // []
+    0x00 0x00 log4                                  // []
 
     stop
 
@@ -293,13 +296,13 @@
     0x24 calldataload       // [to, tokenId]
     0x04 calldataload       // [from, to, tokenId]
 
+    // Accounting Logic
     TRANSFER_TAKE_FROM()    // [from, to, tokenId]
     TRANSFER_GIVE_TO()      // [from, to, tokenId]
 
-    // Emit the transfer event.
+    // Emit the transfer event
     __EVENT_HASH(Transfer)  // [sig,from, to, tokenId]
-    0x20 0x00               // [0, 0, sig, from, to, tokenId]
-    log4                    // []
+    0x20 0x00 log4          // []
 
     // Stop execution
     stop
@@ -315,10 +318,9 @@
     TRANSFER_TAKE_FROM()    // [from, to, tokenId]
     TRANSFER_GIVE_TO()      // [from, to, tokenId]
 
-    // Emit the transfer event.
+    // Emit the transfer event
     __EVENT_HASH(Transfer)  // [sig, from, to, tokenId]
-    0x00 0x00               // [0, 0, sig, from, to, tokenId]
-    log4                    // []
+    0x00 0x00 log4          // []
 
     // Make sure we can transfer to the recipient
     0x24 calldataload       // [to]
@@ -326,7 +328,6 @@
     iszero safe jumpi       // [to]
 
     // onERC721Received Selector
-    // 0xf0b9e5ba
     0x150b7a02 dup1         // [onERC721Received, onERC721Received, to]
     0xE0 shl                // [onERC721Received_shifted, onERC721Received, to]
 
@@ -370,8 +371,9 @@
     // Revert if the return data is not accepted
     UNSAFE_RECIPIENT(0x00)
 
+    // Stop execution if safe
     safe:
-        stop
+    stop
 }
 
 #define macro SAFE_TRANSFER_FROM_WITH_DATA() = takes (0) returns (0) {
@@ -385,8 +387,7 @@
 
     // Emit the transfer event.
     __EVENT_HASH(Transfer)  // [sig, from, to, tokenId]
-    0x00 0x00               // [0, 0, sig, from, to, tokenId]
-    log4                    // []
+    0x00 0x00 log4          // []
 
     // Make sure we can transfer to the recipient
     0x24 calldataload       // [to]
@@ -394,7 +395,6 @@
     iszero safe jumpi       // [to]
 
     // onERC721Received Selector
-    // 0xf0b9e5ba
     0x150b7a02 dup1         // [onERC721Received, onERC721Received, to]
     0xE0 shl                // [onERC721Received_shifted, onERC721Received, to]
 
@@ -443,8 +443,9 @@
     // Revert if the return data is not accepted
     UNSAFE_RECIPIENT(0x00)
 
+    // Stop execution if safe
     safe:
-        stop
+    stop
 }
 
 /// >>>>>>>>>>>>>>>>>>>>>  INTERNAL HELPERS  <<<<<<<<<<<<<<<<<<<<<< ///
@@ -508,8 +509,7 @@
     STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
 
     // update ownerOf
-    dup2                            // [to, from, to, tokenId]
-    dup4                            // [tokenId, to, from, to, tokenId]
+    dup2 dup4                       // [tokenId, to, from, to, tokenId]
     [OWNER_LOCATION]                // [owner_slot, tokenId, to, from, to, tokenId]
     STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
 
