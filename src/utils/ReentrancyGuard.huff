@@ -1,8 +1,8 @@
 /// @title Reentrancy Guard
-/// @author rayquaza7
-/// @notice A Reentrancy Guard
-/// @notice Adapted from <https://github.com/transmissions11/solmate/blob/main/src/utils/ReentrancyGuard.sol>
-/// @license Apache License, Version 2.0
+/// @notice SPDX-License-Identifier: MIT
+/// @author rayquaza7 <https://github.com/rayquaza7>
+/// @notice Gas optimized reentrancy guard for smart contracts.
+/// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/ReentrancyGuard.sol)
 
 #include "./CommonErrors.huff"
 

@@ -1,13 +1,12 @@
 /// @title HuffClone
 /// @notice SPDX-License-Identifier: MIT
-/// @notice Clones with Immutable Args Library
-///         Original implementation:
-///         https://github.com/wighawag/clones-with-immutable-args/blob/master/src/Clone.sol
 /// @author wighawag <https://github.com/wighawag>
 /// @author zefram <https://github.com/boredGenius>
 /// @author hari <https://github.com/hrkrshnn>
 /// @author z0r0z <https://github.com/z0r0z>
 /// @author clabby <https://github.com/clabby>
+/// @notice Clones with Immutable Args Library
+/// @notice Adapted from wighawag (https://github.com/wighawag/clones-with-immutable-args/blob/master/src/Clone.sol)
 
 /// @notice Reads an immutable arg with type address
 /// @param argOffset The offset of the arg in the packed data
@@ -39,7 +38,7 @@
     // Initial Stack:              [argOffset, arrLen]
     GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset, arrLen]
     add                         // [offset + argOffset, arrLen]
-    
+
     dup2 <mem_ptr>              // [mem_ptr, arrLen, offset + argOffset, arrLen]
     mstore                      // [offset + argOffset, arrLen]
     swap1 0x05 shl swap1        // [offset + argOffset, arrLen * 0x20]

@@ -1,12 +1,12 @@
 /// @title HuffCloneLib
+/// @notice SPDX-License-Identifier: MIT
 /// @notice Clones with Immutable Args Library
-///         Original implementation:
-///         https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ClonesWithImmutableArgs.sol
 /// @author wighawag <https://github.com/wighawag>
 /// @author zefram <https://github.com/boredGenius>
 /// @author hari <https://github.com/hrkrshnn>
 /// @author z0r0z <https://github.com/z0r0z>
 /// @author clabby <https://github.com/clabby>
+/// @notice Adapted from wighawag (https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ClonesWithImmutableArgs.sol)
 
 /// @notice Creates a clone proxy of the implementation contract, with immutable args
 /// @dev data cannot exceed 65535 bytes, since 2 bytes are used to store the data length
@@ -60,14 +60,14 @@
     // Subtract 0x02 from extra_len
     0x02 dup4 sub       // [extra_len - 0x02, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
     swap3 pop           // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
-    
+
     // copy_ptr = data_ptr + 0x41
     <dest_ptr> 0x41 add // [copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
 
     // Increase data_ptr by 0x20
     swap6 0x20 add      // [data_ptr + 0x20, run_size, creation_size, extra_len, data_len, impl_addr, copy_ptr]
     swap6               // [copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
-    
+
     // counter = extra_len
     dup4                // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
     memcopy_loop:
@@ -80,7 +80,7 @@
         swap7           // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
 
         0x20 swap1 sub  // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
-        
+
         dup1 0x20 gt    // [0x20 > counter, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
         iszero memcopy_loop jumpi
     post_loop:
@@ -90,10 +90,10 @@
         0x20 sub        // [0x20 - counter, 0x01, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
         0x100 exp       // [0x100 ** (0x20 - counter), 0x01, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
         sub not         // [mask, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
-        
+
         dup9 mload and  // [data & mask, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
         dup3 mstore     // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
-        
+
         add             // [copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
         dup4 0xF0 shl   // [extra_len << 0xF0, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
         swap1 mstore    // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]

@@ -1,12 +1,14 @@
 /// @title ERC-20 Helper
+/// @notice SPDX-License-Identifier: MIT
 /// @author Ben Leimberger <https://github.com/benleim>
 /// @notice Util macros for ERC-20 interactions
 
-/* External Interface */
+// Interface
 #define function transfer(address,uint256) nonpayable returns (bool)
 
-/// input stack:                [acct_addr, amount, getter_addr]
+/// @notice Transfers an ERC-20 token from the caller to the given account
 #define macro ERC20_TRANSFER() = takes (3) returns (0) {
+    // input stack:                [acct_addr, amount, getter_addr]
     __FUNC_SIG(transfer)        // [sig, acct_addr, amount, getter_addr]
     0x00 mstore                 // [acct_addr, amount, getter_addr]
 

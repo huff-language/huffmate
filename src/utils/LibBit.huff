@@ -1,9 +1,10 @@
 /// @title LibBit
-/// @notice Various bit-twiddling macros.
+/// @notice SPDX-License-Identifier: MIT
 /// @author Vectorized <https://github.com/Vectorized>
 /// @author Solady (https://github.com/Vectorized/solady/blob/main/src/utils/LibBit.sol)
 /// @author Inspired by (https://graphics.stanford.edu/~seander/bithacks.html)
 /// @author clabby <https://github.com/clabby>
+/// @notice Various bit-twiddling macros.
 
 #define constant A = 0xffffffffffffffffffffffffffffffff
 #define constant B = 0xffffffffffffffff

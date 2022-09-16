@@ -1,12 +1,12 @@
 /// @title TSOwnable
-/// @dev An Ownable Implementation using Two-Step Transfer Pattern
+/// @notice SPDX-License-Identifier: MIT
 /// @author merkleplant (modified by @devtooligan)
+/// @notice An Ownable Implementation using Two-Step Transfer Pattern
 
 #include "./Address.huff"
 #include "./Errors.huff"
 #include "../auth/NonPayable.huff"
 
-// -----------------------------------------------------------------------------
 // External Interface
 
 /// @notice Returns the current owner address.
@@ -29,7 +29,6 @@
 /// @notice Emitted when new pending owner set.
 #define event NewPendingOwner(address,address)
 
-// -----------------------------------------------------------------------------
 // Event Signatures
 
 // cast keccak "NewOwner(address,address)"
@@ -39,13 +38,10 @@
 #define constant EVENT_NEW_PENDING_OWNER
     = 0xb3d55174552271a4f1aaf36b72f50381e892171636b3fb5447fe00e995e7a37b
 
-// -----------------------------------------------------------------------------
 // Storage
-
 #define constant OWNER_SLOT = FREE_STORAGE_POINTER()
 #define constant PENDING_OWNER_SLOT = FREE_STORAGE_POINTER()
 
-// -----------------------------------------------------------------------------
 // Error Constants
 
 #define constant ONLY_OWNER_ERROR = 0x4F4E4C595F4F574E455200000000000000000000000000000000000000000000
@@ -57,14 +53,12 @@
 #define constant ALREADY_OWNER_ERROR = 0x414C52454144595F4F574E455200000000000000000000000000000000000000
 #define constant ALREADY_OWNER_LENGTH = 0x0d
 
-// -----------------------------------------------------------------------------
 // Constructor
 
 #define macro CONSTRUCTOR_TSOWNABLE() = takes (0) returns (0) {
     caller [OWNER_SLOT] sstore  // Store msg.sender as owner
 }
 
-// -----------------------------------------------------------------------------
 // Access Handler
 
 #define macro ONLY_OWNER() = takes(0) returns (0) {
@@ -81,7 +75,6 @@
     REQUIRE()
 }
 
-// -----------------------------------------------------------------------------
 // Mutating Functions
 
 #define macro OWNABLE_SET_PENDING_OWNER() = takes (0) returns (0) {
@@ -125,7 +118,6 @@
     stop
 }
 
-// -----------------------------------------------------------------------------
 // View Functions
 
 #define macro OWNABLE_GET_OWNER() = takes (0) returns (0) {
@@ -142,9 +134,7 @@
     0x20 0x00 return
 }
 
-// -----------------------------------------------------------------------------
 // Function Dispatching
-
 #define macro MAIN_TSOWNABLE() = takes (0) returns (0) {
 
     // cast sig "setPendingOwner(address)"

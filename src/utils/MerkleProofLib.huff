@@ -1,12 +1,11 @@
 /// @title MerkleProofLib
+/// @notice SPDX-License-Identifier: MIT
+/// @author clabby <https://github.com/clabby>
 /// @notice Gas optimized merkle proof verification library
-///         Original implementation:
-///         https://github.com/transmissions11/solmate/blob/v7/src/utils/MerkleProofLib.sol
+/// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/v7/src/utils/MerkleProofLib.sol)
 /// @dev The `proof_cd_ptr` passed via the stack to this macro should point to the offset
 ///      of the proof array's length in the calldata. This macro assumes that the proof
 ///      array contains 32 byte values.
-/// @author solmate <https://github.com/transmissions11/solmate>
-/// @author clabby <https://github.com/clabby>
 
 /// @notice Verifies a merkle proof.
 /// @param proof_cd_ptr Pointer to the length of the proof array.

@@ -1,4 +1,5 @@
 /// @title ERC1155
+/// @notice SPDX-License-Identifier: MIT
 /// @author cheethas <https://github.com/cheethas>
 /// @author asnared <https://github.com/abigger87>
 /// @notice Minimal, gas efficient ERC 1155 implementation
