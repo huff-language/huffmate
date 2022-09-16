@@ -1,4 +1,5 @@
 /// @title BitPackLib
+/// @notice SPDX-License-Identifier: MIT
 /// @author kadenzipfel <https://github.com/kadenzipfel>
 /// @notice Efficient bit packing library
 

@@ -1,0 +1,140 @@
+/// @title Calls
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @author Franfran <https://github.com/iFrostizz>
+/// @notice Calls is a library of utility functions for calling contracts
+
+/// @notice Calls a contract with the given arguments
+/// @notice Returns the success of the call
+/// @notice Returndata is left in memory for the caller to handle
+/// @param ret_size The size of the return data
+/// @param ret_offset The offset in memory to store the return data
+/// @param arg_size The size of the arguments
+/// @param arg_offset The offset in memory of the arguments
+/// @param value The value to send with the call
+/// @param to The address to call
+/// @param gas The amount of gas to send with the call
+#define macro CALL(
+    ret_size,
+    ret_offset,
+    arg_size,
+    arg_offset,
+    value,
+    to,
+    maxgas
+) = takes (0) returns (1) {
+    <ret_size>              // [retSize]
+    <ret_offset>            // [retOffset, retSize]
+    <arg_size>              // [argSize, retOffset, retSize]
+    <arg_offset>            // [argOffset, argSize, retOffset, retSize]
+    <value>                 // [value, argOffset, argSize, retOffset, retSize]
+    <to>                    // [to, value, argOffset, argSize, retOffset, retSize]
+    <maxgas>                // [gas, to, value, argOffset, argSize, retOffset, retSize]
+    call                    // [success]
+}
+
+/// @notice Staticalls a contract with the given arguments
+/// @notice Returns the success of the call
+/// @notice Returndata is left in memory for the caller to handle
+/// @dev This instructions is equivalent to CALL, except that it does not allow any state modifying instructions or sending ETH in the sub context.
+/// @dev The disallowed instructions are CREATE, CREATE2, LOG0, LOG1, LOG2, LOG3, LOG4, SSTORE, SELFDESTRUCT and CALL if the value sent is not 0.
+/// @dev If the size of the return data is not known, it can also be retrieved after the call with the instructions RETURNDATASIZE and RETURNDATACOPY (since the Byzantium fork).
+/// @param ret_size The size of the return data
+/// @param ret_offset The offset in memory to store the return data
+/// @param arg_size The size of the arguments
+/// @param arg_offset The offset in memory of the arguments
+/// @param to The address to call
+/// @param gas The amount of gas to send with the call
+#define macro STATICCALL(
+    ret_size,
+    ret_offset,
+    arg_size,
+    arg_offset,
+    to,
+    maxgas
+) = takes (0) returns (1) {
+    <ret_size>              // [retSize]
+    <ret_offset>            // [retOffset, retSize]
+    <arg_size>              // [argSize, retOffset, retSize]
+    <arg_offset>            // [argOffset, argSize, retOffset, retSize]
+    <to>                    // [to, argOffset, argSize, retOffset, retSize]
+    <maxgas>                // [gas, to, argOffset, argSize, retOffset, retSize]
+    staticcall              // [success]
+}
+
+/// @notice Codecalls a contract with the given arguments
+/// @notice Returns the success of the call
+/// @notice Returndata is left in memory for the caller to handle
+/// @dev Creates a new sub context as if calling itself, but with the code of the given account.
+/// @dev In particular the storage remains the same. Note that an account with no code will return success as true.
+/// @dev If the size of the return data is not known, it can also be retrieved after the call with the instructions RETURNDATASIZE and RETURNDATACOPY (since the Byzantium fork).
+/// @param ret_size The size of the return data
+/// @param ret_offset The offset in memory to store the return data
+/// @param arg_size The size of the arguments
+/// @param arg_offset The offset in memory of the arguments
+/// @param value The value to send with the call
+/// @param to The address to call
+/// @param gas The amount of gas to send with the call
+#define macro CALLCODE(
+    ret_size,
+    ret_offset,
+    arg_size,
+    arg_offset,
+    value,
+    to,
+    maxgas
+) = takes (0) returns (1) {
+    <ret_size>              // [retSize]
+    <ret_offset>            // [retOffset, retSize]
+    <arg_size>              // [argSize, retOffset, retSize]
+    <arg_offset>            // [argOffset, argSize, retOffset, retSize]
+    <value>                 // [value, argOffset, argSize, retOffset, retSize]
+    <to>                    // [to, argOffset, argSize, retOffset, retSize]
+    <maxgas>                // [gas, to, argOffset, argSize, retOffset, retSize]
+    callcode                // [success]
+}
+
+/// @notice Test call the identity precompile
+#define test TEST_CALL() = takes (0) returns (0) {
+    // Store 0xba5ed in memory
+    0xba5ed dup1 0x00 mstore                        // [0xba5ed]
+
+    // Static Call
+    CALL(0x01, 0x00, 0x01, 0x00, 0x00, 0x04, 0xFFFFFFFF)     // [success, 0xba5ed]
+
+    // Revert if call is unsuccessful
+    iszero iszero cont jumpi
+    0x00 dup1 revert
+    cont:
+
+    // Load the result
+    0x00 mload                                      // [res, 0xba5ed]
+
+    // Compare the results and revert if unequal
+    eq success jumpi                                // []
+    0x00 dup1 revert
+    success:
+}
+
+/// @notice Test staticcall the identity precompile
+#define test TEST_STATIC_CALL() = takes (0) returns (0) {
+    // Store 0xba5ed in memory
+    0xba5ed dup1 0x00 mstore                        // [0xba5ed]
+
+    // Static Call
+    STATICCALL(0x01, 0x00, 0x01, 0x00, 0x04, 0xFFFFFFFF)     // [success, 0xba5ed]
+
+    // Revert if call is unsuccessful
+    iszero iszero cont jumpi
+    0x00 dup1 revert
+    cont:
+
+    // Load the result
+    0x00 mload                                      // [res, 0xba5ed]
+
+    // Compare the results and revert if unequal
+    eq success jumpi                                // []
+    0x00 dup1 revert
+    success:
+}
+

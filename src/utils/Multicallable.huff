@@ -1,8 +1,9 @@
 /// @title Multicallable
+/// @notice SPDX-License-Identifier: MIT
+/// @author clabby <https://github.com/clabby>
 /// @notice Enables a single call to call multiple methods within a contract.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Multicallable.sol)
-/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
-/// @author clabby <https://github.com/clabby>
+/// @author Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
 
 // Calldata
 #define constant DATA_LEN = 0x24

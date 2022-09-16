@@ -1,4 +1,5 @@
 /// @title ERC721
+/// @notice SPDX-License-Identifier: MIT
 /// @author asnared <https://github.com/abigger87>
 /// @author kadenzipfel <https://github.com/kadenzipfel>
 /// @notice Modern and heavily gas golfed ERC-721 implementation
@@ -6,7 +7,7 @@
 
 // Imports
 #include "../utils/CommonErrors.huff"
-#include "../utils/NonPayable.huff"
+#include "../auth/NonPayable.huff"
 #include "../data-structures/Hashmap.huff"
 
 // Interface

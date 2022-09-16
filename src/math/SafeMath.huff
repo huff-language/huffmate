@@ -1,7 +1,8 @@
 /// @title SafeMath
+/// @notice SPDX-License-Identifier: MIT
 /// @author kadenzipfel <https://github.com/kadenzipfel>
 /// @notice Math module over Solidity's arithmetic operations with safety checks
-/// @notice Adapted from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol
+/// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol)
 
 // Interface
 #define function safeAdd(uint256,uint256) pure returns (uint256)
@@ -10,7 +11,7 @@
 #define function safeDiv(uint256,uint256) pure returns (uint256)
 #define function safeMod(uint256,uint256) pure returns (uint256)
 
-// Methods - Use these macros directly
+/// @notice Adds two numbers and reverts on overflow
 #define macro SAFE_ADD() = takes (2) returns (1) {
     // input stack          // [num1, num2]
     dup2                    // [num2, num1, num2]
@@ -24,6 +25,7 @@
     is_not_overflow:        // [result]
 }
 
+/// @notice Subtracts two numbers and reverts on underflow
 #define macro SAFE_SUB() = takes (2) returns (1) {
     // input stack          // [num1, num2]
     dup1                    // [num1, num1, num2]
@@ -36,6 +38,7 @@
     sub                     // [result]
 }
 
+/// @notice Multiplies two numbers and reverts on overflow
 #define macro SAFE_MUL() = takes (2) returns (1) {
     // input stack              // [num1, num2]
     dup1                        // [num1, num1, num2]
@@ -57,6 +60,7 @@
     is_not_overflow:
 }
 
+/// @notice Divides two numbers and reverts on division by zero
 #define macro SAFE_DIV() = takes (2) returns (1) {
     // input stack          // [num1, num2]
     dup2                    // [num2, num1, num2]
@@ -68,6 +72,7 @@
     div                     // [result]
 }
 
+/// @notice Divides two numbers and reverts on division by zero or modulo zero
 #define macro SAFE_MOD() = takes (2) returns (1) {
     // input stack          // [num1, num2]
     dup2                    // [num2, num1, num2]

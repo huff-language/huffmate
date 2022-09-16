@@ -1,16 +1,17 @@
 /// @title Auth
+/// @notice SPDX-License-Identifier: MIT
 /// @author asnared <https://github.com/abigger87>
-/// @notice An Authority module based off <https://github.com/Rari-Capital/solmate/blob/main/src/auth/Auth.sol>
-/// @license Apache License, Version 2.0
+/// @notice An application-independent module providing a flexible and updatable auth pattern
+/// @notice Adapted from <https://github.com/transmissions11/solmate/blob/main/src/auth/Auth.sol>
 
-/* Interface */
-#define function isAuthorized(address,bytes4) view returns (bool)
+// Interface
+// #define function isAuthorized(address,bytes4) view returns (bool)
 #define function setAuthority(address) nonpayable returns ()
 #define function setOwner(address) nonpayable returns ()
 #define function owner() view returns (address)
 #define function authority() view returns (address)
 
-/* Events */
+// Events
 #define event OwnerUpdated(address indexed user, address indexed newOwner)
 #define event AuthorityUpdated(address indexed user, address indexed newAuthority)
 
@@ -22,7 +23,7 @@
 #define constant OWNER = FREE_STORAGE_POINTER()
 #define constant AUTHORITY = FREE_STORAGE_POINTER()
 
-/* CONSTRUCTOR */
+/// @notice Constructor
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
   // Copy the owner into memory
   0x20                        // [size] - byte size to copy
@@ -61,17 +62,16 @@
   log3                        // []
 }
 
-/* modifier requiresAuth() virtual */
+/// @notice Modifier that enforces caller authorization
 #define macro REQUIRES_AUTH() = takes(0) returns(0) {
   0x00 calldataload           // [msg.sig]
   caller                      // [msg.sender, msg.sig]
-  IS_AUTHORIZED(authed)      // []
+  IS_AUTHORIZED(authed)       // []
 	0x00 0x00 revert
   authed:
 }
 
-/* Is the caller authorized? */
-/* tries to call `canCall` on the authority if the address(authority) is not 0 */
+/// @notice Helper to check if the caller is authorized
 #define macro IS_AUTHORIZED(authed) = takes(2) returns(0) {
   // If msg.sender == owner, jump to authed
   caller                      // [msg.sender]
@@ -119,7 +119,8 @@
   post:
 }
 
-/* Set the Authority */
+/// @notice Set the Authority
+/// @param {newAuthority} [address] - The new authority
 #define macro SET_AUTHORITY() = takes(0) returns(0) {
   // Check that the caller is authorized
   REQUIRES_AUTH()
@@ -138,7 +139,8 @@
   stop
 }
 
-/* Set the Owner */
+/// @notice Set the Owner
+/// @param {newOwner} [address] - The new owner
 #define macro SET_OWNER() = takes(0) returns(0) {
   // Check that the caller is authorized
   REQUIRES_AUTH()
@@ -157,28 +159,31 @@
   stop
 }
 
-/* Get the contract Owner */
+/// @notice Get the contract Owner
+/// @return {owner} [address] - The contract owner
 #define macro OWNER() = takes (0) returns (0) {
     [OWNER] sload             // [owner]
     0x00 mstore               // []
     0x20 0x00 return          // []
 }
 
-/* Get the contract Authority */
+/// @notice Get the contract Authority
+/// @return {authority} [address] - The contract authority
 #define macro AUTHORITY() = takes (0) returns (0) {
     [AUTHORITY] sload         // [authority]
     0x00 mstore               // []
     0x20 0x00 return          // []
 }
 
-/* Main Macro - The contract entrypoint */
+/// @notice Main Function Dispatcher
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
-    0x00 calldataload 0xE0 shr
-    dup1 0x13af4035 eq set_owner jumpi
-    dup1 0x7a9e5e4b eq set_authority jumpi
-    dup1 0x8da5cb5b eq owner jumpi
-    dup1 0xbf7e214f eq authority jumpi
+    pc calldataload 0xE0 shr
+
+    dup1 __FUNC_SIG(setOwner)                 eq set_owner jumpi
+    dup1 __FUNC_SIG(setAuthority)             eq set_authority jumpi
+    dup1 __FUNC_SIG(owner)                    eq owner jumpi
+    dup1 __FUNC_SIG(authority)                eq authority jumpi
 
     // Revert if no signatures match
     0x00 0x00 revert

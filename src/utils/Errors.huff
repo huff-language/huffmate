@@ -1,17 +1,16 @@
 /// @title Errors
-/// @author jtriley.eth, clabby <https://github.com/clabby>
+/// @notice SPDX-License-Identifier: MIT
+/// @author jtriley.eth
+/// @author clabby <https://github.com/clabby>
 /// @notice Custom error utilities.
-/// @license Apache License, Version 2.0
 
 // https://docs.soliditylang.org/en/latest/control-structures.html?highlight=panic#panic-via-assert-and-error-via-require
 
-/* Errors */
-
+// Errors
 #define error Error(string)
 #define error Panic(uint256)
 
-/* Constants */
-
+// Constants
 // Solidity Panic Codes
 #define constant COMPILER_PANIC = 0x00
 #define constant ASSERT_FALSE = 0x01
