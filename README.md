@@ -10,7 +10,6 @@ Huffmate is still a work in progress and the majority of contracts have yet to b
 
 Use these contracts at your own risk!
 
-
 ### Usage
 
 To install with [**Foundry**](https://github.com/foundry-rs/foundry):
@@ -24,7 +23,6 @@ To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffl
 ```sh
 npm install @pentagonxyz/huffmate
 ```
-
 
 ### Contracts
 
@@ -65,9 +63,9 @@ utils
 ├─ Multicallable — "Enables a single call to call multiple methods within a contract"
 ├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
 ├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
+├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values."
 ├─ SSTORE2 — TODO
 ```
-
 
 ### Safety
 
@@ -75,12 +73,12 @@ Although contracts have been rigorously reviewed, this is **experimental softwar
 
 We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
-
 ### Acknowledgements
 
 These contracts were inspired by or directly modified from many sources, primarily:
 
 - [solmate](https://github.com/Rari-Capital/solmate)
+- [solady](https://github.com/Vectorized/solady)
 - [huff-examples](https://github.com/huff-language/huff-examples)
 - [Gnosis](https://github.com/gnosis/gp-v2-contracts)
 - [Uniswap](https://github.com/Uniswap/uniswap-lib)
