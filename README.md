@@ -4,6 +4,14 @@
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
+> **Warning**
+>
+> These contracts are **unaudited** and are not recommended for use in production.
+>
+> Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
+> We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
+
+
 ## Warning: Be cautious
 
 Huffmate is still a work in progress and the majority of contracts have yet to be completed and audited. We do not give any warranties and will not be liable for any loss incurred through any use of this codebase.
@@ -53,8 +61,7 @@ tokens
 ├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
 ├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
 utils
-├─ Calls — TODO
-├─ Data — TODO
+├─ Calls — "Minimal wrappers for constructing calls to other contracts"
 ├─ BitPackLib — "Efficient bit packing library"
 ├─ CustomErrors — "Wrappers for reverting with common error messages"
 ├─ ERC1155Receiver — "A minimal interface for receiving ERC1155 tokens"
@@ -69,19 +76,15 @@ utils
 ```
 
 
-### Safety
-
-Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
-
-We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
-
-
 ### Acknowledgements
 
 These contracts were inspired by or directly modified from many sources, primarily:
 
-- [solmate](https://github.com/Rari-Capital/solmate)
+- [solmate](https://github.com/transmissions11/solmate)
 - [huff-examples](https://github.com/huff-language/huff-examples)
+- [huff-rs](https://github.com/huff-language/huff-rs)
+- [huff-clones](https://github.com/clabby/huff-clones)
+- [erc721h](https://github.com/philogy/erc721h)
 - [Gnosis](https://github.com/gnosis/gp-v2-contracts)
 - [Uniswap](https://github.com/Uniswap/uniswap-lib)
 - [Dappsys](https://github.com/dapphub/dappsys)
