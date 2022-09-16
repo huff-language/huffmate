@@ -1,12 +1,13 @@
 /// @title ERC20
+/// @notice SPDX-License-Identifier: MIT
 /// @author asnared <https://github.com/abigger87>
 /// @author devtooligan <https://github.com/devtooligan>
-/// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
-/// @notice Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol)
+/// @notice Modern and gas efficient ERC20 + EIP-2612 implementation
+/// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC20.sol)
 
 // Imports
 #include "../utils/Errors.huff"
-#include "../utils/NonPayable.huff"
+#include "../auth/NonPayable.huff"
 #include "../data-structures/Hashmap.huff"
 
 // Interface

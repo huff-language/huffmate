@@ -1,22 +1,23 @@
 /// @title Owned
-/// @author Andreas Bigger
-/// @notice An Owned module based off <https://github.com/Rari-Capital/solmate/blob/main/src/auth/Owned.sol>
-/// @license Apache License, Version 2.0
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice An single owner authorization module
+/// @notice Adapted from <https://github.com/transmissions11/solmate/blob/main/src/auth/Owned.sol>
 
-/* Interface */
+// Interface
 #define function setOwner(address) nonpayable returns ()
 #define function owner() view returns (address)
 
-/* Events */
+// Events
 #define event OwnerUpdated(address indexed user, address indexed newOwner)
 
-/* Event Signatures */
+// Event Signatures
 #define constant OWNER_UPDATED_SIG = 0x8292fce18fa69edf4db7b94ea2e58241df0ae57f97e0a6c9b29067028bf92d76
 
-/* Storage Slots */
+// Storage Slots
 #define constant OWNER = FREE_STORAGE_POINTER()
 
-/* CONSTRUCTOR */
+// CONSTRUCTOR
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
   // Copy the owner into memory
   0x20                        // [size] - byte size to copy
@@ -37,7 +38,7 @@
   log3                        // []
 }
 
-/* Only Owner Modifier */
+/// @notice Only Owner Modifier
 #define macro IS_OWNER() = takes(0) returns(0) {
   caller                      // [msg.sender]
   [OWNER] sload               // [owner, msg.sender]
@@ -49,7 +50,8 @@
   authed:
 }
 
-/* Set the Owner */
+/// @notice Set the Owner
+/// @param {owner} [address] - The new owner
 #define macro SET_OWNER() = takes(0) returns(0) {
   // Check that the caller is authorized
   IS_OWNER()
@@ -68,18 +70,20 @@
   stop
 }
 
-/* Get the owner of the contract */
+/// @notice Get the owner of the contract
+/// @return {owner} [address] - The owner of the contract
 #define macro OWNER() = takes(0) returns (0) {
   [OWNER] sload                  // [owner]
   0x00 mstore                    // []
   0x20 0x00 return
 }
 
-/* Main Macro - Contract Entrypoint */
+/// @notice Main Function Dispatcher
 #define macro MAIN() = takes(0) returns(0) {
-  0x00 calldataload 0xE0 shr
-  dup1 0x13af4035 eq set_owner jumpi
-  dup1 0x8da5cb5b eq owner jumpi
+  pc calldataload 0xE0 shr
+
+  dup1 __FUNC_SIG(setOwner) eq set_owner jumpi
+  dup1 __FUNC_SIG(owner)    eq owner jumpi
 
   // Revert if no signatures match
   0x00 0x00 revert

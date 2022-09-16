@@ -1,4 +1,5 @@
 /// @title HuffClone
+/// @notice SPDX-License-Identifier: MIT
 /// @notice Clones with Immutable Args Library
 ///         Original implementation:
 ///         https://github.com/wighawag/clones-with-immutable-args/blob/master/src/Clone.sol

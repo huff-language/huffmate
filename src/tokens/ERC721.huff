@@ -6,7 +6,7 @@
 
 // Imports
 #include "../utils/CommonErrors.huff"
-#include "../utils/NonPayable.huff"
+#include "../auth/NonPayable.huff"
 #include "../data-structures/Hashmap.huff"
 
 // Interface

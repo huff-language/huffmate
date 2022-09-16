@@ -1,6 +1,7 @@
 /// @title Reentrancy Guard
 /// @author rayquaza7
-/// @notice A Reentrancy Guard based off <https://github.com/Rari-Capital/solmate/blob/main/src/utils/ReentrancyGuard.sol>
+/// @notice A Reentrancy Guard
+/// @notice Adapted from <https://github.com/transmissions11/solmate/blob/main/src/utils/ReentrancyGuard.sol>
 /// @license Apache License, Version 2.0
 
 #include "./CommonErrors.huff"

@@ -1,12 +1,12 @@
 /// @title ExampleClone
-/// @notice Clones with Immutable Args Library
-///         Original implementation:
-///         https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ExampleClone.sol
+/// @notice SPDX-License-Identifier: MIT
 /// @author wighawag <https://github.com/wighawag>
 /// @author zefram <https://github.com/boredGenius>
 /// @author hari <https://github.com/hrkrshnn>
 /// @author z0r0z <https://github.com/z0r0z>
 /// @author clabby <https://github.com/clabby>
+/// @notice Clones with Immutable Args Library
+/// @notice Adapted from wighawag (https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ExampleClone.sol)
 
 #include "./HuffClone.huff"
 
@@ -42,7 +42,7 @@
 
 #define macro PARAM_5() = takes (0) returns (0) {
     0x04 calldataload           // [arr_len]
-    
+
     // Store pointer in word before array
     0x20 0x00 mstore            // [arr_len]
 

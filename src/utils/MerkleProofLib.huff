@@ -1,18 +1,18 @@
 /// @title MerkleProofLib
 /// @notice Gas optimized merkle proof verification library
 ///         Original implementation:
-///         https://github.com/Rari-Capital/solmate/blob/v7/src/utils/MerkleProofLib.sol
+///         https://github.com/transmissions11/solmate/blob/v7/src/utils/MerkleProofLib.sol
 /// @dev The `proof_cd_ptr` passed via the stack to this macro should point to the offset
 ///      of the proof array's length in the calldata. This macro assumes that the proof
 ///      array contains 32 byte values.
-/// @author solmate <https://github.com/Rari-Capital/solmate>
+/// @author solmate <https://github.com/transmissions11/solmate>
 /// @author clabby <https://github.com/clabby>
 
 /// @notice Verifies a merkle proof.
 /// @param proof_cd_ptr Pointer to the length of the proof array.
 /// @param leaf Leaf to prove inclusion of
 /// @param root Root of the merkle tree
-/// @return is_valid True if the inclusion of `leaf` in the merkle tree represented by 
+/// @return is_valid True if the inclusion of `leaf` in the merkle tree represented by
 ///         `root` was able to be proven, false if not.
 #define macro VERIFY_PROOF() = takes (3) returns (1) {
     // Input Stack:        [proof_cd_ptr, leaf, root]
