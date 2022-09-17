@@ -1,0 +1,72 @@
+/// @title Variable Rate Gradual Dutch Auction
+/// @notice SPDX-License-Identifier: MIT
+/// @author transmissions11 <t11s@paradigm.xyz>
+/// @author FrankieIsLost <frankie@paradigm.xyz>
+/// @author Maddiaa <https://github.com/cheethas>
+/// @notice Sell tokens roughly according to an issuance schedule.
+/// @notice Original Implementation by Maddiaa (https://github.com/cheethas/huff-vrgda/blob/main/src/VRGDA.huff)
+
+#include "./SignedWadMath.huff"
+
+// These will be overriden with the constructor flag
+// The constructor logic will need to be copied within deploy scripts
+// in order to inline the correct constants
+#define constant TARGET_PRICE = 0x00            // ( int256 )
+#define constant DECAY_CONSTANT = 0x00          // ( int256 )
+
+/// @notice Calculate the price of a token according to the VRGDA formula.
+/// @param {Stack} timeSinceStart Time passed since the VRGDA began, scaled by 1e18.
+/// @param {Stack} sold The total number of tokens that have been sold so far.
+/// @return The price of a token according to VRGDA, scaled by 1e18.
+#define macro GET_VRGDA_PRICE(fail) = takes(2) returns(1) {
+    // Inputs : [timeSinceStart, Sold]
+
+    swap1                       // [sold, timeSinceStart]
+    0x01                        // [1, sold, timeSinceStart]
+    add                         // [1 + sold, timeSinceStart]
+    TO_WAD_UNSAFE()             // [wad(1 + sold), timeSinceStart]
+    GET_TARGET_SALE_TIME(fail)  // [targetSaleTime, timeSinceStart]
+
+    swap1                       // [(timeSinceStart, targetSaleTime]
+    sub                         // [(timeSinceStart - targetSaleTime))
+
+    [DECAY_CONSTANT]            // [decayConst, (timeSinceStart - targetSaleTime)]
+    UNSAFE_WAD_MUL()            // [decayConst * (timeSinceStart - targetSaleTime)]
+    EXP_WAD(fail)               // [wadExp(decayConst * (timeSinceStart - targetSaleTime))]
+
+    [TARGET_PRICE]              // [targetPrice, wadExp(decayConst * (timeSinceStart - targetSaleTime))]
+    WAD_MUL(fail)               // [targetPrice * wadExp(decayConst * (timeSinceStart - targetSaleTime))]
+}
+
+/// Return Consant
+/// @notice Returns a constant provided as an arg
+/// @param _constant The constant to return
+#define macro RETURN_CONSTANT(constant) = takes(1) returns(0) {
+    <constant> __RETURN_STACK_ITEM_ONE()
+}
+
+/// Return Stack Item One
+/// @notice Returns the item currently at the top of the stack
+/// @dev 32 bytes only
+#define macro __RETURN_STACK_ITEM_ONE() = takes(1) returns(0) {
+    0x00 mstore
+    0x20 0x00 return
+}
+
+/// @notice Get VRGDA Price External
+/// @notice External wrapper to return the current vrgda price
+#define macro GET_VRGDA_PRICE_EXTERNAL(fail) = {
+    0x24 calldataload       // [sold]
+    0x04 calldataload       // [timesinceStart, sold]
+
+    GET_VRGDA_PRICE(fail)       // [price]
+    __RETURN_STACK_ITEM_ONE()
+}
+
+/// @notice Get Target Sale Time External
+/// @notice External wrapper to return the target sale time
+#define macro GET_TARGET_SALE_TIME_EXTERNAL(fail) = {
+    0x04 calldataload           // [sold]
+    GET_TARGET_SALE_TIME(fail)      // [targetSaleTime]
+    __RETURN_STACK_ITEM_ONE()   // *return targetSaleTime
+}

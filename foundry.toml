@@ -12,10 +12,14 @@ fs_permissions = [
     { access = "read", path = "./test/math/mocks/MathWrappers.huff" },
     { access = "read", path = "./test/math/mocks/TrigonometryWrappers.huff" },
 
-    { access = "read", path = "./test/tokens/mocks/ERC1155Wrappers.huff" },
+    { access = "read", path = "./test/mechanisms/huff-vrgda/mocks/LinearVRGDAWrappers.huff" },
+    { access = "read", path = "./test/mechanisms/huff-vrgda/mocks/LogisticVRGDAWrappers.huff" },
+
+    { access = "read", path = "./test/tokens/mocks/ERC20MintableWrappers.huff" },
     { access = "read", path = "./test/tokens/mocks/ERC20Wrappers.huff" },
     { access = "read", path = "./test/tokens/mocks/ERC721Wrappers.huff" },
-    { access = "read", path = "./test/tokens/mocks/ERC20MintableWrappers.huff" },
+    { access = "read", path = "./test/tokens/mocks/ERC1155Wrappers.huff" },
+    { access = "read", path = "./test/tokens/mocks/ERC4626Wrappers.huff" },
 
     { access = "read", path = "./test/utils/mocks/BitPackLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/CallWrappers.huff" },
@@ -26,6 +30,7 @@ fs_permissions = [
     { access = "read", path = "./test/utils/mocks/MerkleProofLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/MulticallableWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ReentrancyGuardWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/SafeTransferLibWrappers.huff" }
 ]
 remappings = [
     "forge-std/=lib/forge-std/src/",

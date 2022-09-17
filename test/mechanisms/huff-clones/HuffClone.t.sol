@@ -13,7 +13,7 @@ contract ExampleCloneTest is Test {
     function setUp() public {
         IExampleClone impl = IExampleClone(HuffDeployer.deploy("mechanisms/huff-clones/ExampleClone"));
         factory = IExampleCloneFactory(HuffDeployer.deploy_with_args("mechanisms/huff-clones/ExampleCloneFactory", abi.encode(address(impl))));
-        
+
         // Create (address, uint256, uint64, uint8) clone
         clone = IExampleClone(factory.createClone(address(this), type(uint256).max, 8008, 69));
 

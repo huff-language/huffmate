@@ -18,7 +18,6 @@ Huffmate is still a work in progress and the majority of contracts have yet to b
 
 Use these contracts at your own risk!
 
-
 ### Usage
 
 To install with [**Foundry**](https://github.com/foundry-rs/foundry):
@@ -32,7 +31,6 @@ To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffl
 ```sh
 npm install @pentagonxyz/huffmate
 ```
-
 
 ### Contracts
 
@@ -50,6 +48,16 @@ data-structures
 factories
 ├─ Factory — TODO
 ├─ ProxyFactory — TODO
+mechanisms
+|  ├─ huff-clones — "Library for creating clone contracts with immutable arguments"
+|  |  ├─ ExampleClone — "Example clones-with-immutable-args clone contract"
+|  |  ├─ ExampleCloneFactory — "Example clones-with-immutable-args factory contract"
+|  |  ├─ HuffClone — "Clones-with-immutable-args Clone Instance"
+|  |  └─ HuffCloneLib — "Library for creating a HuffClone"
+|  └─ huff-vrgda — "Variable Rate Gradual Dutch Auctions written in Huff"
+|      ├─ LinearVRGDA — "VRGDA with a linear issuance curve"
+|      ├─ LogisticVRGDA — "VRGDA with a logistic issuance curve"
+|      └─ VRGDA — "Sell tokens roughly according to an issuance schedule"
 math
 ├─ FixedPointMath — "Arithmetic library with operations for fixed-point numbers"
 ├─ Math — "Refactored, common arithmetic macros"
@@ -59,7 +67,7 @@ tokens
 ├─ ERC20 — "Modern and gas efficient ERC20 + EIP-2612 implementation"
 ├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
 ├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
-├─ ERC4626 — TODO - "Minimal ERC4626 tokenized Vault implementation"
+├─ ERC4626 — "Minimal ERC4626 tokenized Vault implementation"
 utils
 ├─ Calls — "Minimal wrappers for constructing calls to other contracts"
 ├─ BitPackLib — "Efficient bit packing library"
@@ -72,6 +80,7 @@ utils
 ├─ Multicallable — "Enables a single call to call multiple methods within a contract"
 ├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
 ├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
+├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values."
 ├─ SSTORE2 — TODO
 ```
 
@@ -81,6 +90,7 @@ utils
 These contracts were inspired by or directly modified from many sources, primarily:
 
 - [solmate](https://github.com/transmissions11/solmate)
+- [solady](https://github.com/Vectorized/solady)
 - [huff-examples](https://github.com/huff-language/huff-examples)
 - [huff-rs](https://github.com/huff-language/huff-rs)
 - [huff-clones](https://github.com/clabby/huff-clones)
