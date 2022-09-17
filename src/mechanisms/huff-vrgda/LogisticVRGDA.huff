@@ -1,0 +1,35 @@
+/// @title Logistic Variable Rate Gradual Dutch Auction
+/// @notice SPDX-License-Identifier: MIT
+/// @author transmissions11 <t11s@paradigm.xyz>
+/// @author FrankieIsLost <frankie@paradigm.xyz>
+/// @author Maddiaa <https://github.com/cheethas>
+/// @notice VRGDA with a logistic issuance curve.
+/// @notice Original Implementation by Maddiaa (https://github.com/cheethas/huff-vrgda/blob/main/src/LogisticVRGDA.huff)
+
+#include "./VRGDA.huff"
+
+#define constant LOGISTIC_LIMIT = 0x00          // ( int256 )
+#define constant LOGISTIC_LIMIT_DOUBLED = 0x00  // ( int256 )
+#define constant TIME_SCALE = 0x00              // ( int256 )
+
+/// @dev Given a number of tokens sold, return the target time that number of tokens should be sold by.
+/// @param {Stack} sold A number of tokens sold, scaled by 1e18, to get the corresponding target sale time for.
+/// @return The target time the tokens should be sold by, scaled by 1e18, where the time is
+/// relative, such that 0 means the tokens should be sold immediately when the VRGDA begins.
+#define macro GET_TARGET_SALE_TIME(fail) = takes (1) returns (0) {
+    // init state = [sold]
+    [TIME_SCALE]                // [timeScale, sold]
+    swap1                       // [sold, perTimeUnit]
+
+    [WAD]                       // [1e18, sold, timescale]
+    swap1                       // [sold, 1e18, timescale]
+    [LOGISTIC_LIMIT]            // [logisticLimit, sold, 1e18, timeScale]
+    add                         // [sold + logisticLimit, 1e18, timeScale]
+    [LOGISTIC_LIMIT_DOUBLED]    // [logisticLimitDoubled, (sold+logisticLimit), 1e18, timeScale]
+    UNSAFE_WAD_DIV()            // [(logisticLimitDoubled / (sold + logisticLimit)), 1e18, timeScale]
+    sub                         // [((logisticLimitDoubled / (sold + logisticLimit)) - 1e18), timeScale]
+
+    LN_WAD(fail)                // [wadLn((logisticLimitDoubled / (sold + logisticLimit)) - 1e18), timeScale]
+    UNSAFE_WAD_DIV()            // [wadLn((logisticLimitDoubled / (sold + logisticLimit)) - 1e18) / timeScale]
+    0x00 sub                    // [-wadLn((logisticLimitDoubled / (sold + logisticLimit)) - 1e18) / timeScale]
+}

@@ -1,0 +1,40 @@
+
+#define function getTargetSaleTime(int256) view returns (int256)
+#define function getVRGDAPrice(int256, uint256) view returns (uint256)
+
+// Getters to demonstrate how to override constants in huff
+#define function targetPrice() view returns(int256)
+#define function decayConstant() view returns(int256)
+#define function timeScale() view returns(int256)
+#define function logisticLimit() view returns(int256)
+#define function logisticLimitDoubled() view returns(int256)
+
+
+#define macro MAIN() = {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(getVRGDAPrice) eq getVRGDAPrice jumpi
+    dup1 __FUNC_SIG(getTargetSaleTime) eq getTargetSaleTime jumpi
+    dup1 __FUNC_SIG(targetPrice) eq targetPrice jumpi
+    dup1 __FUNC_SIG(decayConstant) eq decayConstant jumpi
+    dup1 __FUNC_SIG(timeScale) eq timeScale jumpi
+    dup1 __FUNC_SIG(logisticLimit) eq logisticLimit jumpi
+    dup1 __FUNC_SIG(logisticLimitDoubled) eq logisticLimitDoubled jumpi
+
+    fail:
+        0x00 dup1 revert
+
+    getVRGDAPrice:
+        GET_VRGDA_PRICE_EXTERNAL(fail)
+    getTargetSaleTime:
+        GET_TARGET_SALE_TIME_EXTERNAL(fail)
+    targetPrice:
+        RETURN_CONSTANT(TARGET_PRICE)
+    decayConstant:
+        RETURN_CONSTANT(DECAY_CONSTANT)
+    timeScale:
+        RETURN_CONSTANT(TIME_SCALE)
+    logisticLimit:
+        RETURN_CONSTANT(LOGISTIC_LIMIT)
+    logisticLimitDoubled:
+        RETURN_CONSTANT(LOGISTIC_LIMIT_DOUBLED)
+}

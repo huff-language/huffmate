@@ -1,0 +1,30 @@
+
+#define function getTargetSaleTime(int256) view returns (int256)
+#define function getVRGDAPrice(int256, uint256) view returns (uint256)
+#define function targetPrice() view returns (int256)
+#define function decayConstant() view returns (int256)
+#define function perTimeUnit() view returns (int256)
+
+
+#define macro MAIN() = {
+    0x00 calldataload 0xE0 shr
+    dup1 __FUNC_SIG(getVRGDAPrice) eq getVRGDAPrice jumpi
+    dup1 __FUNC_SIG(getTargetSaleTime) eq getTargetSaleTime jumpi
+    dup1 __FUNC_SIG(targetPrice) eq targetPrice jumpi
+    dup1 __FUNC_SIG(decayConstant) eq decayConstant jumpi
+    dup1 __FUNC_SIG(perTimeUnit) eq perTimeUnit jumpi
+
+    fail:
+        0x00 dup1 revert
+
+    getVRGDAPrice:
+        GET_VRGDA_PRICE_EXTERNAL(fail)
+    getTargetSaleTime:
+        GET_TARGET_SALE_TIME_EXTERNAL(fail)
+    targetPrice:
+        RETURN_CONSTANT(TARGET_PRICE)
+    decayConstant:
+        RETURN_CONSTANT(DECAY_CONSTANT)
+    perTimeUnit:
+        RETURN_CONSTANT(PER_TIME_UNIT)
+}

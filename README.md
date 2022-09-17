@@ -48,6 +48,16 @@ data-structures
 factories
 ├─ Factory — TODO
 ├─ ProxyFactory — TODO
+mechanisms
+|  ├─ huff-clones — "Library for creating clone contracts with immutable arguments"
+|  |  ├─ ExampleClone — "Example clones-with-immutable-args clone contract"
+|  |  ├─ ExampleCloneFactory — "Example clones-with-immutable-args factory contract"
+|  |  ├─ HuffClone — "Clones-with-immutable-args Clone Instance"
+|  |  └─ HuffCloneLib — "Library for creating a HuffClone"
+|  └─ huff-vrgda — "Variable Rate Gradual Dutch Auctions written in Huff"
+|      ├─ LinearVRGDA — "VRGDA with a linear issuance curve"
+|      ├─ LogisticVRGDA — "VRGDA with a logistic issuance curve"
+|      └─ VRGDA — "Sell tokens roughly according to an issuance schedule"
 math
 ├─ FixedPointMath — "Arithmetic library with operations for fixed-point numbers"
 ├─ Math — "Refactored, common arithmetic macros"
