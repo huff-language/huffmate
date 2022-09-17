@@ -6,6 +6,35 @@
 
 #define error InvalidCodeAtRange(uint256 _size, uint256 _start, uint256 _end)
 
-#define macro CREATION_CODE_FOR() = takes (0) returns (0) {
+/// @notice Generate a creation code that results on a contract with `_code` as bytecode
+/// @param {_code} [bytes calldata] The returning value of the resulting `creationCode`
+/// @return creationCode (constructor) for new contract
+#define macro CREATION_CODE_FROM_CALLDATA() = takes (1) returns (0) {
+    // Input Stack: [&_code]
 
+    // Memory operations
+    // 0x00    0x63         0x63XXXXXX  PUSH4 _code.length  size
+    // 0x01    0x80         0x80        DUP1                size size
+    // 0x02    0x60         0x600e      PUSH1 14            14 size size
+    // 0x03    0x60         0x6000      PUSH1 00            0 14 size size
+    // 0x04    0x39         0x39        CODECOPY            size
+    // 0x05    0x60         0x6000      PUSH1 00            0 size
+    // 0x06    0xf3         0xf3        RETURN
+    // <CODE>
+
+    // Place the PUSH4 opcode in memory in the first 2 bytes at memory position 0x00
+    0x63 0xF8 shl 0x00 mstore               // [&_code]
+
+    // Place the code length in the next 4 bytes at memory position 0x02
+    dup1 calldataload dup1                  // [_code.length, _code.length, &_code]
+    0x02 mstore                             // [_code.length, &_code]
+
+    // Place the code copy logic in the memory at memory positions 0x06:0x16
+    0x80600E6000396000F3 0x06 mstore        // [_code.length, &_code]
+
+    // Copy the code from calldata to memory at memory position 0x16
+    dup1 0x05 shl                           // [_code.length * 0x20, _code.length, &_code]
+    0x44                                    // [calldataOffset, _code.length * 0x20, _code.length, &_code]
+    0x16                                    // [destOffset, calldataOffset, _code.length * 0x20, _code.length, &_code]
+    calldatacopy                            // [_code.length, &_code]
 }
