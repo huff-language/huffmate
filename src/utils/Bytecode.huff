@@ -70,7 +70,6 @@
     calldatacopy                            // []
 }
 
-
 /// @notice Returns the size of the code on a given address
 /// @param _addr Address that may or may not contain code
 /// @return size of the code on the given `_addr`
@@ -79,4 +78,61 @@
     extcodesize     // [size]
 }
 
+/// @notice Returns the code of a given address
+/// @dev It will fail if `_end < _start`
+/// @param _addr Address that may or may not contain code
+/// @param _start number of bytes of code to skip on read
+/// @param _end index before which to end extraction
+/// @return oCode read from `_addr` deployed bytecode
+/// @notice Forked from: https://gist.github.com/KardanovIR/fe98661df9338c842b4a30306d507fbd
+#define macro CODE_AT() = takes (3) returns (1) {
+    // Input Stack: [_addr, _start, _end]
 
+    // If the code size is zero, return an empty bytes array
+    dup2 dup2                       // [_addr, _start, _addr, _start, _end]
+    CODE_SIZE() dup1                // [codeSize(_addr), _start, _addr, _start, _end]
+    iszero done jumpi               // [codeSize(_addr), _start, _addr, _start, _end]
+
+    // If start > csize, return an empty bytes array
+    dup1 swap3 gt done jumpi        // [codeSize(_addr), _addr, _start, _end]
+
+    // If end < start, revert
+    dup3 dup5 lt error jumpi        // [codeSize(_addr), _addr, _start, _end]
+
+    // Extcodecopy logic
+    dup3 dup5 sub                   // [_end - _start, codeSize(_addr), _addr, _start, _end]
+
+    // Max size
+    dup4 dup3 sub                   // [codeSize(_addr) - _start, _end - _start, codeSize(_addr), _addr, _start, _end]
+
+    // Calculate size
+    dup2 dup2 lt maxSize jumpi      // [codeSize(_addr) - _start, _end - _start, codeSize(_addr), _addr, _start, _end]
+    pop                             // [_end - _start, codeSize(_addr), _addr, _start, _end]
+    cont jump                       // [_end - _start, codeSize(_addr), _addr, _start, _end]
+
+    maxSize:
+    swap1 pop                       // [codeSize(_addr) - _start, codeSize(_addr), _addr, _start, _end]
+
+    cont:                           // [size, codeSize(_addr), _addr, _start, _end]
+
+    // Store the bytes pointer in memory
+    0x20 0x00 mstore                // Store bytes pointer in memory
+
+    // Store size in memory
+    dup1 0x20 mstore                // [size + 0x20 + 0x1f & ~0x1f, codeSize(_addr), _addr, _start, _end]
+
+    // Extcodecopy
+    swap2 swap1                     // [_addr, _start, codeSize(_addr), _end]
+    0x40 swap1                      // [_addr, destOffset, _start, codeSize(_addr), _end]
+
+    // Jump over error
+    done jump
+
+    // TODO: add a revert string here
+    error:
+        0x00 dup1 revert
+
+    // Push the pointer to the bytes in memory
+    done:
+        0x00
+}
