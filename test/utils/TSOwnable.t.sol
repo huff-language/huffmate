@@ -29,4 +29,11 @@ contract TSOwnableTest is Test {
     function testOwner() public {
         assertEq(tsOwnable.owner(), huffConfig);
     }
+
+    function testSetPendingOwner() public {
+        vm.prank(huffConfig);
+        tsOwnable.setPendingOwner(address(0xBEEF));
+        
+        assertEq(tsOwnable.pendingOwner(), address(0xBEEF));
+    }
 }

@@ -64,14 +64,14 @@
 #define macro ONLY_OWNER() = takes(0) returns (0) {
     [ONLY_OWNER_ERROR]                  // ["ONLY_OWNER"]
     [ONLY_OWNER_LENGTH]                 // [10 (length), "ONLY_OWNER"]
-    [OWNER_SLOT] sload caller eq        // [isOwner, 10 (length), "ONLY_OWNER"]
+    [OWNER_SLOT] sload caller eq not    // [isNotOwner, 10 (length), "ONLY_OWNER"]
     REQUIRE()
 }
 
 #define macro ONLY_PENDING_OWNER() = takes (0) returns (0) {
     [ONLY_PENDING_OWNER_ERROR]                  // ["ONLY_PENDING_OWNER"]
     [ONLY_PENDING_OWNER_LENGTH]                 // [18 (length), "ONLY_PENDING_OWNER"]
-    [PENDING_OWNER_SLOT] sload caller eq        // [isPendingOwner, 18 (length), "ONLY_PENDING_OWNER"]
+    [PENDING_OWNER_SLOT] sload caller eq not    // [isNotPendingOwner, 18 (length), "ONLY_PENDING_OWNER"]
     REQUIRE()
 }
 
@@ -87,7 +87,7 @@
     // Revert if address equals owner
     [ALREADY_OWNER_ERROR]                       // ["ALREADY_OWNER", newOwner]
     [ALREADY_OWNER_LENGTH]                      // [13 (length), "ALREADY_OWNER", newOwner]
-    dup3 caller eq                              // [isAlreadyOwner, 13 (length), "ALREADY_OWNER", newOwner]
+    dup3 caller eq not                          // [isNotAlreadyOwner, 13 (length), "ALREADY_OWNER", newOwner]
     REQUIRE()                                   // [newOwner]
 
     // Duplicate address on stack
@@ -99,6 +99,8 @@
 
     // Store address as pending owner
     [PENDING_OWNER_SLOT] sstore
+
+    stop
 }
 
 #define macro OWNABLE_ACCEPT_OWNERSHIP() = takes (0) returns (0) {
