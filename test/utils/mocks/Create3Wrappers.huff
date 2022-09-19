@@ -1,0 +1,12 @@
+#define function deploy(bytes32,bytes,uint256) payable returns (address)
+
+#define macro MAIN() = {
+    pc calldataload 0xe0 shr
+    dup1 __FUNC_SIG(deploy) eq jumpi
+
+    // Exit if selector does not match
+    returndatasize dup1 revert
+
+    deploy:
+        DEPLOY()
+}
