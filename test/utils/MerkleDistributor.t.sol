@@ -31,7 +31,7 @@ contract MerkleDistributorTest is Test {
     uint amount4 = 30;
     uint index4 = 3;
 
-    /// @dev Address of the SimpleStore contract.
+    /// @dev Address of the MerkleDistributor contract.
     MerkleDistributor public merkleDistributor;
 
     /// @dev Setup the testing environment.
