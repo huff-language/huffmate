@@ -39,6 +39,12 @@
 #define constant OUT_OF_BOUNDS_ERROR = 0x4f55545f4f465f424f554e445300000000000000000000000000000000000000
 #define constant OUT_OF_BOUNDS_LENGTH = 0x0d
 
+#define constant INITIALIZATION_FAILED_ERROR = 0x494e495449414c495a4154494f4e5f4641494c45440000000000000000000000
+#define constant INITIALIZATION_FAILED_LENGTH = 0x15
+
+#define constant DEPLOYMENT_FAILED_ERROR = 0x4445504c4f594d454e545f4641494c4544000000000000000000000000000000
+#define constant DEPLOYMENT_FAILED_LENGTH = 0x11
+
 // Merkle Distributor Errors
 
 #define constant ALREADY_CLAIMED_ERROR = 0x414c52454144595f434c41494d45440000000000000000000000000000000000
@@ -52,6 +58,22 @@
 
 #define constant ZERO_ASSETS_ERROR = 0x5a45524f5f415353455453000000000000000000000000000000000000000000
 #define constant ZERO_ASSETS_LENGTH = 0x0b
+
+/// @notice Reverts with an "INITIALIZATION_FAILED" message if the condition is false
+#define macro INITIALIZATION_FAILED(condition) = takes (0) returns (0) {
+    [INITIALIZATION_FAILED_ERROR]   // ["INITIALIZATION_FAILED"]
+    [INITIALIZATION_FAILED_LENGTH]  // [20 (length), "INITIALIZATION_FAILED"]
+    <condition>                     // [condition, 20 (length), "INITIALIZATION_FAILED"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "DEPLOYMENT_FAILED" message if the condition is false
+#define macro DEPLOYMENT_FAILED(condition) = takes (0) returns (0) {
+    [DEPLOYMENT_FAILED_ERROR]       // ["DEPLOYMENT_FAILED"]
+    [DEPLOYMENT_FAILED_LENGTH]      // [16 (length), "DEPLOYMENT_FAILED"]
+    <condition>                     // [condition, 16 (length), "DEPLOYMENT_FAILED"]
+    REQUIRE()                       // []
+}
 
 /// @notice Reverts with an "OUT_OF_BOUNDS" message if the condition is false
 #define macro OUT_OF_BOUNDS(condition) = takes (0) returns (0) {

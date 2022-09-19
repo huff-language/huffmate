@@ -5,13 +5,13 @@ pragma solidity 0.8.15;
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
 
-// import {WETH} from "../tokens/WETH.sol";
-// import {DSTestPlus} from "./utils/DSTestPlus.sol";
-// import {MockERC20} from "./utils/mocks/MockERC20.sol";
-// import {MockAuthChild} from "./utils/mocks/MockAuthChild.sol";
+import { WETH } from "solmate/tokens/WETH.sol";
+import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import { MockAuthChild } from "solmate/test/utils/mocks/MockAuthChild.sol";
 
 interface CREATE3 {
-    function deploy(bytes32 salt, bytes memory creationCode, uint256 value) external returns (address deployed);
+    function deploy(bytes32 salt, bytes memory creationCode, uint256 value) external payable returns (address deployed);
+    function getDeployed(bytes32 salt) external view returns (address deployed);
 }
 
 contract CREATE3Test is Test {
@@ -22,25 +22,23 @@ contract CREATE3Test is Test {
         create3 = CREATE3(HuffDeployer.deploy_with_code("utils/CREATE3", wrapper_code));
     }
 
-    // function testDeployERC20() public {
-    //     bytes32 salt = keccak256(bytes("A salt!"));
+    function testCreate3ERC20() public {
+        bytes32 salt = keccak256(bytes("A salt!"));
 
+        MockERC20 deployed = MockERC20(
+            create3.deploy(
+                salt,
+                abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18)),
+                0
+            )
+        );
 
+        assertEq(address(deployed), create3.getDeployed(salt));
 
-    //     MockERC20 deployed = MockERC20(
-    //         create3.deploy(
-    //             salt,
-    //             abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18)),
-    //             0
-    //         )
-    //     );
-
-    //     assertEq(address(deployed), create3.getDeployed(salt));
-
-    //     assertEq(deployed.name(), "Mock Token");
-    //     assertEq(deployed.symbol(), "MOCK");
-    //     assertEq(deployed.decimals(), 18);
-    // }
+        assertEq(deployed.name(), "Mock Token");
+        assertEq(deployed.symbol(), "MOCK");
+        assertEq(deployed.decimals(), 18);
+    }
 
     // function testFailDoubleDeploySameBytecode() public {
     //     bytes32 salt = keccak256(bytes("Salty..."));
