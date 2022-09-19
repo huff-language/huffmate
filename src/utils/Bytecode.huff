@@ -4,12 +4,12 @@
 /// @notice Low-level bytecode utilities
 /// @notice Adapted from 0xsequence/sstore2 (https://github.com/0xsequence/sstore2/blob/master/contracts/utils/Bytecode.sol)
 
-#define error InvalidCodeAtRange(uint256 _size, uint256 _start, uint256 _end)
+#include "./CommonErrors.huff"
 
 /// @notice Generate a creation code that results on a contract with `_code` as bytecode
 /// @notice Input stack {_code} [bytes calldata] The returning value of the resulting `creationCode`
 /// @return creationCode (constructor) for new contract
-#define macro CREATION_CODE_FROM_CALLDATA() = takes (1) returns (1) {
+#define macro CREATION_CODE_FOR() = takes (1) returns (1) {
     // Input Stack: [&_code]
 
     // Memory operations
@@ -42,73 +42,6 @@
     calldatacopy                            // [&_code]
 }
 
-/// @notice Generate a creation code that results on a contract with `_code` as bytecode
-/// @param {_code} [bytes memory] The returning value of the resulting `creationCode`
-/// @return creationCode (constructor) for new contract
-#define macro CREATION_CODE_FROM_MEMORY(mem_ptr) = takes (0) returns (0) {
-    // Memory operations
-    // 0x00    0x63         0x63XXXXXX  PUSH4 _code.length  size
-    // 0x01    0x80         0x80        DUP1                size size
-    // 0x02    0x60         0x600e      PUSH1 14            14 size size
-    // 0x03    0x60         0x6000      PUSH1 00            0 14 size size
-    // 0x04    0x39         0x39        CODECOPY            size
-    // 0x05    0x60         0x6000      PUSH1 00            0 size
-    // 0x06    0xf3         0xf3        RETURN
-    // <CODE>
-
-    // Load the data length from memory
-    <mem_ptr> calldataload mload dup1       // [_code.length, _code.length]
-
-    // Copy the code from calldata to memory at memory position 0x16
-    0x05 shl                                // [_code.length * 0x20, _code.length]
-    0x44                                    // [calldataOffset, _code.length * 0x20, _code.length]
-    0x16                                    // [destOffset, calldataOffset, _code.length * 0x20, _code.length]
-    calldatacopy                            // [_code.length]
-
-    // Place the PUSH4 opcode in memory in the first 2 bytes at memory position 0x00
-    0x63 0xF8 shl 0x00 mstore               // [_code.length]
-
-    // Place the code length in the next 4 bytes at memory position 0x02
-    0x02 mstore                             // []
-
-    // Place the code copy logic in the memory at memory positions 0x06:0x16
-    0x80600E6000396000F3 0x06 mstore        // []
-}
-
-/// @notice Generate a creation code that results on a contract with `_code` as bytecode
-/// @return creationCode (constructor) for new contract
-#define macro CREATION_CODE_FROM_STACK() = takes (1) returns (0) {
-    // Input Stack: [&_code]
-
-    // Memory operations
-    // 0x00    0x63         0x63XXXXXX  PUSH4 _code.length  size
-    // 0x01    0x80         0x80        DUP1                size size
-    // 0x02    0x60         0x600e      PUSH1 14            14 size size
-    // 0x03    0x60         0x6000      PUSH1 00            0 14 size size
-    // 0x04    0x39         0x39        CODECOPY            size
-    // 0x05    0x60         0x6000      PUSH1 00            0 size
-    // 0x06    0xf3         0xf3        RETURN
-    // <CODE>
-
-    // Load the data length from memory
-     mload dup1                             // [_code.length, _code.length]
-
-    // Copy the code from calldata to memory at memory position 0x16
-    0x05 shl                                // [_code.length * 0x20, _code.length]
-    0x44                                    // [calldataOffset, _code.length * 0x20, _code.length]
-    0x16                                    // [destOffset, calldataOffset, _code.length * 0x20, _code.length]
-    calldatacopy                            // [_code.length]
-
-    // Place the PUSH4 opcode in memory in the first 2 bytes at memory position 0x00
-    0x63 0xF8 shl 0x00 mstore               // [_code.length]
-
-    // Place the code length in the next 4 bytes at memory position 0x02
-    0x02 mstore                             // []
-
-    // Place the code copy logic in the memory at memory positions 0x06:0x16
-    0x80600E6000396000F3 0x06 mstore        // []
-}
-
 /// @notice Returns the size of the code on a given address
 /// @param _addr Address that may or may not contain code
 /// @return size of the code on the given `_addr`
@@ -136,7 +69,7 @@
     dup1 dup4 gt done jumpi         // [codeSize(_addr), _addr, _start, _end]
 
     // If end < start, revert
-    dup3 dup5 lt error jumpi        // [codeSize(_addr), _addr, _start, _end]
+    dup3 dup5 lt oob jumpi          // [codeSize(_addr), _addr, _start, _end]
 
     // Extcodecopy logic
     dup3 dup5 sub                   // [_end - _start, codeSize(_addr), _addr, _start, _end]
@@ -172,7 +105,8 @@
     0x40 add                        // [size + 0x40]
     done jump
 
-    error:
-        0x00 dup1 revert
+    oob:
+        OUT_OF_BOUNDS(0x00)
+
     done:
 }

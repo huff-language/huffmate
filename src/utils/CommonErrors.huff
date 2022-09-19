@@ -33,6 +33,12 @@
 #define constant NOT_MINTED_ERROR = 0x4e4f545f4d494e54454400000000000000000000000000000000000000000000
 #define constant NOT_MINTED_LENGTH = 0x0a
 
+#define constant CREATE_FAILED_ERROR = 0x4352454154455f4641494c454400000000000000000000000000000000000000
+#define constant CREATE_FAILED_LENGTH = 0x0d
+
+#define constant OUT_OF_BOUNDS_ERROR = 0x4f55545f4f465f424f554e445300000000000000000000000000000000000000
+#define constant OUT_OF_BOUNDS_LENGTH = 0x0d
+
 // Merkle Distributor Errors
 
 #define constant ALREADY_CLAIMED_ERROR = 0x414c52454144595f434c41494d45440000000000000000000000000000000000
@@ -47,11 +53,27 @@
 #define constant ZERO_ASSETS_ERROR = 0x5a45524f5f415353455453000000000000000000000000000000000000000000
 #define constant ZERO_ASSETS_LENGTH = 0x0b
 
+/// @notice Reverts with an "OUT_OF_BOUNDS" message if the condition is false
+#define macro OUT_OF_BOUNDS(condition) = takes (0) returns (0) {
+    [OUT_OF_BOUNDS_ERROR]           // ["OUT_OF_BOUNDS"]
+    [OUT_OF_BOUNDS_LENGTH]          // [13 (length), "OUT_OF_BOUNDS"]
+    <condition>                     // [condition, 13 (length), "OUT_OF_BOUNDS"]
+    REQUIRE()                       // []
+}
+
 /// @notice Reverts with an "ZERO_ASSETS" message if the condition is false
 #define macro ZERO_ASSETS(condition) = takes (0) returns (0) {
     [ZERO_ASSETS_ERROR]             // ["ZERO_ASSETS"]
     [ZERO_ASSETS_LENGTH]            // [11 (length), "ZERO_ASSETS"]
     <condition>                     // [condition, 11 (length), "ZERO_ASSETS"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "CREATE_FAILED" message if the condition is false
+#define macro CREATE_FAILED(condition) = takes (0) returns (0) {
+    [CREATE_FAILED_ERROR]           // ["CREATE_FAILED"]
+    [CREATE_FAILED_LENGTH]          // [13 (length), "CREATE_FAILED"]
+    <condition>                     // [condition, 13 (length), "CREATE_FAILED"]
     REQUIRE()                       // []
 }
 

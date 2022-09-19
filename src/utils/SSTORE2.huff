@@ -5,10 +5,9 @@
 /// @notice Adapted from 0xsequence/sstore2 (https://github.com/0xsequence/sstore2)
 
 #include "./Bytecode.huff"
+#include "./CommonErrors.huff"
 
 #define constant TYPE_UINT_256_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-
-#define error WriteError()
 
 /// @notice Stores `_data` and returns `pointer` as key for later retrieval
 /// @dev The pointer is a contract address with `_data` as code
@@ -20,7 +19,7 @@
     dup1 0x04 add calldataload swap1     // [&_data, _data.length]
 
     // Create the contract creation code
-    CREATION_CODE_FROM_CALLDATA()        // [&_data, _data.length]
+    CREATION_CODE_FOR()               // [&_data, _data.length]
 
     // Deploy the contract
     swap1                             // [_data.length, &_data]
@@ -31,43 +30,11 @@
 
     // Check that the address is non-zero
     dup1 iszero iszero success jumpi  // [address, &_data]
-    0x00 dup1 revert
+    CREATE_FAILED(0x00)
     success:
 
     // Clean the stack and return the address
     swap1 pop                         // [address]
-}
-
-/// @notice Stores `_data` and returns `pointer` as key for later retrieval
-/// @dev The pointer is a contract address with `_data` as code
-/// @return pointer Pointer to the written `_data`
-#define macro SSTORE2_WRITE_CALLDATA() = takes (0) returns (1) {
-    // Load the data memory pointer
-    0x04 calldataload                 // [&_data]
-
-    // Copy the code from calldata to memory at memory position 0x00
-    // We need the length of data + 0x20 bytes for the length + 0x20 bytes for the data pointer
-    0x05 shl 0x40 add                       // [_code.length * 0x20 + 0x40, _code.length]
-    0x04                                    // [calldataOffset, _code.length * 0x20, _code.length]
-    0x00                                    // [destOffset, calldataOffset, _code.length * 0x20, _code.length]
-    calldatacopy                            // [_code.length]
-
-    // Create the contract code
-    CREATION_CODE_FROM_MEMORY(0x04)   // [i, _data, &_data, _data.length]
-
-    // Deploy the contract
-    dup4 0x16 add                     // [size, i, _data, &_data, _data.length]
-    0x00                              // [offset, size, i, _data, &_data, _data.length]
-    0x00                              // [value, offset, size, i, _data, &_data, _data.length]
-    create                            // [address, i, _data, &_data, _data.length]
-
-    // Check that the address is non-zero
-    dup1 iszero iszero success jumpi  // [address, i, _data, &_data, _data.length]
-    0x00 dup1 revert
-    success:
-
-    // Clean the stack and return the address
-    swap4 pop pop pop pop            // [address]
 }
 
 /// @notice Reads the contents of the `_pointer` code as data, skips the first byte

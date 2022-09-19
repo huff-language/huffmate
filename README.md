@@ -12,12 +12,6 @@ A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/h
 > We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
 
-## Warning: Be cautious
-
-Huffmate is still a work in progress and the majority of contracts have yet to be completed and audited. We do not give any warranties and will not be liable for any loss incurred through any use of this codebase.
-
-Use these contracts at your own risk!
-
 ### Usage
 
 To install with [**Foundry**](https://github.com/foundry-rs/foundry):
@@ -34,7 +28,7 @@ npm install @pentagonxyz/huffmate
 
 ### Contracts
 
-```ml
+```
 auth
 ├─ Auth — "Flexible and updatable auth pattern"
 ├─ NonPayable — "Modifier Macro that reverts the tx when msg.value > 0"
@@ -80,7 +74,7 @@ utils
 ├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
 ├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
 ├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values"
-├─ SSTORE2 — "Faster & cheaper contract key-value storage for Ethereum Contracts"
+└─ SSTORE2 — "Faster & cheaper contract key-value storage for Ethereum Contracts"
 ```
 
 

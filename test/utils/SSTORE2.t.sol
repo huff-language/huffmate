@@ -64,4 +64,38 @@ contract SSTORE2Test is Test {
         assertEq(packedResult, expectedCodePacked);
         assertEq(packedResult, pointer.code);
     }
+
+    /// @notice Test sstore2 readAt
+    function testReadAt() public {
+        bytes memory input = bytes("this string is longer than 32 bytes and will require multiple words to store");
+        bytes memory expectedCodePacked = abi.encodePacked(
+            hex"00697320737472696e67206973206c6f6e676572207468616e20333220627974657320616e642077696c6c2072657175697265206d756c7469706c6520776f72647320746f2073746f7265"
+        );
+
+        // Store "hello world"
+        address pointer = store.write(input);
+        assert(pointer != address(0));
+        assertEq(abi.encodePacked(hex"00", input), pointer.code);
+
+        // Try to read back from the pointer
+        bytes memory result = store.read(pointer, 0x03);
+        bytes memory packedResult = abi.encodePacked(hex"00", result);
+        assertEq(packedResult, expectedCodePacked);
+    }
+
+    /// @notice Test sstore2 readBetween
+    function testReadBetween() public {
+        bytes memory input = bytes("this string is longer than 32 bytes and will require multiple words to store");
+        bytes memory expectedCodePacked = abi.encodePacked(hex"0074686973");
+
+        // Store "hello world"
+        address pointer = store.write(input);
+        assert(pointer != address(0));
+        assertEq(abi.encodePacked(hex"00", input), pointer.code);
+
+        // Try to read back from the pointer
+        bytes memory result = store.read(pointer, 0x01, 0x05);
+        bytes memory packedResult = abi.encodePacked(hex"00", result);
+        assertEq(packedResult, expectedCodePacked);
+    }
 }
