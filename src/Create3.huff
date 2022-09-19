@@ -13,8 +13,7 @@
     return    
 */
 #define constant PROXY_BYTECODE = 0x67363d3d37363d34f03d5260086018f3 
-    
-    
+#define constant PROXY_BYTECODE_HASH = 0x21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f
 
 
 // TODO: replace this with the keccak of the bytecode
@@ -33,19 +32,70 @@
     0x00                            // [0x00, &offset, len(arr), &mem, salt]                   
 
     // Deploy the proxy 
-    create2  
+    create2                         // [proxy, &mem, salt]
 
 
-    // Check the address of of the proxy is nay null
+    // Check the address of of the proxy is not null
+    dup1 eq                         // [proxy, proxy, salt]
+    iszero eq fail jumpi            // [proxy, salt]
 
 
-    // init stack: 
-    0x04 calldataload // [salt]
-    0x24 calldataload // [creationCode, salt]
-    0x44 calldataload // [value, creationCode, salt]
+    // this overwrites memory, pass memory pointer
+    swap2             // [salt, proxy]
+    GET_DEPLOYED()    // [deployed, proxy]
+    dup1 extcodesize  // [deployed_size, deployed, proxy]
+    
+    // revert if failed to create proxy
+    iszero eq fail jumpi   // [deployed, address]
 
-    [PROXY_BYTECODE]
+
+    0x00                            // [0x00, deployed, proxy] 
+    dup1                            // [0x00, 0x00, deployed, proxy]   
+    dup1                            // [0x00, 0x00, 0x00, deployed, proxy]
+    __LOAD_ARRAY_INTO_MEM(0x24)     // [0x00, 0x00, len(arr), &mem, deployed, proxy]
+    0x44 calldataload               // [value, 0x00, 0x00, len(arr), &mem, deployed, proxy]
+    dup7                            // [proxy, value, 0x00, 0x00, len(arr), &mem, deployed, proxy]
+    gas                             // [gas, proxy, value, 0x00, 0x00, len(arr), &mem, deployed, proxy]
+    call                            // [success, deployed, proxy]
+
+    iszero eq fail jumpi            // [deployed, proxy]
+
+    0x00 mstore
+    0x20 0x00 return 
+
+    fail:
+        0x00 dup1 revert
 }
+
+#define macro __GET_DEPLOYED() = takes(2) returns(1) {
+    // init stack : [salt, &mem]
+    // Returns: [deployed_address]
+    __RIGHTPAD(0xff)        // [rightpad(0xff)]
+    address 0x58 shl        // [rightpad(address), rightpad(0xff)]
+    or                      // [ [0xff][address]]
+    0x00 mstore
+                            // []               // load salt into memory
+    [PROXY_BYTECODE_HASH]   // [hash]           // load hash into memory
+    0x15 mstore             // []               // load proxy bytecode hash into memory
+
+    0x35 0x00 sha3          // [keccak]
+
+    // Shift right by 2 bytes
+    0x10 shr                // [proxy_address]
+
+    // return rpl encoded
+    __RIGHTPAD(0xd69a)     // [0xd69a, proxy_address] 
+    or                     // [ [0xd69a][proxy_address] ]
+    
+
+    0x01 0x50 shr
+    or 
+    0x00 mstore
+    0x23 0x00 sha3
+
+    0x60 shr 
+}
+
 
 /** Util to calldata into memory
     returns the current free memory from the stack
@@ -92,11 +142,6 @@
     // [len(arr), &mem]
 }
 
-
-// getDeployed(bytes32 salt)
-#define macro GET_DEPLOYED() = takes(0) returns(0) {
-    0x04 calldataload          // [salt]
-}
 
 
 #define macro MAIN() = {
