@@ -82,8 +82,8 @@ utils
 ├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
 ├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values."
 ├─ SSTORE2 — TODO
+├─ Shuffling — "Refactored algorithms for shuffling and other bitwise algorithms"
 ```
-
 
 ### Acknowledgements
 
