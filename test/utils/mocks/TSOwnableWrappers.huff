@@ -1,0 +1,9 @@
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    CONSTRUCTOR_TSOWNABLE()
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xe0 shr
+    MAIN_TSOWNABLE()
+    0x00 dup1 revert
+}
