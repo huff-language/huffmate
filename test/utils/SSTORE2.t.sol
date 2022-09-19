@@ -81,6 +81,10 @@ contract SSTORE2Test is Test {
         bytes memory result = store.read(pointer, 0x03);
         bytes memory packedResult = abi.encodePacked(hex"00", result);
         assertEq(packedResult, expectedCodePacked);
+
+        // Reading past the codesize will return an empty bytes array
+        bytes memory emptyRes = store.read(pointer, 0x100);
+        assertEq(emptyRes, hex"");
     }
 
     /// @notice Test sstore2 readBetween
@@ -97,5 +101,24 @@ contract SSTORE2Test is Test {
         bytes memory result = store.read(pointer, 0x01, 0x05);
         bytes memory packedResult = abi.encodePacked(hex"00", result);
         assertEq(packedResult, expectedCodePacked);
+    }
+
+    /// @notice End can never be less than start
+    function testReadBetweenOutOfBounds(uint256 start, uint256 end, bytes memory input) public {
+        // Make sure the end is always less than the start
+        if (end > start) (start, end) = (end, start);
+        vm.assume(end != type(uint256).max);
+        if (end == start) start = end + 1;
+
+        // Make sure the start is never greater than the codesize (the length of input)
+        vm.assume(start <= input.length);
+
+        // Write the input
+        address pointer = store.write(input);
+        assert(pointer != address(0));
+
+        // We should fail to read between with an out of bounds error
+        vm.expectRevert("OUT_OF_BOUNDS");
+        store.read(pointer, start, end);
     }
 }

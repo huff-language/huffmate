@@ -63,10 +63,10 @@
     // If the code size is zero, return an empty bytes array
     dup1                            // [_addr, _addr, _start, _end]
     CODE_SIZE() dup1                // [codeSize(_addr), _addr, _start, _end]
-    iszero done jumpi               // [codeSize(_addr), _addr, _start, _end]
+    iszero empty jumpi              // [codeSize(_addr), _addr, _start, _end]
 
     // If start > csize, return an empty bytes array
-    dup1 dup4 gt done jumpi         // [codeSize(_addr), _addr, _start, _end]
+    dup1 dup4 gt empty jumpi        // [codeSize(_addr), _addr, _start, _end]
 
     // If end < start, revert
     dup3 dup5 lt oob jumpi          // [codeSize(_addr), _addr, _start, _end]
@@ -107,6 +107,10 @@
 
     oob:
         OUT_OF_BOUNDS(0x00)
+
+    empty:
+        0x20 0x00 mstore
+        0x00 0x20 mstore
 
     done:
 }
