@@ -136,15 +136,10 @@
 
 // Function Dispatching
 #define macro MAIN_TSOWNABLE() = takes (0) returns (0) {
-
-    // cast sig "setPendingOwner(address)"
-    dup1 0xc42069ec eq set_pending_owner jumpi
-    // cast sig "acceptOwnership()"
-    dup1 0x79ba5097 eq accept_ownership jumpi
-    // cast sig "owner()"
-    dup1 0x8da5cb5b eq get_owner jumpi
-    // cast sig "pendingOwner()"
-    dup1 0xe30c3978 eq get_pending_owner jumpi
+    dup1 __FUNC_SIG(setPendingOwner) eq set_pending_owner jumpi
+    dup1 __FUNC_SIG(acceptOwnership) eq accept_ownership jumpi
+    dup1 __FUNC_SIG(owner) eq get_owner jumpi
+    dup1 __FUNC_SIG(pendingOwner) eq get_pending_owner jumpi
 
     not_found jump
 
