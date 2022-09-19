@@ -43,7 +43,6 @@ auth
 ├─ RolesAuthority — "Role based Authority that supports up to 256 roles"
 data-structures
 ├─ Arrays — "Memory translation handlers for arrays"
-├─ Bytes — TODO
 ├─ Hashmap — "Simple mapping utilities for 32 byte words"
 factories
 ├─ Factory — TODO
@@ -80,8 +79,8 @@ utils
 ├─ Multicallable — "Enables a single call to call multiple methods within a contract"
 ├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
 ├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
-├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values."
-├─ SSTORE2 — TODO
+├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values"
+├─ SSTORE2 — "Faster & cheaper contract key-value storage for Ethereum Contracts"
 ```
 
 
