@@ -4,26 +4,31 @@
 #define function read(address) view returns (bytes memory)
 #define function write(bytes memory) nonpayable returns (address)
 
+#define macro SSTORE2_WRITE_WRAPPER() = takes (0) returns (0) {
+    SSTORE2_WRITE()                 // [address]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
 
 #define macro SSTORE2_READ_WRAPPER() = takes (0) returns (0) {
     0x04 calldataload               // [pointer]
-    SSTORE2_READ()                  // [data]
-    0x00 mstore                     // []
+    SSTORE2_READ()                  // [data_length_in_memory]
+    0x00 return                     // []
 }
 
 #define macro SSTORE2_READ_AT_WRAPPER() = takes (0) returns (0) {
     0x24 calldataload               // [start]
     0x04 calldataload               // [pointer, start]
-    SSTORE2_READ_AT()               // [data]
-    0x00 mstore                     // []
+    SSTORE2_READ_AT()               // [data_length_in_memory]
+    0x00 return                     // []
 }
 
 #define macro SSTORE2_READ_BETWEEN_WRAPPER() = takes (0) returns (0) {
     0x44 calldataload               // [end]
     0x24 calldataload               // [start, end]
     0x04 calldataload               // [pointer, start, end]
-    SSTORE2_READ_BETWEEN()          // [data]
-    0x00 mstore                     // []
+    SSTORE2_READ_BETWEEN()          // [data_length_in_memory]
+    0x00 return                     // []
 }
 
 #define macro MAIN() = takes (0) returns (0) {
@@ -37,7 +42,7 @@
     0x00 dup1 revert
 
     write_jump:
-        SSTORE2_WRITE()
+        SSTORE2_WRITE_WRAPPER()
 
     read_jump:
         SSTORE2_READ_WRAPPER()
