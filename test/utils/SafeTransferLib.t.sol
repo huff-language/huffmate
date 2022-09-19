@@ -22,7 +22,7 @@ interface ISafeTransferLib {
         address to,
         uint256 amount
     ) external;
-    
+
     function safeTransfer(
         address token,
         address to,
