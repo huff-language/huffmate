@@ -1,0 +1,113 @@
+#define error ErrorCreatingProxy()
+#define error ErrorCreatingContract()
+#define error TargetAlreadyExists()
+
+#define function deploy(bytes32,bytes,uint256) payable returns (address)
+
+/*
+    push8 0x67363d37363d34f0
+    returndatasize
+    mstore
+    push1 0x08
+    push1 0x18
+    return    
+*/
+#define constant PROXY_BYTECODE = 0x67363d3d37363d34f03d5260086018f3 
+    
+    
+
+
+// TODO: replace this with the keccak of the bytecode
+// #define constant PROXY_BYTECODE_HASH = TOOD: keccak the proxy bytecode
+
+
+#define macro DEPLOY() = takes(0) returns(0) {
+
+    // TODO: Do we need to return the mem pointer in LOAD_ARRAY_INTO_MEM it kinna fucks stuff up
+    // Load the creation code into memory
+    0x04 calldataload               // [salt]
+    0x00                            // [0x00, salt]
+    dup1                            // [&offset, &mem, salt] - location to store memory at
+    __LOAD_ARRAY_INTO_MEM(0x24)     // [&offset, len(arr), &mem, salt] - new clean memory pointer
+    
+    0x00                            // [0x00, &offset, len(arr), &mem, salt]                   
+
+    // Deploy the proxy 
+    create2  
+
+
+    // Check the address of of the proxy is nay null
+
+
+    // init stack: 
+    0x04 calldataload // [salt]
+    0x24 calldataload // [creationCode, salt]
+    0x44 calldataload // [value, creationCode, salt]
+
+    [PROXY_BYTECODE]
+}
+
+/** Util to calldata into memory
+    returns the current free memory from the stack
+*/
+#define macro __LOAD_ARRAY_INTO_MEM(calldata_offset) = takes(1) returns(2) {
+    // Initial stack [&mem] - memory offset  
+    0x20                            // [0x20, &mem]
+    <calldata_offset> calldataload  // [&arr, 0x20, &mem] 
+    dup1                            // [&arr, &arr, 0x20, &mem]
+
+    // loop over the creation code to store it into mem
+    calldataload                    // [len(arr), &arr, 0x20, &mem]
+    0x00                            // [i, len(arr), 0x20, &mem]
+
+    startMemoryLoad:
+    dup2 dup2 eq                    // [if (i == len(arr), i, len(arr), &cc, 0x20, &mem)   
+    endMemoryLoad jumpi             // [jump to end]
+        // Loop initial stack [i, len(arr), &arr, 0x20, &mem]
+        swap2                       // [&arr, len(arr), i, 0x20, &mem]
+        dup4                        // [0x20, &arr, len(arr), i, 0x20, &mem]
+        add                         // [&arr++, i, len(arr), 0x20, &mem]
+        dup1                        // [&arr++, &arr++, i, len(arr), 0x20, &mem]
+        calldataload                // [arr[i], &arr++, i, len(arr), 0x20, &mem]
+
+        // Store the value into memory in slot mem_offset + (i * 0x20)
+        swap5                       // [&mem, &arr++, i, len(arr), 0x20, arr[i]]
+        dup5                        // [0x20, &mem, &arr++, i, len(arr), 0x20, arr[i]]
+        add                         // [&mem++, &arr++, i, len(arr), 0x20, arr[i]]
+        dup1                        // [&mem++, &mem++, &arr++, i, len(arr), 0x20, arr[i]] 
+        swap6                       // [arr[i], &mem++, &mem++, &arr++, i, len(arr), 0x20]
+        swap1 mstore                // [&mem++, &arr++, i, len(arr), 0x20]
+
+        // jump back to start memory load for each memory item
+        startMemoryLoad jump
+    endMemoryLoad:
+
+    // Stack after loop
+    // [&mem++, &arr++, i, len(arr), 0x20]
+
+    swap4                           // [0x20, &arr++, i, len(arr), &mem++,]      
+    pop pop pop                     // [len(arr), &mem++]
+
+    // Returns:
+    // [len(arr), &mem]
+}
+
+
+// getDeployed(bytes32 salt)
+#define macro GET_DEPLOYED() = takes(0) returns(0) {
+    0x04 calldataload          // [salt]
+}
+
+
+#define macro MAIN() = {
+
+    pc calldataload 0xe0 shr
+    dup1 __FUNC_SIG(deploy) eq jumpi
+
+    // Exit if selector does not match
+    returndatasize dup1 revert
+
+    deploy:
+        DEPLOY()
+           
+}
