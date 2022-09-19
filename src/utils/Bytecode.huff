@@ -1,0 +1,116 @@
+/// @title Bytecode
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice Low-level bytecode utilities
+/// @notice Adapted from 0xsequence/sstore2 (https://github.com/0xsequence/sstore2/blob/master/contracts/utils/Bytecode.sol)
+
+#include "./CommonErrors.huff"
+
+/// @notice Generate a creation code that results on a contract with `_code` as bytecode
+/// @notice Input stack {_code} [bytes calldata] The returning value of the resulting `creationCode`
+/// @return creationCode (constructor) for new contract
+#define macro CREATION_CODE_FOR() = takes (1) returns (1) {
+    // Input Stack: [&_code]
+
+    // Memory operations
+    // 0x00:0x05    0x63         0x63XXXXXX  PUSH4 _code.length  size
+    // 0x05:0x06    0x80         0x80        DUP1                size size
+    // 0x06:0x08    0x60         0x600e      PUSH1 14            14 size size
+    // 0x08:0x0a    0x60         0x6000      PUSH1 00            0 14 size size
+    // 0x0a:0x0b    0x39         0x39        CODECOPY            size
+    // 0x0b:0x0d    0x60         0x6000      PUSH1 00            0 size
+    // 0x0d:0x0e    0xf3         0xf3        RETURN
+    // <CODE>
+
+    // Place the PUSH4 opcode in memory in the first byte at memory position 0x00
+    0x63 0xF8 shl 0x00 mstore                       // [&_code]
+
+    // Place the code length + 0x01 bytes for the "00" prefix in the next 4 bytes at memory position 0x01
+    dup1 0x04 add calldataload dup1 0x01 add        // [_code.length + 0x01, _code.length, &_code]
+    0xE0 shl                                        // [(_code.length + 0x01) << 0xE0, _code.length, &_code]
+    0x01 mstore                                     // [_code.length, &_code]
+
+    // Place the code copy logic in the memory at memory positions 0x05:0x0e
+    __RIGHTPAD(0x80600E6000396000F3) 0x05 mstore        // [_code.length, &_code]
+
+    // 0x0e:0x0f is the "00" data prefix to prevent the contract from being callable
+
+    // Copy the code from calldata to memory at memory position 0x10
+    0x05 shl                                // [_code.length * 0x20, &_code]
+    dup2 0x24 add                           // [calldataOffset, _code.length * 0x20, &_code]
+    0x0f                                    // [destOffset, calldataOffset, _code.length * 0x20, &_code]
+    calldatacopy                            // [&_code]
+}
+
+/// @notice Returns the size of the code on a given address
+/// @param _addr Address that may or may not contain code
+/// @return size of the code on the given `_addr`
+#define macro CODE_SIZE() = takes (1) returns (1) {
+    // Input Stack:    [_addr]
+    extcodesize     // [size]
+}
+
+/// @notice Returns the code of a given address
+/// @dev It will fail if `_end < _start`
+/// @param _addr Address that may or may not contain code
+/// @param _start number of bytes of code to skip on read
+/// @param _end index before which to end extraction
+/// @return oCode read from `_addr` deployed bytecode
+/// @notice Forked from: https://gist.github.com/KardanovIR/fe98661df9338c842b4a30306d507fbd
+#define macro CODE_AT() = takes (3) returns (1) {
+    // Input Stack: [_addr, _start, _end]
+
+    // If the code size is zero, return an empty bytes array
+    dup1                            // [_addr, _addr, _start, _end]
+    CODE_SIZE() dup1                // [codeSize(_addr), _addr, _start, _end]
+    iszero empty jumpi              // [codeSize(_addr), _addr, _start, _end]
+
+    // If start > csize, return an empty bytes array
+    dup1 dup4 gt empty jumpi        // [codeSize(_addr), _addr, _start, _end]
+
+    // If end < start, revert
+    dup3 dup5 lt oob jumpi          // [codeSize(_addr), _addr, _start, _end]
+
+    // Extcodecopy logic
+    dup3 dup5 sub                   // [_end - _start, codeSize(_addr), _addr, _start, _end]
+
+    // Max size
+    dup4 dup3 sub                   // [codeSize(_addr) - _start, _end - _start, codeSize(_addr), _addr, _start, _end]
+
+    // Calculate size
+    dup2 dup2 lt maxSize jumpi      // [codeSize(_addr) - _start, _end - _start, codeSize(_addr), _addr, _start, _end]
+    pop                             // [_end - _start, codeSize(_addr), _addr, _start, _end]
+    cont jump                       // [_end - _start, codeSize(_addr), _addr, _start, _end]
+
+    maxSize:
+    swap1 pop                       // [codeSize(_addr) - _start, codeSize(_addr), _addr, _start, _end]
+
+    cont:                           // [size, codeSize(_addr), _addr, _start, _end]
+
+    // Store the bytes pointer in memory
+    0x20 0x00 mstore                // Store bytes pointer in memory
+
+    // Store size in memory
+    dup1 0x20 mstore                // [size + 0x20 + 0x1f & ~0x1f, codeSize(_addr), _addr, _start, _end]
+
+    // Extcodecopy
+    dup1                            // [size, size, codeSize(_addr), _addr, _start, _end]
+    dup5                            // [_start, size, size, codeSize(_addr), _addr, _start, _end]
+    0x40                            // [destOffset, _start, size, size, codeSize(_addr), _addr, _start, _end]
+    dup6                            // [_addr, destOffset, _start, size, size, codeSize(_addr), _addr, _start, _end]
+    extcodecopy                     // [size, codeSize(_addr), _addr, _start, _end]
+
+    // Return the full length of bytes to return
+    swap4 pop pop pop pop           // [size]
+    0x40 add                        // [size + 0x40]
+    done jump
+
+    oob:
+        OUT_OF_BOUNDS(0x00)
+
+    empty:
+        0x20 0x00 mstore
+        0x00 0x20 mstore
+
+    done:
+}

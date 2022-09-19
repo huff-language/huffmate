@@ -1,11 +1,11 @@
 /// @title FixedPointMath
-/// @notice Fixed-point number arithmetic
-///         Original implementation:
-///         https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol
-/// @author solmate <https://github.com/transmissions11/solmate>
+/// @notice SPDX-License-Identifier: MIT
 /// @author clabby <https://github.com/clabby>
+/// @notice Minimal module for fixed-point number arithmetic
+/// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol)
 
 #define constant WAD = 0x0de0b6b3a7640000
+#define constant DAY = 0x15180
 
 ////////////////////////////////////////////////////////////////
 //             SIMPLIFIED FIXED POINT OPERATIONS              //
@@ -104,7 +104,7 @@
     0x04a4fd9f2a8b96949216d2255a6c
     dup4 dup3 add           // [x + y, 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
     sub                     // [x + y - 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
-    
+
     dup2                    // [y, x + y - 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
     mul                     // [y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c), y, k, x]
     0x60 sar                // [(y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c)) >> 0x60, y, k, x]
@@ -159,7 +159,7 @@
     // * the 1e18 / 2**96 factor for base conversion.
     // We do this all at once, with an intermediate result in 2**213
     // basis, so the final right shift is always by a positive amount.
-    
+
     0x029d9dc38563c32e5c2f6dc192ee70ef65f9978af3
     mul                     // [0x029d9... * r, y, k, x]
     dup3                    // [k, 0x029d9... * r, y, k, x]
@@ -393,7 +393,7 @@
     dup1                        // [x, x, n, scalar]
     default jumpi               // Jump to "default" if x != 0
 
-    // TODO: Fix hack- code following `finish` label pops four items off of 
+    // TODO: Fix hack- code following `finish` label pops four items off of
     //       the stack, so we fill it with extra items here in order to return
     //       the scalar or 0.
 
@@ -459,7 +459,7 @@
             // If n is even, continue loop
             iszero loop jumpi
             // If n is odd, continue logic
-            
+
             // Multiply x * result
             dup1                // [result, result, scalar >> 1, x, n, scalar]
             dup4                // [x, result, result, scalar >> 1, x, n, scalar]
@@ -486,7 +486,7 @@
             swap2               // [x != 0 & result != (x * result / x), x * result, (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
             swap1               // [x * result, x != 0 & result != (x * result / x), (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
             dup3 lt             // [(scalar >> 1) + (x * result) < x * result, x != 0 & result != (x * result / x), (scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
-            
+
             // Revert if ((scalar >> 1) + (x * result)) < x * result OR x != 0 & result != (x * result / x)
             or <fail> jumpi     // [(scalar >> 1) + (x * result), result, scalar >> 1, x, n, scalar]
 
@@ -523,7 +523,7 @@
     dup3                        // [y, 0x1000..., z, y, x]
     lt                          // [y < 0x1000..., z, y, x]
     continue_1 jumpi            // [z, y, x]
-    
+
     0x40 shl                    // [z << 0x40, y, x]
     swap1                       // [y, z << 0x40, x]
     0x80 shr                    // [y >> 0x80, z << 0x40, x]
@@ -535,7 +535,7 @@
     dup3                        // [y, 0x1000..., z, y, x]
     lt                          // [y < 0x1000..., z, y, x]
     continue_2 jumpi            // [z, y, x]
-    
+
     0x20 shl                    // [z << 0x20, y, x]
     swap1                       // [y, z << 0x20, x]
     0x40 shr                    // [y >> 0x40, z << 0x20, x]
@@ -547,7 +547,7 @@
     dup3                        // [y, 0x1000..., z, y, x]
     lt                          // [y < 0x1000..., z, y, x]
     continue_3 jumpi            // [z, y, x]
-    
+
     0x10 shl                    // [z << 0x10, y, x]
     swap1                       // [y, z << 0x10, x]
     0x20 shr                    // [y >> 0x20, z << 0x10, x]
@@ -559,7 +559,7 @@
     dup3                        // [y, 0x1000..., z, y, x]
     lt                          // [y < 0x1000..., z, y, x]
     continue_4 jumpi            // [z, y, x]
-    
+
     0x08 shl                    // [z << 0x08, y, x]
     swap1                       // [y, z << 0x08, x]
     0x10 shr                    // [y >> 0x10, z << 0x08, x]
@@ -707,4 +707,70 @@
 #define macro ARRANGE_STACK_DIVWAD() = takes (3) returns (3) {
     // Input stack: [WAD, x, y]
     swap1        // [x, WAD, y]
+}
+
+// TESTS
+
+#define macro TEST_ASSERT_EQ() = {
+    eq continue jumpi
+    0x00 dup1 revert
+    continue:
+}
+
+// test wad mul for positive numbers
+#define test TEST_WAD_DIV() = {
+    0xDE0B6B3A7640000       // [y (1e18)]
+    0x1BC16D674EC80000      // [x (2e18),y]
+    WAD_MUL(fail)               // result
+    0x1BC16D674EC80000
+    TEST_ASSERT_EQ()
+    continue jump
+
+    fail:
+        FAIL()
+    continue:
+}
+
+// test wad mul for positive numbers
+#define test TEST_WAD_MUL() = {
+    0x0DE0B6B3A7640000          // [y (1e18)]
+    0x1BC16D674EC80000          // [x (2e18), y]
+    WAD_MUL(fail)               // result
+
+    0x1BC16D674EC80000
+    TEST_ASSERT_EQ()
+    continue jump
+    // catch  jump label
+    fail:
+        0x00 dup1 revert
+    continue:
+}
+
+#define test FAIL_WAD_MUL() = {
+    0xF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+    0x20
+    WAD_MUL(fail)
+    0x00 dup1 revert
+
+    // succeed if fails
+    fail:
+}
+
+#define test FAIL_WAD_DIV() = {
+    0x00
+    0x0DE0B6B3A7640000
+    WAD_DIV(fail)
+    0x00 dup1 revert
+
+    // succeed if fails
+    fail:
+}
+
+
+#define test TEST_TO_WAD_UNSAFE() =  {
+    // Test 0x2 * WAD = 2e18
+    0x02
+    TO_WAD_UNSAFE()
+    0x1BC16D674EC80000              // [2*e18]
+    TEST_ASSERT_EQ()
 }

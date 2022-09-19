@@ -15,7 +15,7 @@ contract ReentranctGuardTest is Test {
     IGuard guard;
 
     function setUp() public {
-        string memory wrapper_code = vm.readFile("test/utils/mocks/ReentrancyGuardMock.huff");
+        string memory wrapper_code = vm.readFile("test/utils/mocks/ReentrancyGuardWrappers.huff");
         guard = IGuard(HuffDeployer.deploy_with_code("utils/ReentrancyGuard", wrapper_code));
     }
 
@@ -45,8 +45,8 @@ contract ReentranctGuardTest is Test {
         state = guard.state();
         assertEq(state, 2);
 
-        // vm.expectRevert(bytes4(""));
-        // guard.lock();
+        vm.expectRevert(bytes("REENTRANCY"));
+        guard.lock();
     }
 
 }

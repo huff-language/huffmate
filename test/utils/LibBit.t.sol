@@ -16,7 +16,7 @@ contract LibBitTest is Test {
     function setUp() public {
         /// @notice deploy a new instance of IJumpTableUtil by
         /// passing in the address of the deployed Huff contract
-        string memory wrapper_code = vm.readFile("test/utils/mocks/LibBitWrapper.huff");
+        string memory wrapper_code = vm.readFile("test/utils/mocks/LibBitWrappers.huff");
         lib = ILibBit(HuffDeployer.deploy_with_code("utils/LibBit", wrapper_code));
     }
 

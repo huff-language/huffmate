@@ -1,27 +1,28 @@
 /// @title ERC1155
+/// @notice SPDX-License-Identifier: MIT
 /// @author cheethas <https://github.com/cheethas>
 /// @author asnared <https://github.com/abigger87>
 /// @notice Minimal, gas efficient ERC 1155 implementation
 
+#include "../auth/NonPayable.huff"
 #include "../data-structures/Hashmap.huff"
 #include "../math/SafeMath.huff"
 #include "../utils/ERC1155Receiver.huff"
 #include "../utils/CommonErrors.huff"
 
-// Stateful Function Interface
+// Function Interface
 #define function mint(address,uint256,uint256,bytes) nonpayable returns ()
-#define function batchMint(address,uint256[],uint256[],bytes) nonpayable returns ()
-
 #define function burn(address,uint256,uint256) nonpayable returns ()
+
+#define function batchMint(address,uint256[],uint256[],bytes) nonpayable returns ()
 #define function batchBurn(address,uint256[],uint256[]) nonpayable returns ()
+
+#define function isApprovedForAll(address,address) view returns (bool)
+#define function setApprovalForAll(address,bool) nonpayable returns ()
 
 #define function safeTransferFrom(address,address,uint256,uint256,bytes) nonpayable returns ()
 #define function safeBatchTransferFrom(address,address,uint256[],uint256[],bytes) nonpayable returns()
-#define function setApprovalForAll(address,bool) nonpayable returns ()
 
-// Accessor Function Interface
-#define function getApproved(uint256) view returns (address)
-#define function isApprovedForAll(address,address) view returns (bool)
 #define function balanceOf(address,uint256) view returns (uint256)
 #define function balanceOfBatch(address[],uint256[]) view returns (uint256[])
 
@@ -41,6 +42,15 @@
 #define constant BALANCE_LOCATION = FREE_STORAGE_POINTER()
 #define constant IS_APPROVED_FOR_ALL_LOCATION = FREE_STORAGE_POINTER()
 
+// Metadata
+// META_NAME = "Token"
+#define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000
+#define constant META_NAME_LENGTH = 0x05
+
+// META_SYMBOL = "TKN"
+#define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
+#define constant META_SYMBOL_LENGTH = 0x03
+
 // Viewable Function Macros
 
 /// @title Balance Of
@@ -59,28 +69,25 @@
 
 /// @title Name
 /// @notice Returns the name of the contract
-/// @dev Hardcoded as "hufferc1155"
 /// @param []
 /// @return {return} [string]
 #define macro NAME() = takes (0) returns (0) {
-    0x0b4855464645524331313535          // [`${len}${hufferc1155}`] len=0x0b
-    0x2b mstore                         // [] load into mem
-
-    0x20 returndatasize mstore          // store dynamic offset
-    0x60 returndatasize return          // return abi encoded string
+    0x20 0x00 mstore                    // []
+    [META_NAME_LENGTH] 0x20 mstore      // []
+    [META_NAME] 0x40 mstore             // []
+    0x60 0x00 return                    // []
 }
 
 /// @title Symbol
 /// @notice Gets the symbol of the contract
-/// @dev Hardcoded as "h1155"
 /// @param []
 /// @return {return} [string]
 #define macro SYMBOL() = takes (0) returns (0) {
-    0x054831313535                      // [`${len}${h1155}`] len=0x05
-    0x25 mstore                         // [] load into mem
-
-    0x20 returndatasize mstore          // store dynamic offset
-    0x60 returndatasize return          // return abi encoded string
+    NON_PAYABLE()                       // []
+    0x20 0x00 mstore                    // []
+    [META_SYMBOL_LENGTH] 0x20 mstore    // []
+    [META_SYMBOL] 0x40 mstore           // []
+    0x60 0x00 return                    // []
 }
 
 /// @title Supports Interface
@@ -542,8 +549,8 @@
     0x80                           // [&ret]
 
     // Get lengths of dynamic arrays, duplicate in prepare to compare
-    0x24 calldataload 0x4 add dup1 // [&ids, &ids, &owners, &owners, &ret]
-    0x04 calldataload 0x4 add dup1 // [&ids, &ids, &ret]
+    0x24 calldataload 0x4 add dup1 // [&ids, &ids, &ret]
+    0x04 calldataload 0x4 add dup1 // [&ids, &ids, &owners, &owners, &ret]
 
     // compare lengths
     swap2                           // [&owners, &ids, &ids, &owners, &ret]

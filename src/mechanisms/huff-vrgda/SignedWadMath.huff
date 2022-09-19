@@ -1,0 +1,433 @@
+/// @title FixedPointMath
+/// @notice Fixed-point number arithmetic
+///         Original implementation:
+///         https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol
+/// @author solmate <https://github.com/transmissions11/solmate>
+/// @author clabby <https://github.com/clabby>
+/// @author Maddiaa <https://github.com/cheethas>
+
+#define constant WAD = 0x0de0b6b3a7640000
+#define constant DAY = 0x15180
+
+#define macro TO_WAD_UNSAFE() = takes (1) returns (1) {
+    [WAD] mul
+}
+
+#define macro toDaysWadUnsafe() = takes (1) returns (1) {
+    [WAD] mul [DAY] div
+}
+
+
+#define macro FROM_DAYS_WAD_UNSAFE() = takes (1) returns (1) {
+    [DAY] mul [WAD] div
+}
+
+
+#define macro UNSAFE_WAD_MUL() = takes (2) returns (1) {
+    mul [WAD] sdiv
+}
+
+
+#define macro UNSAFE_WAD_DIV() = takes (2) returns (1) {
+    // Input Stack: [x, y]
+    [WAD] mul                  // [(x * 1e18), y]
+    sdiv
+}
+
+#define macro UNSAFE_DIV() = takes(2) returns(1) {
+    sdiv
+}
+
+// wadMul(int256 x, int256 y) pure returns (int256)
+#define macro WAD_MUL(fail) = takes(2) returns(1) {
+                      // [x,y]
+
+    dup2 dup2         // [x,y,x,y]
+    mul               // [[x*y] (r),x,y]
+
+    dup2              // [x,r,x,y]
+    dup2              // [r,x,r,x,y]
+    sdiv              // [(r/x),r,x,y]
+    dup4              // [y,(r/x),r,x,y]
+    eq                // [y==(r/x),r,x,y]
+
+    dup3              // [x,y==(r/x),r,x,y]
+    iszero            // [iszero(0), y==(r/x),r,x,y]
+    or                // [iszero(0) || y==(r/x) ,r,x,y]
+    iszero            // [iszero(iszero(0) || y==(r/x)),r,x,y]
+    <fail> jumpi
+
+    // [r,x,y]
+    [WAD]
+    swap1
+    sdiv            // [r,x,y]
+
+    // clean stack
+    swap2 pop pop   // [r]
+}
+
+
+#define macro WAD_DIV(fail) = takes(2) returns(1) {
+                        // [x,y]
+    dup1                // [x,x,y]
+    [WAD] dup1          // [w,w,x,x,y]
+    swap2               // [x,w,w,x,y]
+
+    mul                 // [r,w,x,y]
+    dup1                // [r,r,w,x,y]
+    swap2               // [w,r,r,x,y]
+    swap1               // [r,w,r,x,y]
+
+    sdiv                // [r/w,r,x,y]
+    dup3                // [x,r/w,r,x,y]
+    eq                  // [x==(r/w),r,x,y]
+
+    dup4                // [y,x==(r/w),r,x,y]
+    iszero              // [iszero(y),x==(r/w),r,x,y]
+    iszero              // [!iszero(y) && x==(r/w),r,x,y]
+    and                 // [iszero(y) && x==(r/w),r,x,y]
+    iszero              // [iszero(iszero(y) && x==(r/w)),r,x,y]
+    <fail> jumpi
+
+    // [r,x,y]
+    swap1             // [x,r,y]
+    pop               // [r,y]
+    sdiv              // [r/y]
+}
+
+
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L34
+#define macro EXP_WAD(fail) = takes (1) returns (1) {
+    // Input stack:            [x]
+
+    // When the result is < 0.5 we return zero. This happens when
+    // x <= floor(log(0.5e18) * 1e18) ~ -42e18
+    0xfffffffffffffffffffffffffffffffffffffffffffffffdb731c958f34d94c1
+    dup2                    // [x, 0xfff..., x]
+    sgt iszero              // [x <= 0xfff..., x]
+    ret_zero jumpi          // [x]
+
+    // When the result is > (2**255 - 1) / 1e18 we can not represent it as an
+    // int. This happens when x >= floor(log((2**255 - 1) / 1e18) * 1e18) ~ 135.
+    0x0755bf798b4a1bf1e5    // [0x0755bf798b4a1bf1e5, x]
+    dup2                    // [x, 0x0755bf798b4a1bf1e5, x]
+    slt iszero              // [x >= 0x0755bf798b4a1bf1e5, x]
+    <fail> jumpi            // [x]
+
+    // x is now in the range (-42, 136) * 1e18. Convert to (-42, 136) * 2**96
+    // for more intermediate precision and a binary basis. This base conversion
+    // is a multiplication by 1e18 / 2**96 = 5**18 / 2**78.
+    0x03782dace9d9          // [0x05 ** 0x12, x]
+    swap1                   // [x, 0x05 ** 0x12]
+    0x4e shl                // [x << 0x4e, 0x05 ** 0x12]
+    sdiv                    // [x << 0x4e / 0x05 ** 0x12]
+
+    // Reduce range of x to (-1/2 ln 2, 1/2 ln 2) * 2**96 by factoring out powers
+    // of two such that exp(x) = exp(x') * 2**k, where k is an integer.
+    // Solving this gives k = round(x / log(2)) and x' = x - k * log(2).
+    0xb17217f7d1cf79abc9e3b398
+    dup2                    // [x, 0xb17217f7d1cf79abc9e3b398, x]
+    0x60 shl                // [x << 96, 0xb17217f7d1cf79abc9e3b398, x]
+    sdiv                    // [x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    0x7ffffff20f9306d2eea00000 // [2**95, x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    add                     // [2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    0x60 sar                // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+
+    dup1                    // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    0xb17217f7d1cf79abc9e3b398
+    mul                     // [((2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96) * 0xb17217f7d1cf79abc9e3b398, (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    dup3                    // [x, ((2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96) * 0xb17217f7d1cf79abc9e3b398, (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    sub                     // [x (new), (2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
+    swap2 pop               // [k, x]
+
+    // k is in the range [-61, 195].
+
+    // Evaluate using a (6, 7)-term rational approximation.
+    // p is made monic, we'll multiply by a scale factor later.
+    0x10fe68e7fd37d0007b713f7650
+    dup3                    // [x, 0x10fe68e7fd37d0007b713f7650, k, x]
+    add                     // [y, k, x]
+
+    0x02d16720577bd19bf614176fe9ea
+    dup2 dup5 mul           // [x * y, 0x02d16720577bd19bf614176fe9ea, y, k, x]
+    0x60 sar                // [(x * y) >> 0x60, 0x02d16720577bd19bf614176fe9ea, y, k, x]
+    add                     // [((x * y) >> 0x60) + 0x02d16720577bd19bf614176fe9ea, y, k, x]
+    swap1 pop               // [y, k, x]
+
+    0x04a4fd9f2a8b96949216d2255a6c
+    dup4 dup3 add           // [x + y, 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
+    sub                     // [x + y - 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
+
+    dup2                    // [y, x + y - 0x04a4fd9f2a8b96949216d2255a6c, y, k, x]
+    mul                     // [y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c), y, k, x]
+    0x60 sar                // [(y * (x + y - 0x04a4fd9f2a8b96949216d2255a6c)) >> 0x60, y, k, x]
+    0x0587f503bb6ea29d25fcb740196450
+    add                     // [p, y, k, x]
+
+    dup4                    // [x, p, y, k, x]
+    mul                     // [x * p, y, k, x]
+    0xd835ebba824c98fb31b83b2ca45c
+    0x60 shl                // [0xd835ebba824c98fb31b83b2ca45c << 0x60, x * p, y, k, x]
+    add                     // [p, y, k, x]
+
+    // We leave p in 2**192 basis so we don't need to scale it back up for the division.
+
+    0x240c330e9fb2d9cbaf0fd5aafc
+    dup5 sub                // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
+    0x0277594991cfc85f6e2461837cd9
+    add                     // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
+    0x1a521255e34f6a5061b25ef1c9c4 swap1
+    sub                     // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
+    0xb1bbb201f443cf962f1a1d3db4a5
+    add                     // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
+    0x02c72388d9f74f51a9331fed693f15 swap1
+    sub                     // [q, p, y, k, x]
+
+    dup5 mul                // [x * q, p, y, k, x]
+    0x60 sar                // [(x * q) >> 0x60, p, y, k, x]
+    0x05180bb14799ab47a8a8cb2a527d57
+    add                     // [q, p, y, k, x]
+
+    // The q polynomial won't have zeros in the domain as all its roots are complex.
+    // No scaling is necessary because p is already 2**96 too large.
+    swap1 sdiv              // [p / q (r), y, k, x]
+
+    // r should be in the range (0.09, 0.25) * 2**96.
+
+    // We now need to multiply r by:
+    // * the scale factor s = ~6.031367120.
+    // * the 2**k factor from the range reduction.
+    // * the 1e18 / 2**96 factor for base conversion.
+    // We do this all at once, with an intermediate result in 2**213
+    // basis, so the final right shift is always by a positive amount.
+
+    0x029d9dc38563c32e5c2f6dc192ee70ef65f9978af3
+    mul                     // [0x029d9... * r, y, k, x]
+    dup3                    // [k, 0x029d9... * r, y, k, x]
+    0xc3 sub                // [0xc3 - k, 0x029d9... * r, y, k, x]
+    shr                     // [(0x029d9... * r) >> 0xc3 - k, y, k, x]
+
+    // Clean stack
+    swap3 pop pop pop       // [result]
+
+    finish jump
+
+    ret_zero:
+        0x00 dup1 mstore
+        0x20 0x00 return
+    finish:
+    // Return stack:           [result]
+}
+
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L92
+#define macro LN_WAD(fail) = takes (1) returns (1) {
+    // Input stack:            [x]
+    0x00 dup2 sgt           // [x > 0, x]
+    iszero                  // [x <= 0, x]
+    <fail> jumpi              // [x]
+
+    // We want to convert x from 10**18 fixed point to 2**96 fixed point.
+    // We do this by multiplying by 2**96 / 10**18. But since
+    // ln(x * C) = ln(x) + ln(C), we can simply do nothing here
+    // and add ln(2**96 / 10**18) at the end.
+
+    // Reduce range of x to (1, 2) * 2**96
+    // ln(2^k * x) = k * ln(2) + ln(x)
+    0x60                    // [0x60, x]
+    dup2 LOG_2(fail)        // [log2(x), 0x60, x]
+    sub                     // [k, x]
+
+    dup2 dup2               // [k, x, k, x]
+    0x9f sub                // [0x9f - k, x, k, x]
+    shl                     // [x << (0x9f - k), k, x]
+    0x9f shr                // [x_new, k, x]
+    swap2 pop               // [k, x]
+
+    // Evaluate using a (8, 8)-term rational approximation.
+    // p is made monic, we will multiply by a scale factor later.
+    dup2                    // [x, k, x]
+    0x29508e458543d8aa4df2abee78
+    add                     // [p, k, x]
+
+    dup3 mul                // [p * x, k, x]
+    0x60 sar                // [(p * x) >> 0x60, k, x]
+    0x0139601a2efabe717e604cbb4894
+    add                     // [p, k, x]
+
+    dup3 mul                // [p * x, k, x]
+    0x60 sar                // [(p * x) >> 0x60, k, x]
+    0x02247f7a7b6594320649aa03aba1
+    add                     // [p, k, x]
+
+    0x8c3f38e95a6b1ff2ab1c3b3437
+    swap1 dup4 mul          // [p * x, 0x8c3f..., k, x]
+    0x60 sar                // [(p * x) >> 0x60, 0x8c3f..., k, x]
+    sub                     // [p, k, x]
+
+    0x02384773bdf1ac5676facced6091
+    swap1 dup4 mul          // [p * x, 0x0238..., k, x]
+    0x60 sar                // [(p * x) >> 0x60, 0x0238..., k, x]
+    sub                     // [p, k, x]
+
+    0xb9a025d814b29c212b8b1a07ce
+    swap1 dup4 mul          // [p * x, 0xb9a0..., k, x]
+    0x60 sar                // [(p * x) >> 0x60, 0xb9a0..., k, x]
+    sub                     // [p, k, x]
+
+    0x0a09507084cc699bb0e71ea86a
+    0x60 shl                // [0x0a09... << 0x60, p, k, x]
+    swap1                   // [p, 0x0a09... << 0x60, k, x]
+    dup4 mul                // [p * x, 0x0a09... << 0x60, k, x]
+    sub                     // [p, k, x]
+
+    // We leave p in 2**192 basis so we don't need to scale it back up for the division.
+    // q is monic by convention.
+    dup3                    // [x, p, k, x]
+    0x465772b2bbbb5f824b15207a30
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x0388eaa27412d5aca026815d636e
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x0df99ac502031bf953eff472fdcc
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x13cdffb29d51d99322bdff5f2211
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 shr                // [(q * x) >> 0x60, p, k, x]
+    0x0a0f742023def783a307a986912e
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x01920d8043ca89b5239253284e42
+    add                     // [q, p, k, x]
+
+    dup4 mul                // [q * x, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
+    0x0b7a86d7375468fac667a0a527
+    add                     // [q, p, k, x]
+
+    // The q polynomial is known not to have zeros in the domain.
+    // No scaling required because p is already 2**96 too large.
+    swap1 sdiv              // [p / q (r), k, x]
+
+    // r is in the range (0, 0.125) * 2**96
+
+    // Finalization, we need to:
+    // * multiply by the scale factor s = 5.549...
+    // * add ln(2**96 / 10**18)
+    // * add k * ln(2)
+    // * multiply by 10**18 / 2**96 = 5**18 >> 78
+
+    // mul s * 5e18 * 2**96, base is now 5**18 * 2**192
+    0x1340daa0d5f769dba1915cef59f0815a5506 mul
+
+    // add ln(2) * k * 5e18 * 2**192
+    swap1                   // [k, r, x]
+    0x0267a36c0c95b3975ab3ee5b203a7614a3f75373f047d803ae7b6687f2b3
+    mul                     // [k * 0x0267..., r, x]
+    add                     // [r, x]
+
+    // add ln(2**96 / 10**18) * 5e18 * 2**192
+    0x57115e47018c7177eebf7cd370a3356a1b7863008a5ae8028c72b8864284
+    add                     // [r, x]
+
+    // base conversion: mul 2**18 / 2**192
+    0xAE sar                // [r >> 0xAE, x]
+
+    finish jump
+
+    finish:
+        // Clean stack
+        swap1 pop
+    // Return stack:           [result]
+}
+
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L29
+#define macro POW_WAD(fail) = takes (2) returns (1) {
+    // Input Stack:            [x, y]
+    LN_WAD(fail)                // [lnWad(x), y]
+    mul                     // [lnWad(x) * y]
+    [WAD] swap1             // [lnWad(x) * y, 1e18]
+    sdiv                    // [(lnWad(x) * y) / 1e18]
+    EXP_WAD(fail)               // [result]
+}
+
+
+// https://github.com/transmissions11/solmate/blob/v7/src/utils/FixedPointMathLib.sol#L352
+#define macro LOG_2(fail) = takes (1) returns (1) {
+    // Input stack:                [x]
+
+    dup1 iszero                 // [x == 0, x]
+    <fail> jumpi                // [x]
+
+    dup1                        // [x, x]
+    0xffffffffffffffffffffffffffffffff
+    lt                          // [0xffff... < x, x]
+    0x07 shl                    // [r, x]
+
+    dup2 dup2                   // [r, x, r, x]
+    shr                         // [x >> r, r, x]
+    0xffffffffffffffff lt       // [0xffff... < (x >> r), r, x]
+    0x06 shl                    // [(0xffff... < (x >> r)) << 6, r, x]
+    or                          // [r | (0xffff... < (x >> r)) << 6, x]
+
+    dup2 dup2                   // [r, x, r, x]
+    shr                         // [x >> r, r, x]
+    0xffffffff lt               // [0xffff... < (x >> r), r, x]
+    0x05 shl                    // [(0xffff... < (x >> r)) << 5, r, x]
+    or                          // [r | (0xffff... < (x >> r)) << 5, x]
+
+    dup2 dup2                   // [r, x, r, x]
+    shr                         // [x >> r, r, x]
+    0xffff lt                   // [0xffff < (x >> r), r, x]
+    0x04 shl                    // [(0xffff < (x >> r)) << 4, r, x]
+    or                          // [r | (0xffff < (x >> r)) << 4, x]
+
+    dup2 dup2                   // [r, x, r, x]
+    shr                         // [x >> r, r, x]
+    0xff lt                     // [0xff < (x >> r), r, x]
+    0x03 shl                    // [(0xff < (x >> r)) << 3, r, x]
+    or                          // [r | (0xff < (x >> r)) << 3, x]
+
+    dup2 dup2                   // [r, x, r, x]
+    shr                         // [x >> r, r, x]
+    0x0f lt                     // [0x0f < (x >> r), r, x]
+    0x02 shl                    // [(0x0f < (x >> r)) << 2, r, x]
+    or                          // [r | (0x0f < (x >> r)) << 2, x]
+
+    dup2 dup2                   // [r, x, r, x]
+    shr                         // [x >> r, r, x]
+    0x03 lt                     // [0x03 < (x >> r), r, x]
+    0x01 shl                    // [(0x03 < (x >> r)) << 1, r, x]
+    or                          // [r | (0x03 < (x >> r)) << 1, x]
+
+    dup2 dup2                   // [r, x, r, x]
+    shr                         // [x >> r, r, x]
+    0x01 lt                     // [0x01 < (x >> r), r, x]
+    or                          // [r, x]
+    swap1 pop                   // [r]
+
+    // Return stack:            // [result]
+}

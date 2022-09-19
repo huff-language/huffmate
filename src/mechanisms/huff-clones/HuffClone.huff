@@ -1,0 +1,91 @@
+/// @title HuffClone
+/// @notice SPDX-License-Identifier: MIT
+/// @author wighawag <https://github.com/wighawag>
+/// @author zefram <https://github.com/boredGenius>
+/// @author hari <https://github.com/hrkrshnn>
+/// @author z0r0z <https://github.com/z0r0z>
+/// @author clabby <https://github.com/clabby>
+/// @notice Clones with Immutable Args Library
+/// @notice Adapted from wighawag (https://github.com/wighawag/clones-with-immutable-args/blob/master/src/Clone.sol)
+
+/// @notice Reads an immutable arg with type address
+/// @param argOffset The offset of the arg in the packed data
+/// @return arg The arg value
+#define macro GET_ARG_ADDRESS() = takes (1) returns (1) {
+    // Initial Stack: // [argOffset]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset]
+    add               // [offset + argOffset]
+    calldataload      // [cd]
+    0x60              // [0x60, cd]
+    shr               // [cd >> 0x60]
+}
+
+/// @notice Reads an immutable arg with type uint256
+/// @param argOffset The offset of the arg in the packed data
+/// @return arg The arg value
+#define macro GET_ARG_UINT_256() = takes (1) returns (1) {
+    // Initial Stack: // [argOffset]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset]
+    add               // [offset + argOffset]
+    calldataload      // [cd]
+}
+
+/// @notice Reads a uint256 array stored in the immutable args.
+/// @param argOffset The offset of the arg in the packed data
+/// @param arrLen Number of elements in the array
+/// @return arr The beginning location of the array in memory
+#define macro GET_ARG_UINT_256_ARR(mem_ptr) = takes (2) returns (1) {
+    // Initial Stack:              [argOffset, arrLen]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset, arrLen]
+    add                         // [offset + argOffset, arrLen]
+
+    dup2 <mem_ptr>              // [mem_ptr, arrLen, offset + argOffset, arrLen]
+    mstore                      // [offset + argOffset, arrLen]
+    swap1 0x05 shl swap1        // [offset + argOffset, arrLen * 0x20]
+    <mem_ptr> 0x20 add          // [mem_ptr + 0x20, offset + argOffset, arrLen * 0x20]
+    calldatacopy                // []
+
+    // Return the memory pointer of the array
+    <mem_ptr>                   // [mem_ptr]
+}
+
+/// @notice Reads an immutable arg with type uint64
+/// @param argOffset The offset of the arg in the packed data
+/// @return arg The arg value
+#define macro GET_ARG_UINT_64() = takes (1) returns (1) {
+    // Initial Stack: // [argOffset]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset]
+    add               // [offset + argOffset]
+    calldataload      // [cd]
+    0xC0              // [0xC0, cd]
+    shr               // [cd >> 0xC0]
+}
+
+/// @notice Reads an immutable arg with type uint8
+/// @param argOffset The offset of the arg in the packed data
+/// @return The arg value
+#define macro GET_ARG_UINT_8() = takes (1) returns (1) {
+    // Initial Stack: // [argOffset]
+    GET_IMMUTABLE_ARGS_OFFSET() // [offset, argOffset]
+    add               // [offset + argOffset]
+    calldataload      // [cd]
+    0xF8              // [0xF8, cd]
+    shr               // [cd >> 0xF8]
+}
+
+/// @return The offset of the packed immutable args in calldata
+#define macro GET_IMMUTABLE_ARGS_OFFSET() = takes (0) returns (1) {
+    0x02              // [0x02]
+    calldatasize      // [calldatasize, 0x02]
+    sub               // [calldatasize - 0x02]
+
+    calldataload      // [cd]
+    0xF0              // [0xF0, cd]
+    shr               // [cd >> 0xF0]
+
+    0x02              // [0x02, cd >> 0xF0]
+    add               // [0x02 + cd >> 0xF0]
+
+    calldatasize      // [calldatasize, 0x02 + cd >> 0xF0]
+    sub               // [calldatasize - (0x02 + cd >> 0xF0)]
+}

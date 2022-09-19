@@ -14,31 +14,64 @@ jobs:
   check:
     strategy:
       fail-fast: true
-
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-
       - name: Install Huff
         uses: huff-language/huff-toolchain@v2
         with:
           version: nightly
-
       - name: Run Forge build
-        run: |
-          forge --version
-          forge build --sizes
+        run: forge --version && forge build --sizes
         id: build
 
+  tests:
+    strategy:
+      fail-fast: true
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - name: Install Huff
+        uses: huff-language/huff-toolchain@v2
+        with:
+          version: nightly
       - name: Run Forge tests
-        run: |
-          forge test -vvv
+        run: forge test -vvv
         id: test
+
+  huff-tests:
+    name: Tests in Huff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - name: Install Huff
+        uses: huff-language/huff-toolchain@v2
+        with:
+          version: nightly
+      - name: Huff Tests
+        uses: abigger87/huff-tests@v2.0.0
+        with:
+          with-forge-tests: false
+          test-location: "src"
+          test-extension: "*.huff"
+

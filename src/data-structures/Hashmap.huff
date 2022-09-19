@@ -1,8 +1,10 @@
 /// @title HashMap
-/// @author Andreas Bigger
-/// @notice A Minimal HashMap based off <https://github.com/huff-language/huff-examples/blob/main/erc20/contracts/utils/HashMap.huff>
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice A Module Encapsulating HashMap Methods
+/// @notice Adapted from <https://github.com/huff-language/huff-examples/blob/main/erc20/contracts/utils/HashMap.huff>
 
-// Given a piece of data (ie an address), hash it, generating the storage slot for a hashmap.
+/// @notice Given a piece of data (ie an address), hash it, generating the storage slot for a hashmap.
 #define macro GET_SLOT_FROM_KEY(mem_ptr) = takes(1) returns (1) {
     // Input stack: [key]
     // Load the data into memory and hash it, while preserving the memory location.
@@ -15,8 +17,8 @@
     sha3                // [slot]
 }
 
-// Given two keys (ie an address and a number), hash them together, generating a  for a secondary hashmap.
-// This should only be used if you have multiple maps in your contract.
+/// @notice Given two keys (ie an address and a number), hash them together, generating a slot for a secondary hashmap.
+///         This should only be used if you have multiple maps in your contract.
 #define macro GET_SLOT_FROM_KEYS(mem_ptr) = takes(2) returns (1) {
     // Input stack: [key1, key2]
     // Load the data into memory.
@@ -31,6 +33,7 @@
     sha3        // [key]
 }
 
+/// @notice Calculate the slot from two keys
 #define macro GET_SLOT_FROM_KEYS_2D(mem_ptr) = takes(3) returns (1) {
     // Input stack: [slot, key1, key2]
     // Load the data into memory
@@ -59,40 +62,44 @@
     sha3                // [key]
 }
 
-
+/// @notice Load an element onto the stack from a key
 #define macro LOAD_ELEMENT(mem_ptr) = takes(1) returns(1) {
     // Input stack: [key]
-    GET_SLOT_FROM_KEY(<mem_ptr>)  // [slot]
-    sload                       // [value]
+    GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot]
+    sload                           // [value]
 }
 
+/// @notice Load an element onto the stack from two keys
 #define macro LOAD_ELEMENT_FROM_KEYS(mem_ptr) = takes(2) returns(1) {
     // Input stack: [key1, key2]
-    GET_SLOT_FROM_KEYS(<mem_ptr>) // [slot]
-    sload                       // [value]
+    GET_SLOT_FROM_KEYS(<mem_ptr>)   // [slot]
+    sload                           // [value]
 }
 
-
+/// @notice Load an element onto the stack from a slot and two keys
 #define macro LOAD_ELEMENT_FROM_KEYS_2D(mem_ptr) = takes(3) returns(1) {
     // Input stack: [slot, key1, key2]
     GET_SLOT_FROM_KEYS_2D(<mem_ptr>) // [slot]
     sload                            // [value]
 }
 
+/// @notice Store an element from a key
 #define macro STORE_ELEMENT(mem_ptr) = takes(2) returns(0) {
     // Input stack: [key, value]
-    GET_SLOT_FROM_KEY(<mem_ptr>)  // [slot, value]
-    sstore                      // []
+    GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot, value]
+    sstore                          // []
 }
 
-#define macro STORE_ELEMENT_FROM_KEYS(mem_ptr) = takes(2) returns (0) {
+/// @notice Store an element from two keys
+#define macro STORE_ELEMENT_FROM_KEYS(mem_ptr) = takes(3) returns (0) {
     // Input stack: [key1, key2, value]
-    GET_SLOT_FROM_KEYS(<mem_ptr>) // [slot, value]
-    sstore                      // []
+    GET_SLOT_FROM_KEYS(<mem_ptr>)   // [slot, value]
+    sstore                          // []
 }
 
+/// @notice Store an element from a slot and two keys
 #define macro STORE_ELEMENT_FROM_KEYS_2D(mem_ptr) = takes(4) returns (0) {
     // Input stack: [slot, key1, key2, value]
-    GET_SLOT_FROM_KEYS_2D(<mem_ptr>) // [slot, value]
-    sstore                            // []
+    GET_SLOT_FROM_KEYS_2D(<mem_ptr>)    // [slot, value]
+    sstore                              // []
 }

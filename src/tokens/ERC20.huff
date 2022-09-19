@@ -1,16 +1,18 @@
 /// @title ERC20
+/// @notice SPDX-License-Identifier: MIT
 /// @author asnared <https://github.com/abigger87>
 /// @author devtooligan <https://github.com/devtooligan>
-/// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
-/// @notice Modified from Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol)
+/// @notice Modern and gas efficient ERC20 + EIP-2612 implementation
+/// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC20.sol)
 
+// Imports
+#include "../utils/Errors.huff"
+#include "../auth/NonPayable.huff"
 #include "../data-structures/Hashmap.huff"
-
-// TODO: Add revert strings (and related tests)
 
 // Interface
 #define function allowance(address,address) view returns (uint256)
-#define function approve(address,uint256) nonpayable returns () // these returns sb updated
+#define function approve(address,uint256) nonpayable returns ()
 #define function balanceOf(address) view returns (uint256)
 #define function DOMAIN_SEPARATOR() view returns (bytes32)
 #define function nonces(address) view returns (uint256)
@@ -24,28 +26,30 @@
 #define event Transfer(address, address, uint256)
 
 // Metadata
+#define function decimals() nonpayable returns (uint256)
 #define function name() nonpayable returns (string)
+#define function symbol() nonpayable returns (string)
+
 // META_NAME = "Token"
 #define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000
 #define constant META_NAME_LENGTH = 0x05
 
-#define function symbol() nonpayable returns (string)
 // META_SYMBOL = "TKN"
 #define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
 #define constant META_SYMBOL_LENGTH = 0x03
 
-#define function decimals() nonpayable returns (uint256)
-#define constant META_DECIMALS = 0x12 // 18
 
 // ERC20 Storage
 #define constant TOTAL_SUPPLY_SLOT = FREE_STORAGE_POINTER()
 #define constant BALANCE_SLOT = FREE_STORAGE_POINTER()
 #define constant APPROVAL_SLOT = FREE_STORAGE_POINTER()
+#define constant DECIMALS_SLOT = FREE_STORAGE_POINTER()
 
 // EIP-2612 STORAGE
 #define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
 #define constant INITIAL_DOMAIN_SEPARATOR = FREE_STORAGE_POINTER()
 #define constant NONCE_SLOT = FREE_STORAGE_POINTER()
+
 // PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 #define constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9
 #define constant X_1901 = 0x1901000000000000000000000000000000000000000000000000000000000000
@@ -57,7 +61,17 @@
 
 /// @notice Constructor
 /// @notice Sets the initial domain separator and chain ID
-#define macro CONSTRUCTOR_ERC20() = takes (0) returns (0) {
+#define macro INNER_ERC20_CONSTRUCTOR() = takes (0) returns (0) {
+    // Copy the decimals into memory from the bytecode
+    0x20                                    // [size] - byte size to copy
+    0x20 codesize sub                       // [offset, size] - offset in the code to copy from
+    0x00                                    // [mem, offset, size] - offset in memory to copy to
+    codecopy                                // []
+
+    // Copy the decimals from memory into the DECIMALS_SLOT storage location
+    0x00 mload                              // [decimals]
+    [DECIMALS_SLOT] sstore                  // []
+
     chainid [INITIAL_CHAIN_ID] sstore       // []
     COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
@@ -90,7 +104,7 @@
 
 /// @notice Transfer
 /// @notice Non-Payable function that transfers an amount of tokens from the sender to a recipient.
-#define macro TRANSFER() = takes (0) returns (1) {
+#define macro TRANSFER() = takes (0) returns (0) {
     NON_PAYABLE()
 
     // Setup the stack for the transfer function.
@@ -115,7 +129,7 @@
 
 /// @notice Transfer From
 /// @notice Non-Payable function that transfers an amount of tokens from an address to a recipient.
-#define macro TRANSFER_FROM() = takes (0) returns (1) {
+#define macro TRANSFER_FROM() = takes (0) returns (0) {
     NON_PAYABLE()                           // []
 
     // Setup the stack for the transfer function.
@@ -198,7 +212,7 @@
         dup2                                                // [value, balance, value, from, to]
         swap1                                               // [balance, value, value, from, to]
         sub                                                 // [balance - value, value, from, to]
-        dup3                                                // [from, balance-value, value, from, to]
+        dup3                                                // [from, balance - value, value, from, to]
         [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)        // [value, from, to]
 }
 
@@ -398,12 +412,14 @@
     expired:
         0x5045524D49545F444541444C494E455F45585049524544000000000000000000         // ["PERMIT_DEADLINE_EXPIRED"]
         0x17                                                                       // [23 (length), "PERMIT_DEADLINE_EXPIRED"]
-        REVERT_WITH_REASON(0x00)
+        0x00                                                                       // [0, 23 (length), "PERMIT_DEADLINE_EXPIRED"]
+        REQUIRE()
 
     invalidSigner:
         0x494E56414C49445F5349474E4552000000000000000000000000000000000000         // ["INVALID_SIGNER"]
         0x0e                                                                       // [14 (length), "INVALID_SIGNER"]
-        REVERT_WITH_REASON(0x00)
+        0x00                                                                       // [0, 14 (length), "INVALID_SIGNER"]
+        REQUIRE()
 }
 
 /// @notice Takes an address off the stack, returns the current nonce for that address onto the stack.
@@ -454,7 +470,8 @@
 /// @notice Returns the token decimal representation
 #define macro DECIMALS() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
-    [META_DECIMALS] 0x00 mstore         // []
+    [DECIMALS_SLOT] sload               // [decimals]
+    0x00 mstore                         // []
     0x20 0x00 return                    // []
 }
 
@@ -525,33 +542,9 @@
     // Emit the transfer event.
     0x00 mstore                     // [to, to]
     [ZERO_ADDRESS]                  // [address(0), to, to]
-    __EVENT_HASH(Transfer)          // [sig, from, to]
-    0x20 0x00                       // [0, 32, sig, from, to]
-    log3                            // []
-}
-
-/// @notice Reverts if the call has a non-zero value.
-#define macro NON_PAYABLE() = takes (0) returns (0) {
-    callvalue iszero                                                            // [msg.value == 0]
-    novalue jumpi                                                               // []
-
-    // Revert with a "NON_PAYABLE" message
-    0xb4e4f4e5f50415941424c4500000000000000000000000000000000000000000          // ["NON_PAYABLE"]
-    0x1b                                                                        // [11 (length), "NON_PAYABLE"]
-    REVERT_WITH_REASON(0x00)                                                    // []
-
-    novalue:
-}
-
-/// @notice Revert with a string reason
-#define macro REVERT_WITH_REASON(mem_ptr) = takes (2) returns(0) {
-    // NOTE: String must be < 32 bytes
-    // [len, "str"]
-    [ERROR_SIG] <mem_ptr> mstore            // [len, "str"]   0x00 error sig
-    0x20 <mem_ptr> 0x04 add mstore          // [len, "str"]   0x00 error sig  0x04 offset
-    <mem_ptr> 0x24 add mstore               // ["str"]        0x00 error sig  0x04 offset  0x24 len
-    <mem_ptr> 0x44 add mstore               // []             0x00 error sig  0x04 offset  0x24 len  0x44: "string"
-    0x64 0x00 revert
+    __EVENT_HASH(Transfer)          // [sig, from, to, to]
+    0x20 0x00                       // [0, 32, sig, from, to, to]
+    log3 pop                        // []
 }
 
 
@@ -576,8 +569,7 @@
     dup1 __FUNC_SIG(transferFrom)       eq transferFromJump     jumpi
     dup1 __FUNC_SIG(approve)            eq approveJump          jumpi
 
-    // Revert if function selector is not recognized.
-    0x00 dup1 revert
+    cont jumpi
 
     allowanceJump:
         ALLOWANCE()
@@ -603,4 +595,6 @@
         TRANSFER_FROM()
     transferJump:
         TRANSFER()
+
+    cont:
 }

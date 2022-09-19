@@ -2,7 +2,7 @@
 #define function mint(address, uint256) nonpayable returns ()
 #define function burn(address, uint256) nonpayable returns ()
 
-#define macro BURN() = takes(0) returns (0) {
+#define macro BURN() = takes (0) returns (0) {
     NON_PAYABLE()
     // Setup the stack for the burn function.
     0x04 calldataload   // [from]
@@ -15,7 +15,7 @@
     stop                // []
 }
 
-#define macro MINT() = takes(0) returns (0) {
+#define macro MINT() = takes (0) returns (0) {
     NON_PAYABLE()
 
     // Setup the stack for the mint function.
@@ -27,6 +27,10 @@
 
     // Stop Execution
     stop                // []
+}
+
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    INNER_ERC20_CONSTRUCTOR()
 }
 
 #define macro MAIN() = takes (0) returns (0) {
