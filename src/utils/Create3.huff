@@ -7,6 +7,8 @@
 
 #include "./CommonErrors.huff"
 
+#define event LogWord(bytes32)
+
 // Errors
 #define error ErrorCreatingProxy()
 #define error ErrorCreatingContract()
@@ -105,15 +107,29 @@
     or                      // [[0xff][address], salt]
     0x00 mstore             // [salt]
 
+    0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
+
     // Store the salt in memory at position 0x15
     0x15 mstore             // []
+
+    0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Store the hash in memory at 0x35
     [PROXY_BYTECODE_HASH]   // [hash]
     0x35 mstore             // []
 
-    // Hash the memory from 0x00:0x35
-    0x35 0x00 sha3          // [keccak]
+    // Hash the memory from 0x00:0x55
+    0x55 0x00 sha3          // [keccak]
+
+    // ---------------------------------------- //
+    //              Memory Layout               //
+    // ---------------------------------------- //
+    // prefix |    address   | nonce | empty    //
+    // 0xd694 | <proxy_address> | 01 | 000..000 //
+    // ---------------------------------------- //
+
+    // 0xd6 = 0xc0 (short RLP prefix) + 0x16 (length of: 0x94 ++ proxy ++ 0x01)
+    // 0x94 = 0x80 + 0x14 (0x14 = the length of an address, 20 bytes, in hex)
 
     // Clear the top 10 bytes of the hash
     0x60 shl 0x10 shr       // [proxy_address]
