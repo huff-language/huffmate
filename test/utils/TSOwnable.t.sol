@@ -26,20 +26,21 @@ contract TSOwnableTest is Test {
         );
     }
 
-    function testOwner() public {
+    function testTsOwnableGetOwner() public {
         assertEq(tsOwnable.owner(), huffConfig);
     }
 
-    function testSetPendingOwner() public {
+    function testTsOwnableSetPendingOwner() public {
         vm.prank(huffConfig);
         tsOwnable.setPendingOwner(address(0xBEEF));
-        
+
         assertEq(tsOwnable.pendingOwner(), address(0xBEEF));
     }
 
-    function testSetAndAcceptOwner() public {
+    function testTsOwnableSetAndAcceptOwner() public {
         vm.prank(huffConfig);
         tsOwnable.setPendingOwner(address(0xBEEF));
+        assertEq(tsOwnable.pendingOwner(), address(0xBEEF));
 
         vm.prank(address(0xBEEF));
         tsOwnable.acceptOwnership();
