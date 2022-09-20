@@ -73,9 +73,10 @@
     0x04 calldataload MASK_ADDRESS()            // [newOwner]
 
     // Revert if address equals owner
-    dup1 caller eq iszero set jumpi             // [newOwner]
-    REQUIRE()                                   // [newOwner]
-    set:
+    dup1 caller                                 // [owner, newOwner, newOwner]
+    eq iszero set jumpi                         // [newOwner]
+    ALREADY_OWNER(0x00)                         // []
+    set:                                        // [newOwner]
 
     // Duplicate address on stack
     dup1                                        // [newOwner, newOwner]

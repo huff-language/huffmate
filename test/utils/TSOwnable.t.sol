@@ -44,8 +44,13 @@ contract TSOwnableTest is Test {
 
         vm.prank(address(0xBEEF));
         tsOwnable.acceptOwnership();
-
         assertEq(tsOwnable.owner(), address(0xBEEF));
         assertEq(tsOwnable.pendingOwner(), address(0));
+
+        vm.startPrank(address(0xBEEF));
+        vm.expectRevert("ALREADY_OWNER");
+        tsOwnable.setPendingOwner(address(0xBEEF));
+        vm.stopPrank();
+
     }
 }
