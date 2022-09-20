@@ -46,11 +46,15 @@
     // Output Stack: [deployed]
 
     // Create the proxy
-    dup1 0x11                       // [size, salt, salt, &creationCode, value]
-    [PROXY_BYTECODE] 0x00 mstore    // [size, salt, salt, &creationCode, value]
-    0x00                            // [offset, size, salt, salt, &creationCode, value]
-    0x00                            // [value, offset, size, salt, salt, &creationCode, value]
-    create2                         // [address, salt, &creationCode, value]
+    dup1 0x11                                   // [size, salt, salt, &creationCode, value]
+    
+    // Shift the proxy bytecode left
+    [PROXY_BYTECODE]                            // [bytecode, size, salt, salt, &creationCode, value, bytecode]
+    0x80 shl                                    // [RIGHTPAD(bytecode), size, salt, salt, &creationCode, value, bytecode]
+    0x00 mstore                                 // [size, salt, salt, &creationCode, value]
+    0x00                                        // [offset, size, salt, salt, &creationCode, value]
+    0x00                                        // [value, offset, size, salt, salt, &creationCode, value]
+    create2                                     // [address, salt, &creationCode, value]
 
     // Check the address of of the proxy is not null
     dup1 iszero                     // [address == 0, address, salt, &creationCode, value]
