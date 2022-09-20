@@ -30,17 +30,32 @@ contract TSOwnableTest is Test {
         assertEq(tsOwnable.owner(), huffConfig);
     }
 
-    function testTsOwnableSetPendingOwner() public {
+    function testTsOwnableSetPendingOwner(address rando) public {
+        vm.assume(rando != huffConfig);
+
+        vm.startPrank(rando);
+        vm.expectRevert("ONLY_OWNER");
+        tsOwnable.setPendingOwner(address(0xBEEF));
+        vm.stopPrank();
+
         vm.prank(huffConfig);
         tsOwnable.setPendingOwner(address(0xBEEF));
 
         assertEq(tsOwnable.pendingOwner(), address(0xBEEF));
     }
 
-    function testTsOwnableSetAndAcceptOwner() public {
+    function testTsOwnableSetAndAcceptOwner(address rando) public {
+        vm.assume(rando != address(0xBEEF));
+
         vm.prank(huffConfig);
         tsOwnable.setPendingOwner(address(0xBEEF));
         assertEq(tsOwnable.pendingOwner(), address(0xBEEF));
+
+        // Random person shouldn't be able to accept ownership
+        vm.startPrank(rando);
+        vm.expectRevert("ONLY_PENDING_OWNER");
+        tsOwnable.acceptOwnership();
+        vm.stopPrank();
 
         vm.prank(address(0xBEEF));
         tsOwnable.acceptOwnership();
