@@ -46,7 +46,7 @@
     // Output Stack: [deployed]
 
     // Create the proxy
-    dup1 0x11                       // [size, salt, salt, &creationCode, value]
+    dup1 0x10                       // [size, salt, salt, &creationCode, value]
     [PROXY_BYTECODE] 0x00 mstore    // [size, salt, salt, &creationCode, value]
     0x00                            // [offset, size, salt, salt, &creationCode, value]
     0x00                            // [value, offset, size, salt, salt, &creationCode, value]
@@ -55,6 +55,9 @@
     // Check the address of of the proxy is not null
     dup1 iszero                     // [address == 0, address, salt, &creationCode, value]
     deployment_failed jumpi         // [address, salt, &creationCode, value]
+
+    dup1 0x00 0x00 0x20 swap3 extcodecopy
+    0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Load the length of the creation code
     dup3 0x04 add calldataload         // [creationCode.length, address, salt, &creationCode, value]
