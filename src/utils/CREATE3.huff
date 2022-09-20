@@ -108,12 +108,8 @@
     or                      // [[0xff][address], salt]
     0x00 mstore             // [salt]
 
-    // 0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
-
     // Store the salt in memory at position 0x15
     0x15 mstore             // []
-
-    // 0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Store the hash in memory at 0x35
     [PROXY_BYTECODE_HASH]   // [hash]
