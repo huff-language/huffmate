@@ -1,0 +1,33 @@
+#define function deploy(bytes32, bytes, uint256) payable returns (address)
+#define function getDeployed(bytes32) view returns (address)
+
+#define macro CREATE_3_DEPLOY_WRAPPER() = takes (0) returns (0) {
+    0x44 calldataload       // [value]
+    0x24 calldataload       // [&creationCode, value]
+    0x04 calldataload       // [salt, &creationCode, value]
+    CREATE_3_DEPLOY()       // [deployed]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro CREATE_3_GET_DEPLOYED_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [salt]
+    CREATE_3_GET_DEPLOYED()     // [deployed]
+    0x00 mstore                 // []
+    0x20 0x00 return            // []
+}
+
+#define macro MAIN() = {
+    pc calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(deploy)         eq deploy_jump jumpi
+    dup1 __FUNC_SIG(getDeployed)    eq get_deployed_jump jumpi
+
+    // Exit if selector does not match
+    0x00 dup1 revert
+
+    deploy_jump:
+        CREATE_3_DEPLOY_WRAPPER()
+    get_deployed_jump:
+        CREATE_3_GET_DEPLOYED_WRAPPER()
+}
