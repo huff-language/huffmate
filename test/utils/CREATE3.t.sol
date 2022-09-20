@@ -25,10 +25,13 @@ contract CREATE3Test is Test {
     function testCreate3ERC20() public {
         bytes32 salt = keccak256(bytes("A salt!"));
 
+        bytes memory packedCode = abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18));
+        console2.logBytes(packedCode);
+
         MockERC20 deployed = MockERC20(
             create3.deploy(
                 salt,
-                abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18)),
+                packedCode,
                 0
             )
         );
