@@ -26,7 +26,6 @@ contract CREATE3Test is Test {
         bytes32 salt = keccak256(bytes("A salt!"));
 
         bytes memory packedCode = abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18));
-        console2.logBytes(packedCode);
 
         MockERC20 deployed = MockERC20(
             create3.deploy(
@@ -43,7 +42,21 @@ contract CREATE3Test is Test {
         assertEq(deployed.decimals(), 18);
     }
 
-    function testCreate3DeployERC20(
+    function testFailDoubleDeploySameBytecode() public {
+        bytes32 salt = keccak256(bytes("Salty..."));
+
+        create3.deploy(salt, type(MockAuthChild).creationCode, 0);
+        create3.deploy(salt, type(MockAuthChild).creationCode, 0);
+    }
+
+    function testFailDoubleDeployDifferentBytecode() public {
+        bytes32 salt = keccak256(bytes("and sweet!"));
+
+        create3.deploy(salt, type(WETH).creationCode, 0);
+        create3.deploy(salt, type(MockAuthChild).creationCode, 0);
+    }
+
+    function testDeployERC20(
         bytes32 salt,
         string calldata name,
         string calldata symbol,
@@ -59,20 +72,6 @@ contract CREATE3Test is Test {
         assertEq(deployed.symbol(), symbol);
         assertEq(deployed.decimals(), decimals);
     }
-
-    // function testFailDoubleDeploySameBytecode() public {
-    //     bytes32 salt = keccak256(bytes("Salty..."));
-
-    //     // create3.deploy(salt, type(MockAuthChild).creationCode, 0);
-    //     // create3.deploy(salt, type(MockAuthChild).creationCode, 0);
-    // }
-
-    // function testFailDoubleDeployDifferentBytecode() public {
-    //     bytes32 salt = keccak256(bytes("and sweet!"));
-
-    //     // create3.deploy(salt, type(WETH).creationCode, 0);
-    //     // create3.deploy(salt, type(MockAuthChild).creationCode, 0);
-    // }
 
     function testFailDoubleDeploySameBytecode(bytes32 salt, bytes calldata bytecode) public {
         create3.deploy(salt, bytecode, 0);

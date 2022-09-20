@@ -2,7 +2,7 @@
 #define function getDeployed(bytes32) view returns (address)
 
 #define macro CREATE_3_DEPLOY_WRAPPER() = takes (0) returns (0) {
-    0x44 calldataload       // [alue]
+    0x44 calldataload       // [value]
     0x24 calldataload       // [&creationCode, value]
     0x04 calldataload       // [salt, &creationCode, value]
     CREATE_3_DEPLOY()       // [deployed]
