@@ -1,10 +1,11 @@
 /// @title TSOwnable
 /// @notice SPDX-License-Identifier: MIT
 /// @author merkleplant (modified by @devtooligan)
+/// @author asnared <https://github.com/abigger87>
 /// @notice An Ownable Implementation using Two-Step Transfer Pattern
 
 #include "./Address.huff"
-#include "./Errors.huff"
+#include "./CommonErrors.huff"
 #include "../auth/NonPayable.huff"
 
 // External Interface
@@ -24,127 +25,124 @@
 #define function acceptOwnership() nonpayable returns ()
 
 /// @notice Emitted when new owner set.
-#define event NewOwner(address,address)
+#define event NewOwner(address, address)
 
 /// @notice Emitted when new pending owner set.
-#define event NewPendingOwner(address,address)
-
-// Event Signatures
-
-// cast keccak "NewOwner(address,address)"
-#define constant EVENT_NEW_OWNER
-    = 0x70aea8d848e8a90fb7661b227dc522eb6395c3dac71b63cb59edd5c9899b2364
-// cast keccak "NewPendingOwner(address,address)"
-#define constant EVENT_NEW_PENDING_OWNER
-    = 0xb3d55174552271a4f1aaf36b72f50381e892171636b3fb5447fe00e995e7a37b
+#define event NewPendingOwner(address, address)
 
 // Storage
+
+/// @notice Owner Storage Slot
 #define constant OWNER_SLOT = FREE_STORAGE_POINTER()
+
+/// @notice Pending Owner Storage Slot
 #define constant PENDING_OWNER_SLOT = FREE_STORAGE_POINTER()
 
-// Error Constants
-
-#define constant ONLY_OWNER_ERROR = 0x4F4E4C595F4F574E455200000000000000000000000000000000000000000000
-#define constant ONLY_OWNER_LENGTH = 0x0a
-
-#define constant ONLY_PENDING_OWNER_ERROR = 0x4F4E4C595F50454E44494E475F4F574E45520000000000000000000000000000
-#define constant ONLY_PENDING_OWNER_LENGTH = 0x12
-
-#define constant ALREADY_OWNER_ERROR = 0x414C52454144595F4F574E455200000000000000000000000000000000000000
-#define constant ALREADY_OWNER_LENGTH = 0x0d
-
-// Constructor
-
+/// @notice Inner TSOwnable Constructor
 #define macro CONSTRUCTOR_TSOWNABLE() = takes (0) returns (0) {
-    caller [OWNER_SLOT] sstore  // Store msg.sender as owner
+    // Store msg.sender as owner
+    caller [OWNER_SLOT] sstore          // []
 }
 
-// Access Handler
-
-#define macro ONLY_OWNER() = takes(0) returns (0) {
-    [ONLY_OWNER_ERROR]                  // ["ONLY_OWNER"]
-    [ONLY_OWNER_LENGTH]                 // [10 (length), "ONLY_OWNER"]
-    [OWNER_SLOT] sload caller eq        // [isOwner, 10 (length), "ONLY_OWNER"]
-    REQUIRE()
+/// @notice Only Owner Modifier
+#define macro ONLY_OWNER_MODIFIER() = takes (0) returns (0) {
+    [OWNER_SLOT] sload                      // [owner]
+    caller eq authed jumpi                  // []
+    ONLY_OWNER(0x00)                        // []
+    authed:                                 // []
 }
 
-#define macro ONLY_PENDING_OWNER() = takes (0) returns (0) {
-    [ONLY_PENDING_OWNER_ERROR]                  // ["ONLY_PENDING_OWNER"]
-    [ONLY_PENDING_OWNER_LENGTH]                 // [18 (length), "ONLY_PENDING_OWNER"]
-    [PENDING_OWNER_SLOT] sload caller eq        // [isPendingOwner, 18 (length), "ONLY_PENDING_OWNER"]
-    REQUIRE()
+/// @notice Only Pending Owner Modifier
+#define macro ONLY_PENDING_OWNER_MODIFIER() = takes (0) returns (0) {
+    [PENDING_OWNER_SLOT] sload              // [pending_owner]
+    caller eq                               // [msg.sender == pending_owner]
+    authed jumpi                            // []
+    ONLY_PENDING_OWNER(0x00)                // []
+    authed:                                 // []
 }
 
 // Mutating Functions
 
+/// @notice Set Pending Owner
+/// @param newOwner The address of the new pending owner
 #define macro OWNABLE_SET_PENDING_OWNER() = takes (0) returns (0) {
-    NON_PAYABLE()
-    ONLY_OWNER()
+    NON_PAYABLE()                               // []
+    ONLY_OWNER_MODIFIER()                       // []
 
     // Read argument and mask to address
     0x04 calldataload MASK_ADDRESS()            // [newOwner]
 
     // Revert if address equals owner
-    [ALREADY_OWNER_ERROR]                       // ["ALREADY_OWNER", newOwner]
-    [ALREADY_OWNER_LENGTH]                      // [13 (length), "ALREADY_OWNER", newOwner]
-    dup3 caller eq                              // [isAlreadyOwner, 13 (length), "ALREADY_OWNER", newOwner]
-    REQUIRE()                                   // [newOwner]
+    dup1 caller                                 // [owner, newOwner, newOwner]
+    eq iszero set jumpi                         // [newOwner]
+    ALREADY_OWNER(0x00)                         // []
+    set:                                        // [newOwner]
 
     // Duplicate address on stack
-    dup1
+    dup1                                        // [newOwner, newOwner]
 
     // Emit NewPendingOwner event
-    [OWNER_SLOT] sload [EVENT_NEW_PENDING_OWNER] 0x00 0x00
-    log3
+    [OWNER_SLOT] sload                          // [owner, newOwner, newOwner]
+    __EVENT_HASH(NewPendingOwner) 0x00 0x00     // [offset, size, sig, owner, newOwner, newOwner]
+    log3                                        // [newOwner]
 
     // Store address as pending owner
-    [PENDING_OWNER_SLOT] sstore
+    [PENDING_OWNER_SLOT] sstore                 // []
+
+    // Stop execution
+    stop
 }
 
+/// @notice Accept Ownership
+/// @notice Allows the pending owner to become the owner
 #define macro OWNABLE_ACCEPT_OWNERSHIP() = takes (0) returns (0) {
-    NON_PAYABLE()
-    ONLY_PENDING_OWNER()
+    NON_PAYABLE()                               // []
+    ONLY_PENDING_OWNER_MODIFIER()               // []
 
     // Emit NewOwner event
-    caller [OWNER_SLOT] sload [EVENT_NEW_OWNER] 0x00 0x00
-    log3
+    caller [OWNER_SLOT] sload                   // [owner, pending_owner]
+    __EVENT_HASH(NewOwner) 0x00 0x00            // [offset, size, sig, owner, pending_owner]
+    log3                                        // []
 
     // Store msg.sender as owner
-    caller [OWNER_SLOT] sstore
+    caller [OWNER_SLOT] sstore                  // []
 
     // Clear pending owner
-    0x00 [PENDING_OWNER_SLOT] sstore
+    0x00 [PENDING_OWNER_SLOT] sstore            // []
 
+    // Stop execution
     stop
 }
 
 // View Functions
 
+/// @notice Get Owner
+/// @notice Returns the current owner
 #define macro OWNABLE_GET_OWNER() = takes (0) returns (0) {
-    NON_PAYABLE()
-    [OWNER_SLOT] sload
-    0x00 mstore
-    0x20 0x00 return
+    NON_PAYABLE()                   // []
+    [OWNER_SLOT] sload              // [owner]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
 }
 
+/// @notice Get Pending Owner
+/// @notice Returns the current pending owner
 #define macro OWNABLE_GET_PENDING_OWNER() = takes (0) returns (0) {
-    NON_PAYABLE()
-    [PENDING_OWNER_SLOT] sload
-    0x00 mstore
-    0x20 0x00 return
+    NON_PAYABLE()                   // []
+    [PENDING_OWNER_SLOT] sload      // [pending_owner]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
 }
 
 // Function Dispatching
-#define macro MAIN_TSOWNABLE() = takes (0) returns (0) {
+#define macro MAIN_TSOWNABLE() = takes (1) returns (1) {
+    // Input stack: [sig]
+    // Output stack: [sig]
 
-    // cast sig "setPendingOwner(address)"
-    dup1 0xc42069ec eq set_pending_owner jumpi
-    // cast sig "acceptOwnership()"
-    dup1 0x79ba5097 eq accept_ownership jumpi
-    // cast sig "owner()"
-    dup1 0x8da5cb5b eq get_owner jumpi
-    // cast sig "pendingOwner()"
-    dup1 0xe30c3978 eq get_pending_owner jumpi
+    dup1 __FUNC_SIG(setPendingOwner)    eq set_pending_owner jumpi
+    dup1 __FUNC_SIG(acceptOwnership)    eq accept_ownership jumpi
+    dup1 __FUNC_SIG(owner)              eq get_owner jumpi
+    dup1 __FUNC_SIG(pendingOwner)       eq get_pending_owner jumpi
 
     not_found jump
 

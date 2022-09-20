@@ -39,6 +39,17 @@
 #define constant OUT_OF_BOUNDS_ERROR = 0x4f55545f4f465f424f554e445300000000000000000000000000000000000000
 #define constant OUT_OF_BOUNDS_LENGTH = 0x0d
 
+// Ownable Errors
+
+#define constant ONLY_OWNER_ERROR = 0x4F4E4C595F4F574E455200000000000000000000000000000000000000000000
+#define constant ONLY_OWNER_LENGTH = 0x0a
+
+#define constant ONLY_PENDING_OWNER_ERROR = 0x4F4E4C595F50454E44494E475F4F574E45520000000000000000000000000000
+#define constant ONLY_PENDING_OWNER_LENGTH = 0x12
+
+#define constant ALREADY_OWNER_ERROR = 0x414C52454144595F4F574E455200000000000000000000000000000000000000
+#define constant ALREADY_OWNER_LENGTH = 0x0d
+
 // Merkle Distributor Errors
 
 #define constant ALREADY_CLAIMED_ERROR = 0x414c52454144595f434c41494d45440000000000000000000000000000000000
@@ -52,6 +63,30 @@
 
 #define constant ZERO_ASSETS_ERROR = 0x5a45524f5f415353455453000000000000000000000000000000000000000000
 #define constant ZERO_ASSETS_LENGTH = 0x0b
+
+/// @notice Reverts with an "ONLY_OWNER" message if the condition is false
+#define macro ONLY_OWNER(condition) = takes (0) returns (0) {
+    [ONLY_OWNER_ERROR]              // ["ONLY_OWNER"]
+    [ONLY_OWNER_LENGTH]             // [10 (length), "ONLY_OWNER"]
+    <condition>                     // [condition, 10 (length), "ONLY_OWNER"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "ONLY_PENDING_OWNER" message if the condition is false
+#define macro ONLY_PENDING_OWNER(condition) = takes (0) returns (0) {
+    [ONLY_PENDING_OWNER_ERROR]      // ["ONLY_PENDING_OWNER"]
+    [ONLY_PENDING_OWNER_LENGTH]     // [18 (length), "ONLY_PENDING_OWNER"]
+    <condition>                     // [condition, 18 (length), "ONLY_PENDING_OWNER"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "ALREADY_OWNER" message if the condition is false
+#define macro ALREADY_OWNER(condition) = takes (0) returns (0) {
+    [ALREADY_OWNER_ERROR]           // ["ALREADY_OWNER"]
+    [ALREADY_OWNER_LENGTH]          // [13 (length), "ALREADY_OWNER"]
+    <condition>                     // [condition, 13 (length), "ALREADY_OWNER"]
+    REQUIRE()                       // []
+}
 
 /// @notice Reverts with an "OUT_OF_BOUNDS" message if the condition is false
 #define macro OUT_OF_BOUNDS(condition) = takes (0) returns (0) {
