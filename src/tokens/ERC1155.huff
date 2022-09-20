@@ -310,7 +310,7 @@
 
     isTrue:
 
-        // loop over the arrays of ids and amounts and increase the balance
+    // loop over the arrays of ids and amounts and increase the balance
     0x00    // [i, ids.length, &amount, &ids, to, from]
     loop:
         dup2 dup2           // [i, ids.length, i, ids.length, &amount, &ids, to, from]

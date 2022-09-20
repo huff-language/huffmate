@@ -34,8 +34,8 @@
 }
 
 /// @notice Loads a jumpdest stored in a packed jumptable into memory at `mem_ptr`
-/// @dev This macro only loads 2 bytes from the contract code, so make sure to account 
-///      for this when passing a `mem_ptr`. I.e., if we want to store the jumpdest pc 
+/// @dev This macro only loads 2 bytes from the contract code, so make sure to account
+///      for this when passing a `mem_ptr`. I.e., if we want to store the jumpdest pc
 ///      at offset `x`, we would pass in `x + 0x1e` as the `mem_ptr` argument.
 ///
 /// @param mem_ptr The memory location to load the 2 byte jumpdest into
