@@ -46,7 +46,7 @@
     // Output Stack: [deployed]
 
     // Create the proxy
-    dup1 0x11                                   // [size, salt, salt, &creationCode, value]
+    dup1 0x10                                   // [size, salt, salt, &creationCode, value]
     
     // Shift the proxy bytecode left
     [PROXY_BYTECODE]                            // [bytecode, size, salt, salt, &creationCode, value, bytecode]
@@ -63,13 +63,10 @@
     // Load the length of the creation code
     dup3 0x04 add calldataload         // [creationCode.length, address, salt, &creationCode, value]
 
-    // Copy the length of the code to position 0x20
-    // dup1 0x20 mstore                        // [creationCode.length, address, salt, &creationCode, value]
-
-    // Copy the code from calldata to memory at memory position 0x24
+    // Copy the code from calldata to memory at memory position 0x20
     dup1 0x05 shl                           // [size, creationCode.length, address, salt, &creationCode, value]
     dup5 0x24 add                           // [calldataOffset, size, creationCode.length, address, salt, &creationCode, value]
-    0x24                                    // [destOffset, calldataOffset, size, creationCode.length, address, salt, &creationCode, value]
+    0x20                                    // [destOffset, calldataOffset, size, creationCode.length, address, salt, &creationCode, value]
     calldatacopy                            // [creationCode.length, address, salt, &creationCode, value]
 
     // Call the proxy with the creation code
@@ -111,12 +108,12 @@
     or                      // [[0xff][address], salt]
     0x00 mstore             // [salt]
 
-    0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
+    // 0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Store the salt in memory at position 0x15
     0x15 mstore             // []
 
-    0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
+    // 0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Store the hash in memory at 0x35
     [PROXY_BYTECODE_HASH]   // [hash]
@@ -124,6 +121,7 @@
 
     // Hash the memory from 0x00:0x55
     0x55 0x00 sha3          // [keccak]
+
 
     // ---------------------------------------- //
     //              Memory Layout               //
@@ -143,6 +141,7 @@
     or                      // [ [0xd694][proxy_address] ]
 
     // Append a 0x01 to the end of the address
+
     0x01 0x48 shl           // [0x01 << 9, [0xd694][proxy_address]]
     or                      // [ [0xd694][proxy_address][01] ]
 

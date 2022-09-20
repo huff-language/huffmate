@@ -26,7 +26,6 @@ contract CREATE3Test is Test {
         bytes32 salt = keccak256(bytes("A salt!"));
 
         bytes memory packedCode = abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18));
-        console2.logBytes(packedCode);
 
         MockERC20 deployed = MockERC20(
             create3.deploy(
@@ -43,36 +42,36 @@ contract CREATE3Test is Test {
         assertEq(deployed.decimals(), 18);
     }
 
-    // function testFailDoubleDeploySameBytecode() public {
-    //     bytes32 salt = keccak256(bytes("Salty..."));
+    function testFailDoubleDeploySameBytecode() public {
+        bytes32 salt = keccak256(bytes("Salty..."));
 
-    //     // create3.deploy(salt, type(MockAuthChild).creationCode, 0);
-    //     // create3.deploy(salt, type(MockAuthChild).creationCode, 0);
-    // }
+        create3.deploy(salt, type(MockAuthChild).creationCode, 0);
+        create3.deploy(salt, type(MockAuthChild).creationCode, 0);
+    }
 
-    // function testFailDoubleDeployDifferentBytecode() public {
-    //     bytes32 salt = keccak256(bytes("and sweet!"));
+    function testFailDoubleDeployDifferentBytecode() public {
+        bytes32 salt = keccak256(bytes("and sweet!"));
 
-    //     // create3.deploy(salt, type(WETH).creationCode, 0);
-    //     // create3.deploy(salt, type(MockAuthChild).creationCode, 0);
-    // }
+        create3.deploy(salt, type(WETH).creationCode, 0);
+        create3.deploy(salt, type(MockAuthChild).creationCode, 0);
+    }
 
-    // function testDeployERC20(
-    //     bytes32 salt,
-    //     string calldata name,
-    //     string calldata symbol,
-    //     uint8 decimals
-    // ) public {
-    //     MockERC20 deployed = MockERC20(
-    //         create3.deploy(salt, abi.encodePacked(type(MockERC20).creationCode, abi.encode(name, symbol, decimals)), 0)
-    //     );
+    function testDeployERC20(
+        bytes32 salt,
+        string calldata name,
+        string calldata symbol,
+        uint8 decimals
+    ) public {
+        MockERC20 deployed = MockERC20(
+            create3.deploy(salt, abi.encodePacked(type(MockERC20).creationCode, abi.encode(name, symbol, decimals)), 0)
+        );
 
-    //     assertEq(address(deployed), create3.getDeployed(salt));
+        assertEq(address(deployed), create3.getDeployed(salt));
 
-    //     assertEq(deployed.name(), name);
-    //     assertEq(deployed.symbol(), symbol);
-    //     assertEq(deployed.decimals(), decimals);
-    // }
+        assertEq(deployed.name(), name);
+        assertEq(deployed.symbol(), symbol);
+        assertEq(deployed.decimals(), decimals);
+    }
 
     function testFailDoubleDeploySameBytecode(bytes32 salt, bytes calldata bytecode) public {
         create3.deploy(salt, bytecode, 0);
