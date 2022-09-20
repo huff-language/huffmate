@@ -1,0 +1,63 @@
+/// @title Ternary
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice A collection of ternary operators with abstracted conditional logic
+
+
+/// @notice Not Ternary
+/// @notice In shorthand, this is `!condition ? x : y`, where the input stack is [!condition, x, y]
+#define macro NOT_TERNARY() = takes(3) returns(1) {
+    // Input Stack: [!condition, x, y]
+    // Output Stack: [!condition ? x : y]
+
+    // If the condition is true, jump and pop
+    __Utils_Misc__ternaryNoSwap jumpi
+        swap1
+    __Utils_Misc__ternaryNoSwap:
+        pop
+}
+
+/// @notice Ternary
+/// @notice In shorthand, this is `condition ? x : y`, where the input stack is [condition, x, y]
+#define macro TERNARY() = takes(3) returns(1) {
+    // Input Stack: [condition, x, y]
+    // Output Stack: [condition ? x : y]
+
+    // If the condition is false, jump and pop
+    __Utils_Misc__ternaryNoSwap iszero jumpi
+        swap1
+    __Utils_Misc__ternaryNoSwap:
+        pop
+}
+
+// TESTS
+
+/// @notice Tests the NOT_TERNARY() macro
+#define test TEST_NOT_TERNARY() = {
+    // Test false should return the first element
+    0x00 0x01 0x02 NOT_TERNARY()
+    0x01 eq worked jumpi
+        0x00 0x00 revert
+    worked:
+
+    // Test true should return the second element
+    0x01 0x01 0x02 NOT_TERNARY()
+    0x02 eq worked_again jumpi
+        0x00 0x00 revert
+    worked_again:
+}
+
+/// @notice Tests the TERNARY() macro
+#define test TEST_TERNARY() = {
+    // Test true should return the first element
+    0x01 0x01 0x02 NOT_TERNARY()
+    0x01 eq worked jumpi
+        0x00 0x00 revert
+    worked:
+
+    // Test false should return the second element
+    0x00 0x01 0x02 NOT_TERNARY()
+    0x02 eq worked_again jumpi
+        0x00 0x00 revert
+    worked_again:
+}

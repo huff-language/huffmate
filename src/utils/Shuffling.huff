@@ -1,0 +1,45 @@
+/// @title Shuffling
+/// @notice SPDX-License-Identifier: MIT
+/// @author Philogy <https://github.com/Philogy>
+/// @author asnared <https://github.com/abigger87>
+/// @notice Refactored algorithms for shuffling and other bitwise algorithms.
+/// @notice Adapted from Ethereum Consensus Specs (https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/beacon-chain.md#compute_shuffled_index)
+
+#include "./Address.huff"
+#include "./Ternary.huff"
+
+#include "../math/Math.huff"
+
+// Constants
+#define constant POS_MASK = 0xffffffff00
+
+/// @notice Shuffling Algorithm
+#define macro MECHS__ONE_WAY_SHUFFLE(mem1, mem2) = takes (4) returns (1) {
+    // Input Stack:                    [seed, index, index_count, iters]
+    // Output Stack:                   [index']
+
+    __Mechs__shuffleContinue:       // [seed, index, index_count, iters]
+        <mem1> mstore               // [index, index_count, iters]
+        0x20 <mem1> sha3            // [seed', index, index_count, iters]
+        dup3 dup1                   // [index_count, index_count, seed' index, index_count, iters]
+        dup3 mod                    // [pivot, index_count, seed', index, index_count, iters]
+        dup4 dup3                   // [index_count, index, pivot, index_count, seed', index, index_count, iters]
+        sub add mod                 // [flip, seed', index, index_count, iters]
+        dup3 dup2 MAX()             // [position, flip, seed', index, index_count, iters]
+        dup1 [POS_MASK] and         // [masked_position, position, flip, seed', index, index_count, iters]
+        <mem2> mstore               // [position, flip, seed', index, index_count, iters]
+        0x40 <mem1> sha3            // [rand2, position, flip, seed', index, index_count, iters]
+        swap1 0xff and shr          // [rand_bit_unmasked, flip, seed', index, index_count, iters]
+        0x1 and                     // [rand_bit, flip, seed', index, index_count, iters]
+        swap2 swap3 swap2           // [rand_bit, flip, index, seed', index_count, iters]
+        NOT_TERNARY()               // [index', seed', index_count, iters]
+        swap1 swap3                 // [iters, index', index_count, seed']
+        UNSAFE_SUB() swap3          // [seed', index', index_count, iters']
+
+    // Continue if iters > 0
+    dup4 __Mechs__shuffleContinue jumpi
+
+    // Return the index
+    pop swap2 pop pop               // [index']
+}
+

@@ -5,12 +5,17 @@
 /// @notice Math module over Solidity's arithmetic operations
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol)
 
+#include "../utils/Errors.huff"
+
 // Interface
 #define function sqrt(uint256) pure returns(uint256)
 #define function max(uint256, uint256) pure returns(uint256)
 #define function min(uint256, uint256) pure returns(uint256)
 #define function average(uint256, uint256) pure returns(uint256)
 #define function ceilDiv(uint256, uint256) pure returns(uint256)
+
+// Negative 1 in two's compliment
+#define constant NEG1 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 /// @notice Calculates the square root of a stack input
 #define macro SQRT() = takes (1) returns (1) {
@@ -192,7 +197,7 @@
     swap1               // [num1, num2]
 
     less_than:
-    pop                 // [min(num2, num1)]
+    pop                 // [max(num2, num1)]
 }
 
 /// @notice Returns the ceiling of the division of two values on the stack
@@ -211,7 +216,7 @@
     dest jump
 
     divide_by_zero:
-    0x00 0x00 revert
+        [DIVIDE_BY_ZERO] PANIC()
 
     if_zero:
     swap1               // [num2, num1]
@@ -229,7 +234,7 @@
     swap1               // [num2, num1]
 
     greater_than:
-        pop                 // [max(num1, num2)]
+        pop             // [min(num1, num2)]
 }
 
 /// @notice Returns the average of two values on the stack
@@ -240,4 +245,12 @@
     xor                 // [num2 ^ num1, num1 & num2]
     0x02 swap1 div      // [num2 ^ num1 / 2, num1 & num2]
     add                 // [sum]
+}
+
+/// @notice Unsafely subtracts 1 from a uint256 using the 2's complement representation
+#define macro UNSAFE_SUB() = takes (1) returns (1) {
+    // Input Stack:    [x]
+    // Output Stack:   [x - 1]
+
+    [NEG1] add      // [x - 1]
 }

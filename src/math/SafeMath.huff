@@ -4,6 +4,8 @@
 /// @notice Math module over Solidity's arithmetic operations with safety checks
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol)
 
+#include "../utils/Errors.huff"
+
 // Interface
 #define function safeAdd(uint256,uint256) pure returns (uint256)
 #define function safeSub(uint256,uint256) pure returns (uint256)
@@ -21,7 +23,7 @@
     gt                      // [is_overflow, result]
     iszero                  // [is_not_overflow, result]
     is_not_overflow jumpi   // [result]
-        0x00 0x00 revert
+        [ARITHMETIC_OVERFLOW] PANIC()
     is_not_overflow:        // [result]
 }
 
@@ -33,7 +35,7 @@
     gt                      // [is_underflow, num1, num2]
     iszero                  // [is_not_underflow, num1, num2]
     is_not_underflow jumpi  // [num1, num2]
-        0x00 0x00 revert
+        [ARITHMETIC_OVERFLOW] PANIC()
     is_not_underflow:       // [num1, num2]
     sub                     // [result]
 }
@@ -56,7 +58,7 @@
     swap2                       // [num2, div_check, result]
     eq                          // [is_not_overflow, result]
     is_not_overflow jumpi       // [result]
-        0x00 0x00 revert
+        [ARITHMETIC_OVERFLOW] PANIC()
     is_not_overflow:
 }
 
@@ -67,7 +69,7 @@
     0x00 swap1              // [num2, 0, num1, num2]
     gt                      // [is_not_div_zero, num1, num2]
     is_not_div_zero jumpi
-        0x00 0x00 revert
+        [DIVIDE_BY_ZERO] PANIC()
     is_not_div_zero:
     div                     // [result]
 }
@@ -79,7 +81,7 @@
     0x00 swap1              // [num2, 0, num1, num2]
     gt                      // [is_not_mod_zero, num1, num2]
     is_not_mod_zero jumpi
-        0x00 0x00 revert
+        [ARITHMETIC_OVERFLOW] PANIC()
     is_not_mod_zero:
     mod                     // [result]
 }

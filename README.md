@@ -74,9 +74,9 @@ utils
 ├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
 ├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
 ├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values"
+├─ Shuffling — "Refactored algorithms for shuffling and other bitwise algorithms"
 └─ SSTORE2 — "Faster & cheaper contract key-value storage for Ethereum Contracts"
 ```
-
 
 ### Acknowledgements
 

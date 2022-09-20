@@ -30,7 +30,7 @@ contract SafeMathTest is Test {
             uint256 c = a + b;
 
             if (a > c) {
-                vm.expectRevert();
+                vm.expectRevert(stdError.arithmeticError);
                 safeMath.safeAdd(a, b);
                 return;
             }
@@ -48,7 +48,7 @@ contract SafeMathTest is Test {
     function testSafeSub(uint256 a, uint256 b) public {
         unchecked {
             if (b > a) {
-                vm.expectRevert();
+                vm.expectRevert(stdError.arithmeticError);
                 safeMath.safeSub(a, b);
                 return;
             }
@@ -74,7 +74,7 @@ contract SafeMathTest is Test {
 
             uint256 c = a * b;
             if (c / a != b) {
-                vm.expectRevert();
+                vm.expectRevert(stdError.arithmeticError);
                 safeMath.safeMul(a, b);
                 return;
             }
@@ -92,7 +92,7 @@ contract SafeMathTest is Test {
     function testSafeDiv(uint256 a, uint256 b) public {
         unchecked {
             if (b == 0) {
-                vm.expectRevert();
+                vm.expectRevert(stdError.divisionError);
                 safeMath.safeDiv(a, b);
                 return;
             }
@@ -110,7 +110,7 @@ contract SafeMathTest is Test {
     function testSafeMod(uint256 a, uint256 b) public {
         unchecked {
             if (b == 0) {
-                vm.expectRevert();
+                vm.expectRevert(stdError.arithmeticError);
                 safeMath.safeMod(a, b);
                 return;
             }
