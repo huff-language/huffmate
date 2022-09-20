@@ -13,6 +13,49 @@
 
 #include "./CommonErrors.huff"
 
+// BEFORE ADDRESS
+//--------------------------------------------------------------------------------//
+// Opcode     | Opcode + Arguments    | Description      | Stack View             //
+//--------------------------------------------------------------------------------//
+// 0x3d       |  0x36                 | RETURNDATASIZE   | 0                      //
+// 0x60       |  0x602d               | PUSH1 0x2d       | 0x2d 0                 //
+// 0x80       |  0x36                 | DUP1             | 0x2d 0x2d 0            //
+// 0x60       |  0x600a               | PUSH1 0x0a       | 0x0a 0x2d 0x2d 0       //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 0x0a 0x2d 0x2d 0     //
+// 0x39       |  0x39                 | CODECOPY         | 0x2d 0                 //
+// 0x81       |  0x81                 | DUP2             | 0 0x2d 0               //
+// 0xf3       |  0xf3                 | RETURN           | 0                      //
+
+// 0x36       |  0x36                 | CALLDATASIZE     | size                   //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 size                 //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 0 size               //
+// 0x37       |  0x37                 | CALLDATACOPY     |                        //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | 0                      //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 0                    //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 0 0                  //
+// 0x36       |  0x36                 | CALLDATASIZE     | size 0 0 0             //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | 0 size 0 0 0           //
+// 0x73       |  0x73                 | PUSH20 <addr>    | addr 0 size 0 0 0      //
+
+// AFTER ADDRESS
+//--------------------------------------------------------------------------------//
+// Opcode     | Opcode + Arguments    | Description      | Stack View             //
+//--------------------------------------------------------------------------------//
+// 0x5a       |  0x5a                 | GAS              | gas addr 0 size 0 0 0  //
+// 0xf4       |  0xf4                 | DELEGATECALL     | success 0              //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | rds success 0          //
+// 0x82       |  0x82                 | DUP3             | 0 rds success 0        //
+// 0x80       |  0x80                 | DUP1             | 0 0 rds success 0      //
+// 0x3e       |  0x3e                 | RETURNDATACOPY   | success 0              //
+// 0x90       |  0x90                 | SWAP1            | 0 success              //
+// 0x3d       |  0x3d                 | RETURNDATASIZE   | rds 0 success          //
+// 0x91       |  0x91                 | SWAP2            | success rds 0          //
+// 0x60       |  0x602b               | PUSH1 0x2b       | 0x2b success rds 0     //
+// 0x57       |  0x57                 | JUMPI            | Revert if success == 0 //
+// 0xfd       |  0xfd                 | REVERT           |                        //
+// 0x5b       |  0x5b                 | JUMPDEST         |                        //
+// 0xf3       |  0xf3                 | RETURN           |                        //
+//--------------------------------------------------------------------------------//
 
 #define constant BYTECODE_BEFORE_ADDRESS = 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000
 #define constant BYTECODE_BEFORE_ADDRESS_NO_PADDING = 0x3d602d80600a3d3981f3363d3d373d3d3d363d73
