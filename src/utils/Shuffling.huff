@@ -1,170 +1,45 @@
 /// @title Shuffling
+/// @notice SPDX-License-Identifier: MIT
 /// @author Philogy <https://github.com/Philogy>
 /// @author asnared <https://github.com/abigger87>
 /// @notice Refactored algorithms for shuffling and other bitwise algorithms.
 /// @notice Adapted from Ethereum Consensus Specs (https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/beacon-chain.md#compute_shuffled_index)
 
-#define error Panic(uint256)
+#include "./Address.huff"
+#include "./Ternary.huff"
 
-#define macro REVERT_SIG(zero) = takes(1) returns(0) {
-  // takes:           [error_sig]
-  <zero> mstore    // []
-  0x04 0x1c revert // []
-}
+#include "../math/Math.huff"
 
-/* the remaining error sig is explicitly not popped, can be useful if chaining
- * multiple conditions into an AND-type conditional statement
- *
- * solidity: if (!(cond1 && cond2 && cond3)) revert MyCustomError()
- * huff, where cond<x> is an op that places condition at the top of stack:
- * __FUNC_SIG(MyCustomError)
- * cond1 REQUIRE(0x0)
- * cond2 REQUIRE(0x0)
- * cond3 REQUIRE(0x0)
- */
-#define macro REQUIRE(zero) = takes (2) returns (1) {
-    // takes:                              [condition, error_sig]
-    __Utils_Misc__requireContinue jumpi // [error_sig]
-    REVERT_SIG(<zero>)
-    __Utils_Misc__requireContinue:      // [error_sig]
-}
-
-#define macro REQUIRE_NO_SIG(zero) = takes(1) returns(0) {
-    // takes: [condition]
-    __Utils_Misc__requireNoSigContinue jumpi
-    <zero> <zero> revert
-    __Utils_Misc__requireNoSigContinue:
-}
-
-/// @dev underflow safe subtraction with custom error (4-byte error sig only, no args)
-#define macro SAFE_SUB(zero) = takes(3) returns(1) {
-  // takes:          [error_sig, x, y]
-  dup3 dup3       // [x, y, error_sig, x, y]
-  lt iszero       // [x >= y, error_sig, x, y]
-  REQUIRE(<zero>) // [error_sig, x, y]
-  pop sub         // [x-y]
-}
-
-
-#define constant MASK_ADDR = 0xffffffffffffffffffffffffffffffffffffffff
-
-/// @notice Require that the top of the stack is an address
-#define macro REQUIRE_ADDR(zero) = takes(1) returns(0) {
-    // takes:                    [addr_value]
-    dup1 [MASK_ADDR] and      // [addr_value & MASK_ADDR, addr_value]
-    eq REQUIRE_NO_SIG(<zero>) // []
-}
-
-/// @dev underflow safe subtraction which throws same error as solidity
-#define macro SAFE_SUB_PANIC(zero) = takes (2) returns (1) {
-    // takes:    [x, y]
-    dup2 dup2 // [x, y, x, y]
-    lt iszero // [x >= y, x, y]
-    __Utils_Misc__safeSubContinue jumpi
-
-    0x11 PANIC(<zero>)
-
-    __Utils_Misc__safeSubContinue:
-        sub     // [x - y]
-}
-
-/// @notice Safe addition
-#define macro SAFE_ADD_PANIC(zero) = takes(2) returns(1) {
-    // takes: [x, y]
-    dup2       // [y, x, y]
-    add        // [y + x, y]
-    swap1 dup2 // [y + x, y, y + x]
-    lt iszero  // [y + x >= y, y + x]
-    __Utils_Misc__safeAddContinue jumpi
-    0x11 PANIC(<zero>)
-    __Utils_Misc__safeAddContinue:
-    //            [y + x]
-}
-
-#define macro NO_VALUE_CHECK(zero) = takes(0) returns(0) {
-    callvalue iszero __Utils_Misc__valueCheckContinue jumpi
-    <zero> <zero> revert
-    __Utils_Misc__valueCheckContinue:
-}
-
-#define macro RETURN1(zero) = takes(1) returns(0) {
-    // takes:        [value_to_return]
-    <zero> mstore // []
-    0x20 <zero> return
-}
-
-// Must be at the beginning of a contract to ensure RETURNDATASIZE is zero
-#define macro GET_SELECTOR() = takes(0) returns(0) {
-    returndatasize calldataload 0xE0 shr
-}
-
-#define macro PANIC(zero) = takes(1) returns(0) {
-    // takes: [panic_code]
-    __FUNC_SIG(Panic) <zero> mstore
-    0x20 mstore
-    0x24 0x1c revert
-}
-
-#define macro NOT_TERNARY() = takes(3) returns(1) {
-    // takes:   [not_condition, x, y]
-    __Utils_Misc__ternaryNoSwap jumpi
-        swap1
-    __Utils_Misc__ternaryNoSwap:
-    pop
-    // returns: [!not_condition ? x : y]
-}
-
-#define macro MAX() = takes(2) returns(1) {
-    // takes:       [x, y]
-
-    dup1 dup3 gt // [y > x, x, y]
-    NOT_TERNARY()
-    // returns:  [max(x, y)]
-}
-
-#define macro MIN() = takes(2) returns(1) {
-    // takes:       [x, y]
-
-    dup1 dup3 lt // [y < x, x, y]
-    NOT_TERNARY()
-    // returns:  [min(x, y)]
-}
-
-
-#define constant NEG1 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-
-#define macro SUB1() = takes (1) returns (1) {
-    // takes:   [x]
-    [NEG1] add
-    // returns: [x-1]
-}
-
+// Constants
 #define constant POS_MASK = 0xffffffff00
 
-// based off: https://github.com/ethereum/consensus-specs/blob/dev/specs/phase0/beacon-chain.md#compute_shuffled_index
-#define macro MECHS__ONE_WAY_SHUFFLE(mem1, mem2) = takes(4) returns(4) {
-    // takes:                [seed, index, index_count, iters]
+/// @notice Shuffling Algorithm
+#define macro MECHS__ONE_WAY_SHUFFLE(mem1, mem2) = takes (4) returns (1) {
+    // Input Stack:                    [seed, index, index_count, iters]
+    // Output Stack:                   [index']
 
-    __Mechs__shuffleContinue:
-        //                     [seed, index, index_count, iters]
-        <mem1> mstore       // [index, index_count, iters]
-        0x20 <mem1> sha3    // [seed', index, index_count, iters]
-        dup3 dup1           // [index_count, index_count, seed' index, index_count, iters]
-        dup3 mod            // [pivot, index_count, seed', index, index_count, iters]
-        dup4 dup3           // [index_count, index, pivot, index_count, seed', index, index_count, iters]
-        sub add mod         // [flip, seed', index, index_count, iters]
-        dup3 dup2 MAX()     // [position, flip, seed', index, index_count, iters]
-        dup1 [POS_MASK] and // [masked_position, position, flip, seed', index, index_count, iters]
-        <mem2> mstore       // [position, flip, seed', index, index_count, iters]
-        0x40 <mem1> sha3    // [rand2, position, flip, seed', index, index_count, iters]
-        swap1 0xff and shr  // [rand_bit_unmasked, flip, seed', index, index_count, iters]
-        0x1 and             // [rand_bit, flip, seed', index, index_count, iters]
-        swap2 swap3 swap2   // [rand_bit, flip, index, seed', index_count, iters]
-        NOT_TERNARY()       // [index', seed', index_count, iters]
-        swap1 swap3         // [iters, index', index_count, seed']
-        SUB1() swap3        // [seed', index', index_count, iters']
+    __Mechs__shuffleContinue:       // [seed, index, index_count, iters]
+        <mem1> mstore               // [index, index_count, iters]
+        0x20 <mem1> sha3            // [seed', index, index_count, iters]
+        dup3 dup1                   // [index_count, index_count, seed' index, index_count, iters]
+        dup3 mod                    // [pivot, index_count, seed', index, index_count, iters]
+        dup4 dup3                   // [index_count, index, pivot, index_count, seed', index, index_count, iters]
+        sub add mod                 // [flip, seed', index, index_count, iters]
+        dup3 dup2 MAX()             // [position, flip, seed', index, index_count, iters]
+        dup1 [POS_MASK] and         // [masked_position, position, flip, seed', index, index_count, iters]
+        <mem2> mstore               // [position, flip, seed', index, index_count, iters]
+        0x40 <mem1> sha3            // [rand2, position, flip, seed', index, index_count, iters]
+        swap1 0xff and shr          // [rand_bit_unmasked, flip, seed', index, index_count, iters]
+        0x1 and                     // [rand_bit, flip, seed', index, index_count, iters]
+        swap2 swap3 swap2           // [rand_bit, flip, index, seed', index_count, iters]
+        NOT_TERNARY()               // [index', seed', index_count, iters]
+        swap1 swap3                 // [iters, index', index_count, seed']
+        UNSAFE_SUB() swap3          // [seed', index', index_count, iters']
 
+    // Continue if iters > 0
     dup4 __Mechs__shuffleContinue jumpi
 
-    // returns:              [seed', index', index_count, 0]
+    // Return the index
+    pop swap2 pop pop               // [index']
 }
+

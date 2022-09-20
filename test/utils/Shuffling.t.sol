@@ -2,10 +2,11 @@
 pragma solidity ^0.8.15;
 
 import { Test } from "forge-std/Test.sol";
+import { console2 } from "forge-std/console2.sol";
 import { HuffDeployer } from "foundry-huff/HuffDeployer.sol";
 
 interface IShuffler {
-    // TODO ...
+    function oneWayShuffle(bytes32 seed, uint256 index, uint256 count, uint256 rounds) external view returns (uint256);
 }
 
 contract ShufflingTest is Test {
@@ -17,7 +18,12 @@ contract ShufflingTest is Test {
     }
 
     function testShuffle() public {
-        // TODO ...
+        bytes32 seed = bytes32(abi.encode("RANDOM_SEED"));
+        uint256 index = 1337;
+        uint256 count = 10;
+        uint256 rounds = 10;
+        uint256 shuffled_index = shuffler.oneWayShuffle(seed, index, count, rounds);
+        console2.log(shuffled_index);
     }
 
 }
