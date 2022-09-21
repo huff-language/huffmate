@@ -10,8 +10,6 @@
 ///         deterministic method.
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol)
 
-#define event LogWord(bytes32)
-
 #include "../utils/CommonErrors.huff"
 
 // BEFORE ADDRESS
@@ -71,16 +69,15 @@
 /// @param {Stack} Implementation - address of the contract to clone.
 /// @param {Stack} Salt - The salt to be added to create2.
 #define macro CLONE_DETERMINISTIC() = takes (2) returns (1) {
-    0xca11 __EVENT_HASH(LogWord) 0x00 0x00 log2
     CLONE_MACRO(create2)
 }
 
 /// @dev Can remain inside the scratch space therefore no memory pointer is required
 #define macro CLONE_MACRO(deploy_opcode) = takes (2) returns (1) {
-    // Takes 1: [implementation, salt [optional]]
+    // Input Stack: [implementation, salt [optional]]
 
     // Store the prefix
-    __RIGHTPAD(0x3d602d80600a3d3981f3363d3d373d3d3d363d73)      // [bytecode_b4, implementation, salt]
+    __RIGHTPAD(0x3d602d80600a3d3981f3363d3d373d3d3d363d73)      // [prefix, implementation, salt]
     0x00 mstore                                                 // [implementation, salt]
 
     // Place the implementation at memory byte 20
@@ -88,11 +85,8 @@
     0x14 mstore                                                 // [salt]
 
     // Add the suffix after the implementation at byte 40
-    __RIGHTPAD(0x5af43d82803e903d91602b57fd5bf3)                // [bytecode_after, salt]
+    __RIGHTPAD(0x5af43d82803e903d91602b57fd5bf3)                // [suffix, salt]
     0x28 mstore                                                 // [salt]
-
-    0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
-    0x20 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Create the contract
     0x37                                                        // [0x37, salt]
@@ -101,59 +95,58 @@
     <deploy_opcode>                                             // [address] * This will be create | create2
 
     // Throw exception if deployment fails
-    dup1 iszero eq create_failed jumpi                          // [address]
+    dup1 iszero create_failed jumpi                             // [address]
     continue jump
 
     create_failed:
         DEPLOYMENT_FAILED(0x00)
 
     continue:
-    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
-    // 0x60 shl                                                    // [shifted_address]
 }
 
 
 /// @dev Memory pointer required as this function nukes memory and this is part of a library
 #define macro PREDICT_DETERMINISTIC_ADDRESS(ptr) = takes (3) returns (1) {
     // Input Stack: [implementation, salt, deployer]
-    swap1 swap2 swap1                       // [implementation, deployer, salt]
+    swap1 swap2 swap1                                           // [implementation, deployer, salt]
 
-    // mstore(ptr, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73)
-    __RIGHTPAD(0x3d602d80600a3d3981f3363d3d373d3d3d363d73)    // [bytecode_b4, implementation, deployer, salt]
-    <ptr> mstore                            // [implementation, deployer, salt]
+    // Store the creation code prefix at memory byte 0
+    __RIGHTPAD(0x3d602d80600a3d3981f3363d3d373d3d3d363d73)      // [prefix, implementation, deployer, salt]
+    <ptr> mstore                                                // [implementation, deployer, salt]
 
-    // mstore(add(ptr, 0x14), implementation)
-    0x60 shl                                // [shifted_implementation, deployer, salt]
-    <ptr> 0x14 add                          // [ptr + 0x14, implementation, deployer, salt]
-    mstore                                  // [deployer, salt]
+    // Store the implementation address at memory byte 20
+    0x60 shl                                                    // [rightpad(implementation), deployer, salt]
+    <ptr> 0x14 add                                              // [ptr + 0x14, implementation, deployer, salt]
+    mstore                                                      // [deployer, salt]
 
-    // mstore(add(ptr, 0x24), 0x5af43d82803e903d91602b57fd5bf3ff)
-    __RIGHTPAD(0x5af43d82803e903d91602b57fd5bf3ff)   // [bytecode_after, deployer, salt]
-    <ptr> 0x28 add                          // [ptr + 0x24, bytecode_after, deployer, salt]
-    mstore                                  // [deployer, salt]
+    // Store the creation code suffix at memory byte 40
+    __RIGHTPAD(0x5af43d82803e903d91602b57fd5bf3ff)              // [bytecode_after, deployer, salt]
+    <ptr> 0x28 add                                              // [ptr + 0x28, bytecode_after, deployer, salt]
+    mstore                                                      // [deployer, salt]
 
     // mstore(add(ptr, 0x38), deployer)
-    0x60 shl                                // [shifted_deployer, salt]
-    <ptr> 0x38 add                          // [ptr + 0x38, deployer, salt]
-    mstore                                  // [salt]
+    0x60 shl                                                    // [rightpad(deployer), salt]
+    <ptr> 0x38 add                                              // [ptr + 0x38, deployer, salt]
+    mstore                                                      // [salt]
 
     // mstore(add(ptr, 0x58), salt)
-    <ptr> 0x4c add                          // [ptr + 0x58, salt]
-    mstore                                  // []
+    <ptr> 0x4c add                                              // [ptr + 0x58, salt]
+    mstore                                                      // []
 
     // Hash and then store in memory
-    0x37                                    // [0x37]
-    <ptr>                                   // [ptr, 0x37]
-    sha3                                    // [hash]
+    0x37                                                        // [0x37]
+    <ptr>                                                       // [ptr, 0x37]
+    sha3                                                        // [hash]
 
-    <ptr> 0x6c add                          // [ptr + 0x78, hash]
-    mstore                                  // []
+    <ptr> 0x6c add                                              // [ptr + 0x6c, hash]
+    mstore                                                      // []
 
     // Hash the rest of the data
-    0x55                                    // [0x55]
-    <ptr> 0x37 add                          // [ptr + 0x43, 0x55]
-    sha3                                    // [hash]
+    0x55                                                        // [0x55]
+    <ptr> 0x37 add                                              // [ptr + 0x37, 0x55]
+    sha3                                                        // [hash]
 
-    // Clean the upper 96 bits of the hash - this is the address
-    0x60 shl 0x60 shr                       // [clean(hash)]
+    // Clean the upper 96 bits (12 bytes) of the hash
+    // The remaining 160 bits (20 bytes) are the address
+    0x60 shl 0x60 shr                                           // [clean(hash)]
 }

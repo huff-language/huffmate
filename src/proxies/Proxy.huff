@@ -13,7 +13,7 @@
 
 /// @notice Delegates a call to implementation
 /// @param {Stack} implementation -  The address of the implementation
-#define macro DELEGATE() = takes(1) returns(0) {
+#define macro DELEGATE() = takes (1) returns (0) {
     // Takes: [implementation]
 
     calldatasize                // [cds, implementation]

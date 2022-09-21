@@ -5,7 +5,7 @@ pragma solidity 0.8.15;
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
 
-import { MockAuthChild } from "solmate/test/utils/mocks/MockAuthChild.sol";
+import { MockERC1155 } from "solmate/test/utils/mocks/MockERC1155.sol";
 import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
 
 interface Clones {
@@ -19,26 +19,24 @@ contract ClonesTest is Test {
     using Bytes32AddressLib for bytes32;
 
     Clones clones;
-    MockAuthChild implementation;
+    MockERC1155 implementation;
 
     function setUp() public {
         string memory wrapper_code = vm.readFile("test/proxies/mocks/ClonesWrappers.huff");
         clones = Clones(HuffDeployer.deploy_with_code("proxies/Clones", wrapper_code));
 
         // Deploy a mock contract to use as the implementation
-        implementation = new MockAuthChild();
+        implementation = new MockERC1155();
     }
 
-    // function testClone() public {
-    //     address instance = clones.clone(address(implementation));
-    //     assertTrue(instance != address(0));
-    //     console2.log("Cloned instance: ", instance);
-    // }
+    function testClone() public {
+        address instance = clones.clone(address(implementation));
+        assertTrue(instance != address(0));
+    }
 
     function testCloneDeterministic() public {
         bytes32 salt = keccak256(bytes("A salt!"));
         address instance = clones.cloneDeterministic(address(implementation), salt);
-        console2.log("Cloned instance: ", instance);
         address predicted = clones.predictDeterministicAddress(address(implementation), salt);
         assertEq(instance, predicted);
     }
