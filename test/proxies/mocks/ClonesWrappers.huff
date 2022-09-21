@@ -40,7 +40,7 @@
     pc calldataload 0xe0 shr
 
     dup1 __FUNC_SIG(clone)                           eq clone_jump jumpi
-    dup1 __FUNC_SIG(cloneDeteministic)               eq clone_deterministic_jump jumpi
+    dup1 __FUNC_SIG(cloneDeterministic)              eq clone_deterministic_jump jumpi
     dup1 __FUNC_SIG(predictDeterministicAddress)     eq predict_deterministic_address_jump jumpi
     dup1 0x93a7e711                                  eq predict_deterministic_address_deployer_jump jumpi
 

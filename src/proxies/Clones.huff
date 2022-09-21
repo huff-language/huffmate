@@ -59,62 +59,59 @@
 //--------------------------------------------------------------------------------//
 
 #define constant BYTECODE_BEFORE_ADDRESS = 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000
-#define constant BYTECODE_BEFORE_ADDRESS_NO_PADDING = 0x3d602d80600a3d3981f3363d3d373d3d3d363d73
-
 #define constant BYTECODE_AFTER_ADDRESS = 0x5af43d82803e903d91602b57fd5bf3
-#define constant BYTECODE_AFTER_ADDRESS_WITH_PADDING = 0x5af43d82803e903d91602b57fd5bf3ff
 
 /// @notice Clone a contract using `create`.
 /// @param {Stack} Implementation - address of the contract to clone.
-#define macro CLONE() = takes (1) returns (0) {
+#define macro CLONE() = takes (1) returns (1) {
     CLONE_MACRO(create)
 }
 
 /// @notice Clone a contract to a deterministic address using `create2`.
 /// @param {Stack} Implementation - address of the contract to clone.
 /// @param {Stack} Salt - The salt to be added to create2.
-#define macro CLONE_DETERMINISTIC() = takes (2) returns (0) {
+#define macro CLONE_DETERMINISTIC() = takes (2) returns (1) {
+    0xca11 __EVENT_HASH(LogWord) 0x00 0x00 log2
     CLONE_MACRO(create2)
 }
 
 /// @dev Can remain inside the scratch space therefore no memory pointer is required
-#define macro CLONE_MACRO(deploy_opcode) = takes (1) returns (0) {
-    // Takes 1: [Implementation]
+#define macro CLONE_MACRO(deploy_opcode) = takes (2) returns (1) {
+    // Takes 1: [implementation, salt [optional]]
 
-    // Cleans the upper 96 bits of the `implementation` word, then packs the first 3 bytes
-    // of the `implementation` address with the bytecode before the address.
-    dup1                        // [implementation]
-    0x60 shl                    // [clean(implementation), implementation]
+    // Store the prefix
+    __RIGHTPAD(0x3d602d80600a3d3981f3363d3d373d3d3d363d73)      // [bytecode_b4, implementation, salt]
+    0x00 mstore                                                 // [implementation, salt]
 
-    // Leave room for bytecode before address
-    0xe8 shr                    // [shifted(implementation), implementation]
+    // Place the implementation at memory byte 20
+    0x60 shl                                                    // [rightpad(implementation), salt]
+    0x14 mstore                                                 // [salt]
 
-    [BYTECODE_BEFORE_ADDRESS]   // [bytecode_b4, shifted(implementation), implementation]
-    or
-    0x00 mstore                 // [ [bytecode_b4][implementation], implementation ]
+    // Add the suffix after the implementation at byte 40
+    __RIGHTPAD(0x5af43d82803e903d91602b57fd5bf3)                // [bytecode_after, salt]
+    0x28 mstore                                                 // [salt]
 
-    // Packs the remaining 17 bytes of `implementation` with the bytecode after the address.
-    0x78 shl                    // [rightpad(implementation)]
+    0x00 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
+    0x20 mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
-    [BYTECODE_AFTER_ADDRESS]    // [bytecode_after, rightpad(implementation)]
-    or                          // [ [implementation][bytecode_after] ]
-    0x20                        // [ 0x20, [implementation][bytecode_after] ]
-    mstore                      // []
-
-    0x37                        // [0x37]
-    0x09                        // [0x09, 0x37]
-    0x00                        // [0x00, 0x09, 0x37]
-    <deploy_opcode>             // [success] * This will be create | create2
+    // Create the contract
+    0x37                                                        // [0x37, salt]
+    0x00                                                        // [0x00, 0x37, salt]
+    0x00                                                        // [0x00, 0x00, 0x37, salt]
+    <deploy_opcode>                                             // [address] * This will be create | create2
 
     // Throw exception if deployment fails
-    iszero eq create_failed jumpi
+    dup1 iszero eq create_failed jumpi                          // [address]
     continue jump
 
     create_failed:
         DEPLOYMENT_FAILED(0x00)
 
     continue:
+    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
+    // 0x60 shl                                                    // [shifted_address]
 }
+
 
 /// @dev Memory pointer required as this function nukes memory and this is part of a library
 #define macro PREDICT_DETERMINISTIC_ADDRESS(ptr) = takes (3) returns (1) {
@@ -132,35 +129,29 @@
 
     // mstore(add(ptr, 0x24), 0x5af43d82803e903d91602b57fd5bf3ff)
     __RIGHTPAD(0x5af43d82803e903d91602b57fd5bf3ff)   // [bytecode_after, deployer, salt]
-    <ptr> 0x24 add                          // [ptr + 0x24, bytecode_after, deployer, salt]
+    <ptr> 0x28 add                          // [ptr + 0x24, bytecode_after, deployer, salt]
     mstore                                  // [deployer, salt]
 
     // mstore(add(ptr, 0x38), deployer)
-    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
     0x60 shl                                // [shifted_deployer, salt]
     <ptr> 0x38 add                          // [ptr + 0x38, deployer, salt]
     mstore                                  // [salt]
 
-    <ptr> mload __EVENT_HASH(LogWord) 0x00 0x00 log2
-    <ptr> 0x20 add mload __EVENT_HASH(LogWord) 0x00 0x00 log2
-
-
     // mstore(add(ptr, 0x58), salt)
-    <ptr> 0x58 add                          // [ptr + 0x58, salt]
+    <ptr> 0x4c add                          // [ptr + 0x58, salt]
     mstore                                  // []
-    <ptr> 0x40 add mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Hash and then store in memory
     0x37                                    // [0x37]
-    <ptr> 0x0c add                          // [ptr + 0x0c, 0x37]
+    <ptr>                                   // [ptr, 0x37]
     sha3                                    // [hash]
 
-    <ptr> 0x78 add                          // [ptr + 0x78, hash]
+    <ptr> 0x6c add                          // [ptr + 0x78, hash]
     mstore                                  // []
 
     // Hash the rest of the data
     0x55                                    // [0x55]
-    <ptr> 0x43 add                          // [ptr + 0x43, 0x55]
+    <ptr> 0x37 add                          // [ptr + 0x43, 0x55]
     sha3                                    // [hash]
 
     // Clean the upper 96 bits of the hash - this is the address

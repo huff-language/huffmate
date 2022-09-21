@@ -11,8 +11,8 @@ import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
 interface Clones {
     function clone(address implementation) external returns (address instance);
     function cloneDeterministic(address implementation, bytes32 salt) external returns (address instance);
-    function predictDeterministicAddress(address implementation, bytes32 salt) external returns (address predicted);
-    function predictDeterministicAddress(address implementation, bytes32 salt, address deployer) external returns (address predicted);
+    function predictDeterministicAddress(address implementation, bytes32 salt) external view returns (address predicted);
+    function predictDeterministicAddress(address implementation, bytes32 salt, address deployer) external pure returns (address predicted);
 }
 
 contract ClonesTest is Test {
@@ -30,9 +30,18 @@ contract ClonesTest is Test {
     }
 
     // function testClone() public {
-    //     MockAuthChild deployed = MockAuthChild(clones.clone(type(MockAuthChild).creationCode));
-    //     assertEq(address(deployed), clones.predictDeterministicAddress(type(MockAuthChild).creationCode, bytes32(0)));
+    //     address instance = clones.clone(address(implementation));
+    //     assertTrue(instance != address(0));
+    //     console2.log("Cloned instance: ", instance);
     // }
+
+    function testCloneDeterministic() public {
+        bytes32 salt = keccak256(bytes("A salt!"));
+        address instance = clones.cloneDeterministic(address(implementation), salt);
+        console2.log("Cloned instance: ", instance);
+        address predicted = clones.predictDeterministicAddress(address(implementation), salt);
+        assertEq(instance, predicted);
+    }
 
     function testClonesPredictDeterministicAddress() public {
         bytes32 salt = keccak256(bytes("A salt!"));
@@ -43,25 +52,21 @@ contract ClonesTest is Test {
             address(implementation),
             hex"5af43d82803e903d91602b57fd5bf3"
         );
-        console2.log("Creation code:");
-        console2.logBytes(creationCode);
 
         bytes32 creationCodeHash = keccak256(creationCode);
-        console2.log("Creation code hash:");
-        console2.logBytes32(creationCodeHash);
 
         bytes memory packed = abi.encodePacked(bytes1(0xff), address(clones), salt, creationCodeHash);
-        console2.log("Packed:");
-        console2.logBytes(packed);
 
         // Constructed the expected address
         address expected = keccak256(packed).fromLast20Bytes();
-        console2.log("Expected address:");
-        console2.log(expected);
 
         // Validate expected address
         assertEq(
             clones.predictDeterministicAddress(address(implementation), salt),
+            expected
+        );
+        assertEq(
+            clones.predictDeterministicAddress(address(implementation), salt, address(clones)),
             expected
         );
     }
