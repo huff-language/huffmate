@@ -11,7 +11,7 @@
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol)
 
 
-#include "./CommonErrors.huff"
+#include "../utils/CommonErrors.huff"
 
 // BEFORE ADDRESS
 //--------------------------------------------------------------------------------//
@@ -65,27 +65,27 @@
 
 /// @notice Clone a contract using `create`.
 /// @param {Stack} Implementation - address of the contract to clone.
-#define macro CLONE() = takes(1) returns(0) {
+#define macro CLONE() = takes (1) returns (0) {
     CLONE_MACRO(create)
 }
 
 /// @notice Clone a contract to a deterministic address using `create2`.
 /// @param {Stack} Implementation - address of the contract to clone.
 /// @param {Stack} Salt - The salt to be added to create2.
-#define macro CLONE_DETERMINISTIC() = takes(2) returns(0) {
+#define macro CLONE_DETERMINISTIC() = takes (2) returns (0) {
     CLONE_MACRO(create2)
 }
 
 /// @dev Can remain inside the scratch space therefore no memory pointer is required
-#define macro CLONE_MACRO(deploy_opcode) = takes(1) returns(0) {
-    // Takes 1: [Implementation] 
+#define macro CLONE_MACRO(deploy_opcode) = takes (1) returns (0) {
+    // Takes 1: [Implementation]
 
     // Cleans the upper 96 bits of the `implementation` word, then packs the first 3 bytes
     // of the `implementation` address with the bytecode before the address.
     dup1                        // [implementation]
     0x60 shl                    // [clean(implementation), implementation]
-    
-    // Leave room for bytecode before address 
+
+    // Leave room for bytecode before address
     0xe8 shr                    // [shifted(implementation), implementation]
 
     [BYTECODE_BEFORE_ADDRESS]   // [bytecode_b4, shifted(implementation), implementation]
@@ -93,22 +93,21 @@
     0x00 mstore                 // [ [bytecode_b4][implementation], implementation ]
 
     // Packs the remaining 17 bytes of `implementation` with the bytecode after the address.
-    0x78 shl                    // [rightpad(implementation)] 
-    
+    0x78 shl                    // [rightpad(implementation)]
 
-    [BYTECODE_AFTER_ADDRESS]    // [bytecode_after, rightpad(implementation)] 
+    [BYTECODE_AFTER_ADDRESS]    // [bytecode_after, rightpad(implementation)]
     or                          // [ [implementation][bytecode_after] ]
     0x20                        // [ 0x20, [implementation][bytecode_after] ]
     mstore                      // []
 
-    0x37                        // [0x37]   
+    0x37                        // [0x37]
     0x09                        // [0x09, 0x37]
     0x00                        // [0x00, 0x09, 0x37]
     <deploy_opcode>             // [success] * This will be create | create2
 
     // Throw exception if deployment fails
     iszero eq create_failed jumpi
-    continue jump           
+    continue jump
 
     create_failed:
         DEPLOYMENT_FAILED(0x00)
@@ -117,16 +116,15 @@
 }
 
 /// @dev Memory pointer required as this function nukes memory and this is part of a library
-#define macro PREDICT_DETERMINISTIC_ADDRESS(ptr) = takes(3) returns(0) {
-    // stack: [implementation, salt]
+#define macro PREDICT_DETERMINISTIC_ADDRESS(ptr) = takes (3) returns (1) {
+    // Input Stack: [implementation, salt, deployer]
 
-    address                                 // [address, implementation, salt]
+    swap1 swap2                             // [deployer, implementation, salt]
 
     /// place the deployer in memory
     <ptr> 0x38 add                          // [ptr + 0x28, address, implementation, salt]
     mstore                                  // [implementation, salt]
 
-    
     [BYTECODE_AFTER_ADDRESS_WITH_PADDING]   // [bytecode_after, implementation, salt]
     <ptr> 0x24 add                          // [ptr + 0x24, bytecode_after, implementation, salt]
     mstore                                  // [implementation, salt]
@@ -138,12 +136,12 @@
     [BYTECODE_BEFORE_ADDRESS_NO_PADDING]    // [bytecode_b4, salt]
     <ptr> mstore                            // [salt]
 
-    // Place the salt in memory        
+    // Place the salt in memory
     <ptr> 0x58 add                          // [ptr + 0x58, salt]
     mstore                                  // []
 
     // Hash and then store in memory
-    0x37                                    // [0x37] 
+    0x37                                    // [0x37]
     <ptr> 0x0c add                          // [ptr + 0x0c, 0x37]
     sha3                                    // [hash]
 

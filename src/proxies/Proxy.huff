@@ -4,10 +4,10 @@
 /// @dev This abstract contract provides a fallback function that delegates all calls to another contract using the EVM
 ///      instruction `delegatecall`. We refer to the second contract as the _implementation_ behind the proxy, and it has to
 ///      be specified by overriding the virtual {_implementation} function.
-///      
+///
 ///      Additionally, delegation to the implementation can be triggered manually through the {_fallback} function, or to a
 ///      different contract through the {_delegate} function.
-///      
+///
 ///      The success and return data of the delegated call will be returned back to the caller of the proxy.
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Proxy.sol)
 
@@ -15,13 +15,13 @@
 /// @param {Stack} implementation -  The address of the implementation
 #define macro DELEGATE() = takes(1) returns(0) {
     // Takes: [implementation]
-    
+
     calldatasize                // [cds, implementation]
     0x00 dup1                   // [0, 0, cds, implementation]
     calldatacopy                // [implementation]
 
     // Call the implementation
-    0x00                        // [0, implementation] 
+    0x00                        // [0, implementation]
     dup1                        // [0, 0, implementation]
     calldatasize                // [cds, 0, 0, implementation]
     dup2                        // [0, cds, 0, 0, implementation]
@@ -37,8 +37,8 @@
 
     // Return the returned data
     iszero proxy_call_failed jumpi         // [implementation]
-    
-    0x00 returndatasize return 
+
+    0x00 returndatasize return
 
     proxy_call_failed:
         0x00 returndatasize revert

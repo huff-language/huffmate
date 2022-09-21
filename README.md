@@ -38,8 +38,9 @@ auth
 data-structures
 ├─ Arrays — "Memory translation handlers for arrays"
 ├─ Hashmap — "Simple mapping utilities for 32 byte words"
-factories
-├─ Factory — TODO
+proxies
+├─ Clones — "Minimal proxy contracts, also known as clones"
+├─ Proxy — "Minimal proxy library"
 ├─ ProxyFactory — TODO
 mechanisms
 |  ├─ huff-clones — "Library for creating clone contracts with immutable arguments"
