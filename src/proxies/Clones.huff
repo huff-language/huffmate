@@ -10,6 +10,7 @@
 ///         deterministic method.
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol)
 
+#define event LogWord(bytes32)
 
 #include "../utils/CommonErrors.huff"
 
@@ -118,27 +119,36 @@
 /// @dev Memory pointer required as this function nukes memory and this is part of a library
 #define macro PREDICT_DETERMINISTIC_ADDRESS(ptr) = takes (3) returns (1) {
     // Input Stack: [implementation, salt, deployer]
+    swap1 swap2 swap1                       // [implementation, deployer, salt]
 
-    swap1 swap2                             // [deployer, implementation, salt]
+    // mstore(ptr, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73)
+    __RIGHTPAD(0x3d602d80600a3d3981f3363d3d373d3d3d363d73)    // [bytecode_b4, implementation, deployer, salt]
+    <ptr> mstore                            // [implementation, deployer, salt]
 
-    /// place the deployer in memory
-    <ptr> 0x38 add                          // [ptr + 0x28, address, implementation, salt]
-    mstore                                  // [implementation, salt]
+    // mstore(add(ptr, 0x14), implementation)
+    0x60 shl                                // [shifted_implementation, deployer, salt]
+    <ptr> 0x14 add                          // [ptr + 0x14, implementation, deployer, salt]
+    mstore                                  // [deployer, salt]
 
-    [BYTECODE_AFTER_ADDRESS_WITH_PADDING]   // [bytecode_after, implementation, salt]
-    <ptr> 0x24 add                          // [ptr + 0x24, bytecode_after, implementation, salt]
-    mstore                                  // [implementation, salt]
+    // mstore(add(ptr, 0x24), 0x5af43d82803e903d91602b57fd5bf3ff)
+    __RIGHTPAD(0x5af43d82803e903d91602b57fd5bf3ff)   // [bytecode_after, deployer, salt]
+    <ptr> 0x24 add                          // [ptr + 0x24, bytecode_after, deployer, salt]
+    mstore                                  // [deployer, salt]
 
-    // Place implementation in memory
-    <ptr> 0x14 add                          // [ptr + 0x14, implementation, salt]
+    // mstore(add(ptr, 0x38), deployer)
+    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
+    0x60 shl                                // [shifted_deployer, salt]
+    <ptr> 0x38 add                          // [ptr + 0x38, deployer, salt]
     mstore                                  // [salt]
 
-    [BYTECODE_BEFORE_ADDRESS_NO_PADDING]    // [bytecode_b4, salt]
-    <ptr> mstore                            // [salt]
+    <ptr> mload __EVENT_HASH(LogWord) 0x00 0x00 log2
+    <ptr> 0x20 add mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
-    // Place the salt in memory
+
+    // mstore(add(ptr, 0x58), salt)
     <ptr> 0x58 add                          // [ptr + 0x58, salt]
     mstore                                  // []
+    <ptr> 0x40 add mload __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Hash and then store in memory
     0x37                                    // [0x37]
@@ -148,8 +158,7 @@
     <ptr> 0x78 add                          // [ptr + 0x78, hash]
     mstore                                  // []
 
-
-    // Do I have to shift the bytes here
+    // Hash the rest of the data
     0x55                                    // [0x55]
     <ptr> 0x43 add                          // [ptr + 0x43, 0x55]
     sha3                                    // [hash]
