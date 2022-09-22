@@ -1,0 +1,71 @@
+/// @title Refunded
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice Efficient gas refunds distributed through a modifier
+/// @notice Adapted from Zolidity (https://github.com/z0r0z/zolidity/blob/main/src/utils/Refunded.sol)
+
+#include "./Errors.huff"
+#include "./ReentrancyGuard.huff"
+
+/// @notice The base cost of refunding
+#define constant BASE_COST = 0x6359 // 25433
+
+/// @notice The maximum amount of gas that can be refunded
+#define constant GAS_PRICE_MAX = 0x9502F9000 // 4e10
+
+// Refunded custom errors
+#define constant MAX_GAS_ERROR = 0x4d41585f47415300000000000000000000000000000000000000000000000000
+#define constant MAX_GAS_LENGTH = 0x07
+
+/// @notice Refunds contract calls up to a maximum of 4e10 gas
+/// @notice Modified functions over 21k gas benefit most from a refund
+#define macro REFUNDED(dest) = takes (0) returns (0) {
+    // Get the starting amount of gas
+    gas                                 // [gasLeft]
+
+    // Prevent Reentrancy
+    LOCK()                              // [gasLeft]
+
+    basefee [GAS_PRICE_MAX] add         // [currMaxGas, gasLeft]
+    gasprice gt iszero                  // [!(gasPrice > currMaxGas), gasLeft]
+    __Safe_Gas_Refund__j jumpi          // [gasLeft]
+        MAX_GAS(0x00)
+
+    __Safe_Gas_Refund__j:
+
+    // The below attempts to mimic `_;` using a jump
+    // NOTE: This must jump back to `__Refund_Return_Dest` to complete the refund
+    <dest> jump
+    __Refund_Return_Dest:
+
+    // Calculate refund amount
+    gas swap1 sub                       // [gasUsed]
+    [BASE_COST] add                     // [gasUsed + BASE_COST]
+    gasprice mul                        // [(gasUsed + BASE_COST) * gasPrice]
+
+    // Refund the gas to origin
+    0x00                                // [retOffset, value]
+    0x00                                // [argSize, retOffset, value]
+    0x00                                // [argOffset, argSize, retOffset, value]
+    0x00                                // [retSize, argOffset, argSize, retOffset, value]
+    swap4                               // [value, argOffset, argSize, retOffset, retSize]
+    origin                              // [to, value, argOffset, argSize, retOffset, retSize]
+    gas                                 // [gas, to, value, argOffset, argSize, retOffset, retSize]
+    call
+    iszero iszero __Refund_Successful__j jumpi
+        0x00 dup1 revert
+
+    // The refund was successful!
+    __Refund_Successful__j:
+
+    // Finally, unlock the guard
+    UNLOCK()
+}
+
+/// @notice Reverts with an "MAX_GAS" message if the condition is false
+#define macro MAX_GAS(condition) = takes (0) returns (0) {
+    [MAX_GAS_ERROR]                 // ["MAX_GAS"]
+    [MAX_GAS_LENGTH]                // [7 (length), "MAX_GAS"]
+    <condition>                     // [condition, 7 (length), "MAX_GAS"]
+    REQUIRE()                       // []
+}
