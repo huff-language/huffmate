@@ -8,10 +8,10 @@
 #include "./ReentrancyGuard.huff"
 
 /// @notice The base cost of refunding
-#define constant BASE_COST = 25433
+#define constant BASE_COST = 0x6359 // 25433
 
 /// @notice The maximum amount of gas that can be refunded
-#define constant GAS_PRICE_MAX = 4e10
+#define constant GAS_PRICE_MAX = 0x9502F9000 // 4e10
 
 // Refunded custom errors
 #define constant MAX_GAS_ERROR = 0x4d41585f47415300000000000000000000000000000000000000000000000000
@@ -19,7 +19,7 @@
 
 /// @notice Refunds contract calls up to a maximum of 4e10 gas
 /// @notice Modified functions over 21k gas benefit most from a refund
-#define macro REFUNDED() = takes (0) returns (0) {
+#define macro REFUNDED(dest) = takes (0) returns (0) {
     // Get the starting amount of gas
     gas                                 // [gasLeft]
 
@@ -33,8 +33,10 @@
 
     __Safe_Gas_Refund__j:
 
-    // TODO: how to inline other calls?
-    // _;
+    // The below attempts to mimic `_;` using a jump
+    // NOTE: This must jump back to `__Refund_Return_Dest` to complete the refund
+    <dest> jump
+    __Refund_Return_Dest:
 
     // Calculate refund amount
     gas swap1 sub                       // [gasUsed]
@@ -42,10 +44,19 @@
     gasprice mul                        // [(gasUsed + BASE_COST) * gasPrice]
 
     // Refund the gas to origin
-    // TODO:
-    origin
+    0x00                                // [retOffset, value]
+    0x00                                // [argSize, retOffset, value]
+    0x00                                // [argOffset, argSize, retOffset, value]
+    0x00                                // [retSize, argOffset, argSize, retOffset, value]
+    swap4                               // [value, argOffset, argSize, retOffset, retSize]
+    origin                              // [to, value, argOffset, argSize, retOffset, retSize]
+    gas                                 // [gas, to, value, argOffset, argSize, retOffset, retSize]
     call
+    iszero iszero __Refund_Successful__j jumpi
+        0x00 dup1 revert
 
+    // The refund was successful!
+    __Refund_Successful__j:
 
     // Finally, unlock the guard
     UNLOCK()

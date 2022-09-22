@@ -31,6 +31,7 @@ fs_permissions = [
     { access = "read", path = "./test/utils/mocks/MulticallableWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/Create3Wrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ReentrancyGuardWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/RefundedWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/SafeTransferLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ShufflingWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/SSTORE2Wrappers.huff" },
