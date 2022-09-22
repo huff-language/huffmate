@@ -4,6 +4,10 @@
 /// @dev This abstract contract provides getters and event emitting update functions for https://eips.ethereum.org/EIPS/eip-1967[EIP1967] slots.
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/ERC1967/ERC1967Upgrade.sol)
 
+// Function Definitions
+
+#define function implementation() view returns (address)
+
 // EIP 1967 Constants
 
 /// @notice This is the keccak-256 hash of "eip1967.proxy.rollback" subtracted by 1
@@ -103,6 +107,25 @@
     __DelegateCall_Success:
 }
 
+// TODO:
+/// @notice Perform implementation upgrade with security checks for UUPS proxies, and additional setup call.
+#define macro UPGRADE_TO_AND_CALL_UUPS() = takes (3) returns (0) {
+    // Upgrades from old implementations will perform a rollback test. This test requires the new
+    // implementation to upgrade back to the old, non-ERC1822 compliant, implementation. Removing
+    // this special case will break upgrade paths from old UUPS implementation to new ones.
+
+    // if (StorageSlot.getBooleanSlot(_ROLLBACK_SLOT).value) {
+    //     _setImplementation(newImplementation);
+    // } else {
+    //     try IERC1822Proxiable(newImplementation).proxiableUUID() returns (bytes32 slot) {
+    //         require(slot == _IMPLEMENTATION_SLOT, "ERC1967Upgrade: unsupported proxiableUUID");
+    //     } catch {
+    //         revert("ERC1967Upgrade: new implementation is not UUPS");
+    //     }
+    //     _upgradeToAndCall(newImplementation, data, forceCall);
+    // }
+}
+
 
 // Admin Macros
 
@@ -125,8 +148,8 @@
     [_ADMIN_SLOT] sstore               // []
 }
 
-/// @notice Perform admin upgrade
-#define macro UPGRADE_TO() = takes (1) returns (0) {
+/// @notice Change the admin
+#define macro CHANGE_ADMIN() = takes (1) returns (0) {
     // Input Stack: [address]
 
     // Get the previous admin
@@ -158,8 +181,80 @@
     // Set the beacon slot
     __Is_Contract_JUMP:
 
-    // TODO: call the implementation function on the beacon and check that it's extcodesize > 0
-    
+    // Staticcall the implementation on address
+    __FUNC_SIG(implementation) 0x00 mstore      // [address]
+    0x20                                        // [retSize, address]
+    0x00                                        // [retOffset, retSize, address]
+    0x04                                        // [argSize, retOffset, retSize, address]
+    0x00                                        // [argOffset, argSize, retOffset, retSize, address]
+    dup5                                        // [address, argOffset, argSize, retOffset, retSize, address]
+    gas                                         // [gas, address, argOffset, argSize, retOffset, retSize, address]
+    staticcall                                  // [success, address]
+    iszero iszero __StaticCall_Success jumpi    // [address]
+        0x00 dup1 revert
+    __StaticCall_Success:
 
+    // Load the implementation address from the staticcal
+    0x00 mload                                  // [implementation, address]
+    extcodesize iszero iszero                   // [isContract(address), address]
+    __Is_Contract_JUMP jumpi                    // [address]
+        NON_CONTRACT(0x00)
+
+    // The implementation is a contract, so we can now set the beacon slot
+    __Is_Contract_JUMP:
     [_BEACON_SLOT] sstore               // []
+}
+
+
+#define macro UPGRADE_TO_BEACON_AND_CALL() = take (0) returns (0) {
+    // Input Stack:                                [newBeacon, data, forceCall]
+
+    // Set the new beacon
+    dup1 SET_BEACON()                           // [newBeacon, data, forceCall]
+
+    // Emit the BeaconUpgraded event
+    dup1 __EVENT_HASH(BeaconUpgraded)           // [sig, newBeacon, newBeacon, data, forceCall]
+    0x00 0x00 log2                              // [newBeacon, data, forceCall]
+
+    // Copy the calldata to memory
+    dup2 calldataload dup1                      // [dataSize, dataSize, newBeacon, data, forceCall]
+    swap4 not swap1 iszero and                  // [(!forceCall && dataSize == 0), newBeacon, data, dataSize]
+    __IgnoreCall_And_Clean_Stack jumpi
+
+    // Get the implementation address from the newBeacon
+    __FUNC_SIG(implementation) 0x00 mstore      // [newBeacon, data, dataSize]
+    0x20                                        // [retSize, newBeacon, data, dataSize]
+    0x00                                        // [retOffset, retSize, newBeacon, data, dataSize]
+    0x04                                        // [argSize, retOffset, retSize, newBeacon, data, dataSize]
+    0x00                                        // [argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
+    dup5                                        // [newBeacon, argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
+    gas                                         // [gas, newBeacon, argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
+    staticcall                                  // [success, newBeacon, data, dataSize]
+    iszero iszero __ImplCall_Success jumpi      // [newBeacon, data, dataSize]
+    0x00 dup1 revert
+    __ImplCall_Success:
+
+    // Delegate call to the implementation address
+    0x00 mload                                  // [implementation, newBeacon, data, dataSize]
+    swap3 swap1 swap2                           // [data, dataSize, newBeacon, implementation]
+    dup2 dup2 0x20 add                          // [&data[0], dataSize, data, dataSize, newBeacon, implementation]
+    0x00                                        // [destOffset, calldataOffset, dataSize, data, dataSize, newBeacon, implementation]
+    calldatacopy                                // [data, dataSize, newBeacon, implementation]
+    swap1                                       // [dataSize, data, newBeacon, implementation]
+
+    // Call the implementation with the given data
+    0x00                                        // [retOffset, dataSize, data, newBeacon, implementation]
+    0x00                                        // [retSize, retOffset, dataSize, data, newBeacon, implementation]
+    swap2                                       // [argSize, retOffset, retSize, data, newBeacon, implementation]
+    0x00                                        // [argOffset, argSize, retOffset, retSize, data, newBeacon, implementation]
+    dup7                                        // [newBeacon, argOffset, argSize, retOffset, retSize, data, newBeacon, implementation]
+    gas                                         // [gas, address, argOffset, argSize, retOffset, retSize, data, newBeacon, implementation]
+    delegatecall                                // [success, data, newBeacon, implementation]
+    iszero iszero __DelegateCall_Success jumpi  // [data, newBeacon, implementation]
+    0x00 dup1 revert
+
+    __IgnoreCall_And_Clean_Stack:
+    pop pop pop                                 // []
+
+    __DelegateCall_Success:
 }
