@@ -14,7 +14,7 @@ A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/h
 
 ### Usage
 
-To install with [**Foundry**](https://github.com/foundry-rs/foundry):
+**Recommended** To install with [**Foundry**](https://github.com/foundry-rs/foundry):
 
 ```sh
 forge install pentagonxyz/huffmate
@@ -39,9 +39,8 @@ data-structures
 ├─ Arrays — "Memory translation handlers for arrays"
 ├─ Hashmap — "Simple mapping utilities for 32 byte words"
 proxies
-├─ Clones — "Minimal proxy contracts, also known as clones"
-├─ Proxy — "Minimal proxy library"
-├─ ProxyFactory — TODO
+├─ Clones — "Clones library for deploying minimal proxy contracts"
+├─ Proxy — "Minimal ERC1967-complieant + upgradeable proxy contract"
 mechanisms
 |  ├─ huff-clones — "Library for creating clone contracts with immutable arguments"
 |  |  ├─ ExampleClone — "Example clones-with-immutable-args clone contract"
@@ -85,9 +84,11 @@ These contracts were inspired by or directly modified from many sources, primari
 
 - [solmate](https://github.com/transmissions11/solmate)
 - [solady](https://github.com/Vectorized/solady)
+- [zolidity](https://github.com/z0r0z/zolidity)
 - [huff-examples](https://github.com/huff-language/huff-examples)
 - [huff-rs](https://github.com/huff-language/huff-rs)
 - [huff-clones](https://github.com/clabby/huff-clones)
+- [huff-vrgda](https://github.com/cheethas/huff-vrgda)
 - [huff-tests](https://github.com/abigger87/huff-tests)
 - [erc721h](https://github.com/philogy/erc721h)
 - [Gnosis](https://github.com/gnosis/gp-v2-contracts)

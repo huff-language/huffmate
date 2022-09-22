@@ -45,6 +45,12 @@
 #define constant DEPLOYMENT_FAILED_ERROR = 0x4445504c4f594d454e545f4641494c4544000000000000000000000000000000
 #define constant DEPLOYMENT_FAILED_LENGTH = 0x11
 
+#define constant NON_CONTRACT_ERROR = 0x4e4f4e5f434f4e54524143540000000000000000000000000000000000000000
+#define constant NON_CONTRACT_LENGTH = 0x0c
+
+#define constant ZERO_ADDRESS_ERROR = 0x5a45524f5f414444524553530000000000000000000000000000000000000000
+#define constant ZERO_ADDRESS_LENGTH = 0x0c
+
 // Ownable Errors
 
 #define constant ONLY_OWNER_ERROR = 0x4F4E4C595F4F574E455200000000000000000000000000000000000000000000
@@ -70,6 +76,21 @@
 #define constant ZERO_ASSETS_ERROR = 0x5a45524f5f415353455453000000000000000000000000000000000000000000
 #define constant ZERO_ASSETS_LENGTH = 0x0b
 
+/// @notice Reverts with an "ZERO_ADDRESS" message if the condition is false
+#define macro ZERO_ADDRESS(condition) = takes (0) returns (0) {
+    [ZERO_ADDRESS_ERROR]            // ["ZERO_ADDRESS"]
+    [ZERO_ADDRESS_LENGTH]           // [12 (length), "ZERO_ADDRESS"]
+    <condition>                     // [condition, 12 (length), "ZERO_ADDRESS"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "NON_CONTRACT" message if the condition is false
+#define macro NON_CONTRACT(condition) = takes (0) returns (0) {
+    [NON_CONTRACT_ERROR]            // ["NON_CONTRACT"]
+    [NON_CONTRACT_LENGTH]           // [12 (length), "NON_CONTRACT"]
+    <condition>                     // [condition, 12 (length), "NON_CONTRACT"]
+    REQUIRE()                       // []
+}
 
 /// @notice Reverts with an "INITIALIZATION_FAILED" message if the condition is false
 #define macro INITIALIZATION_FAILED(condition) = takes (0) returns (0) {

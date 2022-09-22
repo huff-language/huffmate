@@ -10,6 +10,7 @@
 ///         deterministic method.
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol)
 
+#include "./ERC1967Upgrade.huff"
 #include "../utils/CommonErrors.huff"
 
 // BEFORE ADDRESS

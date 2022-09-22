@@ -1,0 +1,165 @@
+/// @title ERC1967 Upgrade
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @dev This abstract contract provides getters and event emitting update functions for https://eips.ethereum.org/EIPS/eip-1967[EIP1967] slots.
+/// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/ERC1967/ERC1967Upgrade.sol)
+
+// EIP 1967 Constants
+
+/// @notice This is the keccak-256 hash of "eip1967.proxy.rollback" subtracted by 1
+#define constant _ROLLBACK_SLOT = 0x4910fdfa16fed3260ed0e7147f7cc6da11a60208b5b9406d12a635614ffd9143
+
+/// @notice Storage slot with the address of the current implementation
+/// @notice This is the keccak-256 hash of "eip1967.proxy.implementation" subtracted by 1
+/// @notice Validated in the constructor
+#define constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
+
+/// @notice Storage slot with the admin of the contract
+/// @notice This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1
+/// @notice Validated in the constructor
+#define constant _ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
+
+/// @notice The storage slot of the UpgradeableBeacon contract which defines the implementation for this proxy
+/// @notice This is bytes32(uint256(keccak256('eip1967.proxy.beacon')) - 1))
+/// @notice Validated in the constructor
+#define constant _BEACON_SLOT = 0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50
+
+// Events
+
+/// @notice Emitted when the implementation is upgraded.
+#define event Upgraded(address indexed implementation)
+
+/// @notice Emitted when the admin account has changed
+#define event AdminChanged(address previousAdmin, address newAdmin)
+
+/// @notice Emitted when the beacon is upgraded
+#define event BeaconUpgraded(address indexed beacon)
+
+// Implementation Macros
+
+/// @notice Returns the current implementation
+#define macro GET_IMPLEMENTATION() = takes (0) returns (1) {
+    [_IMPLEMENTATION_SLOT] sload    // [address]
+}
+
+/// @notice Sets the implementation address of the proxy
+#define macro SET_IMPLEMENTATION() = takes (1) returns (0) {
+    // Input Stack: [address]
+
+    // Check that the address is a contract
+    dup1 extcodesize iszero iszero              // [isContract(address), address]
+    __Is_Contract_JUMP jumpi                    // [address]
+        NON_CONTRACT(0x00)
+
+    // Set the implementation slot
+    __Is_Contract_JUMP:
+    [_IMPLEMENTATION_SLOT] sstore               // []
+}
+
+/// @notice Perform implementation upgrade
+#define macro UPGRADE_TO() = takes (1) returns (0) {
+    // Input Stack: [address]
+
+    // Set the implementation
+    dup1 SET_IMPLEMENTATION()                   // [address]
+
+    // Emit the Upgraded event
+    __EVENT_HASH(Upgraded) 0x00 0x00 log2       // []
+}
+
+
+/// @notice Perform implementation upgrade with additional setup call.
+#define macro UPGRADE_TO_AND_CALL() = takes (3) returns (0) {
+    // Input Stack: [address, data, forceCall]
+
+    // Set the implementation
+    dup1 UPGRADE_TO()                           // [address, data, forceCall]
+
+    // Copy the data from calldata to memory
+    swap2 not                                   // [!forceCall, data, address]
+
+    dup2 calldataload dup1                      // [dataSize, dataSize, forceCall, data, address]
+    swap2 swap1 iszero and                      // [(!forceCall && dataSize == 0), dataSize, data, address]
+    __IgnoreCall_And_Clean_Stack jumpi
+
+    dup1 swap2 0x20 add                         // [&data[0], dataSize, dataSize, address]
+    0x00                                        // [destOffset, calldataOffset, dataSize, dataSize, address]
+    calldatacopy                                // [dataSize, address]
+
+    // Call the implementation with the given data
+    0x00                                        // [retOffset, dataSize, address]
+    swap2                                       // [argSize, retOffset, address]
+    0x00                                        // [argOffset, argSize, retOffset, address]
+    0x00                                        // [retSize, argOffset, argSize, retOffset, address]
+    swap4                                       // [address, argOffset, argSize, retOffset, retSize]
+    gas                                         // [gas, address, argOffset, argSize, retOffset, retSize]
+    delegatecall                                // [success]
+    iszero iszero __DelegateCall_Success jumpi  // []
+    0x00 dup1 revert
+
+    __IgnoreCall_And_Clean_Stack:
+    pop pop pop                                 // []
+
+    __DelegateCall_Success:
+}
+
+
+// Admin Macros
+
+/// @notice Returns the current admin
+#define macro GET_ADMIN() = takes (0) returns (1) {
+    [_ADMIN_SLOT] sload    // [address]
+}
+
+/// @notice Sets the admin address of the proxy
+#define macro SET_ADMIN() = takes (1) returns (0) {
+    // Input Stack: [address]
+
+    // Check that the address != address(0)
+    dup1 iszero iszero                          // [address != address(0), address]
+    __Is_Not_Zero_addr_JUMP jumpi                    // [address]
+        ZERO_ADDRESS(0x00)
+
+    // Set the admin slot
+    __Is_Not_Zero_addr_JUMP:
+    [_ADMIN_SLOT] sstore               // []
+}
+
+/// @notice Perform admin upgrade
+#define macro UPGRADE_TO() = takes (1) returns (0) {
+    // Input Stack: [address]
+
+    // Get the previous admin
+    GET_ADMIN()                         // [previousAdmin, address]
+
+    // Set the admin
+    dup2 SET_ADMIN()                    // [previousAdmin, address]
+
+    // Emit the Upgraded event
+    __EVENT_HASH(AdminChanged) 0x00 0x00 log3       // []
+}
+
+// Beacon Macros
+
+/// @notice Returns the current beacon
+#define macro GET_BEACON() = takes (0) returns (1) {
+    [_BEACON_SLOT] sload        // [bytes32]
+}
+
+/// @notice Sets the proxy beacon
+#define macro SET_BEACON() = takes (1) returns (0) {
+    // Input Stack: [address]
+
+    // Check that the address is a contract
+    dup1 extcodesize iszero iszero              // [isContract(address), address]
+    __Is_Contract_JUMP jumpi                    // [address]
+        NON_CONTRACT(0x00)
+
+    // Set the beacon slot
+    __Is_Contract_JUMP:
+
+    // TODO: call the implementation function on the beacon and check that it's extcodesize > 0
+    
+
+    [_BEACON_SLOT] sstore               // []
+}
