@@ -1,6 +1,7 @@
 /// @title Clones
 /// @notice SPDX-License-Identifier: MIT
 /// @author Maddiaa <https://github.com/cheethas>
+/// @author asnared <https://github.com/abigger87>
 /// @notice https://eips.ethereum.org/EIPS/eip-1167[EIP 1167] is a standard for deploying minimal proxy contracts, also known as "clones".
 /// @notice To simply and cheaply clone contract functionality in an immutable way, this standard specifies
 ///         a minimal bytecode implementation that delegates all calls to a known, fixed address.

@@ -11,7 +11,6 @@ A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/h
 > Although contracts have been rigorously reviewed, this is **experimental software** and is provided on an "as is" and "as available" basis.
 > We **do not give any warranties** and **will not be liable for any loss** incurred through any use of this codebase.
 
-
 ### Usage
 
 **Recommended** To install with [**Foundry**](https://github.com/foundry-rs/foundry):
@@ -40,7 +39,7 @@ data-structures
 ├─ Hashmap — "Simple mapping utilities for 32 byte words"
 proxies
 ├─ Clones — "Clones library for deploying minimal proxy contracts"
-├─ Proxy — "Minimal ERC1967-complieant + upgradeable proxy contract"
+├─ Proxy — "Minimal ERC1967-compliant + upgradeable proxy contract"
 mechanisms
 |  ├─ huff-clones — "Library for creating clone contracts with immutable arguments"
 |  |  ├─ ExampleClone — "Example clones-with-immutable-args clone contract"
@@ -76,7 +75,6 @@ utils
 ├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values"
 └─ SSTORE2 — "Faster & cheaper contract key-value storage for Ethereum Contracts"
 ```
-
 
 ### Acknowledgements
 
