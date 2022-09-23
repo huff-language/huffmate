@@ -7,10 +7,6 @@
 
 #include "./CommonErrors.huff"
 
-// Errors
-#define error ErrorCreatingProxy()
-#define error ErrorCreatingContract()
-#define error TargetAlreadyExists()
 
 // Proxy Constants
 #define constant PROXY_BYTECODE = 0x67363d3d37363d34f03d5260086018f3

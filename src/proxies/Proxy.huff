@@ -1,0 +1,45 @@
+/// @title Proxy
+/// @notice SPDX-License-Identifier: MIT
+/// @author Maddiaa <https://github.com/cheethas>
+/// @dev This abstract contract provides a fallback function that delegates all calls to another contract using the EVM
+///      instruction `delegatecall`. We refer to the second contract as the _implementation_ behind the proxy, and it has to
+///      be specified by overriding the virtual {_implementation} function.
+///
+///      Additionally, delegation to the implementation can be triggered manually through the {_fallback} function, or to a
+///      different contract through the {_delegate} function.
+///
+///      The success and return data of the delegated call will be returned back to the caller of the proxy.
+/// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Proxy.sol)
+
+/// @notice Delegates a call to implementation
+/// @param {Stack} implementation -  The address of the implementation
+#define macro DELEGATE() = takes (1) returns (0) {
+    // Takes: [implementation]
+
+    calldatasize                // [cds, implementation]
+    0x00 dup1                   // [0, 0, cds, implementation]
+    calldatacopy                // [implementation]
+
+    // Call the implementation
+    0x00                        // [0, implementation]
+    dup1                        // [0, 0, implementation]
+    calldatasize                // [cds, 0, 0, implementation]
+    dup2                        // [0, cds, 0, 0, implementation]
+    dup5                        // [implementation, 0, cds, 0, 0, implementation]
+    gas                         // [gas, implementation, 0, cds, 0, 0, implementation]
+    delegatecall                // [success, implementation]
+
+    // Copy the returned data
+    returndatasize              // [rds, success, implementation]
+    0x00                         // [0, rds, success, implementation]
+    dup1                        // [0, 0, rds, success, implementation]
+    returndatacopy              // [success, implementation]
+
+    // Return the returned data
+    iszero proxy_call_failed jumpi         // [implementation]
+
+    returndatasize 0x00 return
+
+    proxy_call_failed:
+        returndatasize 0x00 revert
+}
