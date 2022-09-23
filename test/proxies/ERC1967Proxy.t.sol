@@ -10,6 +10,7 @@ import { MockBeacon } from "./mocks/MockBeacon.sol";
 import { MockProxiableUUID } from "./mocks/MockProxiableUUID.sol";
 import { NotUUPSMockProxiableUUID } from "./mocks/NotUUPSMockProxiableUUID.sol";
 
+import { ERC1155Recipient } from "solmate/test/ERC1155.t.sol";
 
 interface Proxy {
     // Implementation
@@ -31,7 +32,7 @@ interface Proxy {
 }
 
 
-contract ProxiesTest is Test {
+contract ProxiesTest is Test, ERC1155Recipient {
     using Bytes32AddressLib for bytes32;
 
     Proxy proxy;
@@ -154,4 +155,23 @@ contract ProxiesTest is Test {
         proxy.upgradeToAndCallUUPS(address(proxiableUUID), bytes(mintCalldata), false);
         assertEq(proxy.implementation(), address(proxiableUUID));
     } 
+
+
+    function testProxyPassthrough() public {
+        // set implementation
+        proxy.upgradeTo(address(implementation));
+
+        // perform a call on the implementation
+        bytes memory mintCalldata = abi.encodeWithSignature(
+            "mint(address,uint256,uint256,bytes)",
+            address(this),
+            uint256(1),
+            uint256(1),
+            bytes("")
+        );
+
+        (bool success, bytes memory returnData) = address(proxy).call(mintCalldata);
+
+        assertEq(success, true);
+    }
 }
