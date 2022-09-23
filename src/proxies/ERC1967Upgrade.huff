@@ -5,6 +5,8 @@
 /// @dev This abstract contract provides getters and event emitting update functions for https://eips.ethereum.org/EIPS/eip-1967[EIP1967] slots.
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/ERC1967/ERC1967Upgrade.sol)
 
+#include "../utils/CommonErrors.huff"
+
 // Function Definitions
 
 #define function implementation() view returns (address)
@@ -42,28 +44,6 @@
 
 /// @notice Emitted when the beacon is upgraded
 #define event BeaconUpgraded(address indexed beacon)
-
-// Error Messages
-
-// Unsupported Proxiable UUID 
-#define constant ERC1967_UPGRADE_UNSUPPORTED_PROXYIABLE_UUID = 0x756E737570706F727465642070726F786961626C655555494400000000000000
-#define constant ERC1967_UPGRADE_UNSUPPORTED_PROXYIABLE_UUID_LENGTH = 0x19
-
-#define macro REVERT_UNSUPPORTED_PROXYIABLE_UUID() = {
-    [ERC1967_UPGRADE_UNSUPPORTED_PROXYIABLE_UUID]
-    [ERC1967_UPGRADE_UNSUPPORTED_PROXYIABLE_UUID_LENGTH]
-    REQUIRE()
-}
-
-// Implementation not uups
-#define constant ERC1967_UPGRADE_IMPLEMENTATION_NOT_UUPS = 0x6E657720696D706C656D656E746174696F6E206973206E6F7420555550530000
-#define constant ERC1967_UPGRADE_IMPLEMENTATION_NOT_UUPS_LENGTH = 0x1E
-
-#define macro REVERT_UPGRADE_IMPLEMENTATION_NOT_UUPS() = {
-    [ERC1967_UPGRADE_IMPLEMENTATION_NOT_UUPS]
-    [ERC1967_UPGRADE_IMPLEMENTATION_NOT_UUPS_LENGTH]
-    REQUIRE()
-}
 
 
 // Implementation Macros
@@ -134,6 +114,7 @@
     __DelegateCall_Success:
 }
 
+
 /// @notice Perform implementation upgrade with security checks for UUPS proxies, and additional setup call.
 #define macro UPGRADE_TO_AND_CALL_UUPS() = takes (3) returns (0) {
     // Upgrades from old implementations will perform a rollback test. This test requires the new
@@ -154,19 +135,20 @@
         // call the new implementation
 
         // store function selector in mem
-        __FUNC_SIG(proxiableUUID)       // [funcSig(proxiableUUID), newImplementation, data, forceCall]
-        0x00                            // [0, funcSig(proxiableUUID), newImplementation, data, forceCall]
-        dup1 mstore                     // [0, funcSig(proxiableUUID), newImplementation, data, forceCall]
+        0x00                            // [0, newImplementation, data, forceCall]
+        __FUNC_SIG(proxiableUUID)       // [funcSig(proxiableUUID), 0, newImplementation, data, forceCall]
+        dup2                            // [0, funcSig(proxiableUUID), 0, newImplementation, data, forceCall]
+        mstore                          // [0, newImplementation, data, forceCall]
 
         // Call
-        0x20                            // [retSize, 0, funcSig(proxiableUUID), newImplementation, data, forceCall]
-        dup2                            // [retOffset, retSize, 0, funcSig(proxiableUUID), newImplementation, data, forceCall]
-        0x04                            // [argSize, retOffset, retSize, 0, funcSig(proxiableUUID), newImplementation, data, forceCall]
-        dup2                            // [argOffset, argSize, retOffset ,retSize, 0, funcSig(proxiableUUID), newImplementation, data, forceCall]
-        dup5                            // [value(0), argOffset, argSize, retOffset ,retSize, 0, funcSig(proxiableUUID), newImplementation, data, forceCall]
-        dup8                            // [address, value(0), argOffset, argSize, retOffset ,retSize, 0, funcSig(proxiableUUID), newImplementation, data, forceCall]
-        gas                             // [gas, address, value(0), argOffset, argSize, retOffset ,retSize, 0, funcSig(proxiableUUID), newImplementation, data, forceCall]
-        call                            // [success, 0, funcSig(proxiableUUID), newImplementation, data, forceCall]
+        0x20                            // [retSize, 0, newImplementation, data, forceCall]
+        dup2                            // [retOffset, retSize, 0, newImplementation, data, forceCall]
+        0x04                            // [argSize, retOffset, retSize, 0, newImplementation, data, forceCall]
+        0x1c                            // [argOffset, argSize, retOffset ,retSize, 0, newImplementation, data, forceCall]
+        dup5                            // [value(0), argOffset, argSize, retOffset ,retSize, 0, newImplementation, data, forceCall]
+        dup7                            // [address, value(0), argOffset, argSize, retOffset ,retSize, 0, newImplementation, data, forceCall]
+        gas                             // [gas, address, value(0), argOffset, argSize, retOffset ,retSize, 0, newImplementation, data, forceCall]
+        call                            // [success, 0, newImplementation, data, forceCall]
 
         // check call success
         iszero not_supported_check_revert jumpi 
@@ -174,7 +156,7 @@
 
             // The return implementation slot is now stored between 00:32 in the current call frame's memory
             mload                           // [slot, newImplementation, data, forceCall]
-            [IMPLEMENTATION_SLOT] eq        // [(slot == IMPLEMENTATION_SLOT), newImplementation, data, forceCall]
+            [_IMPLEMENTATION_SLOT] eq        // [(slot == IMPLEMENTATION_SLOT), newImplementation, data, forceCall]
             iszero not_uups_revert jumpi // [newImplementation, data, forceCall]
 
             UPGRADE_TO_AND_CALL()   
@@ -186,14 +168,13 @@
         // This branch will terminate execution 
         not_supported_check_revert:
             // Emit error message that the proxy call failed
-            REVERT_UNSUPPORTED_PROXYIABLE_UUID()
+            REVERT_UNSUPPORTED_PROXIABLE_UUID(0x00)
         not_uups_revert:
-            REVERT_UPGRADE_IMPLEMENTATION_NOT_UUPS()
+            REVERT_UPGRADE_IMPLEMENTATION_NOT_UUPS(0x00)
 
     continue:
     // NOTE: Execution will continue after this macro, make sure you terminate execution in the calling block
 }
-
 
 // Admin Macros
 
@@ -254,7 +235,7 @@
     0x20                                        // [retSize, address]
     0x00                                        // [retOffset, retSize, address]
     0x04                                        // [argSize, retOffset, retSize, address]
-    0x00                                        // [argOffset, argSize, retOffset, retSize, address]
+    0x1c                                        // [argOffset, argSize, retOffset, retSize, address]
     dup5                                        // [address, argOffset, argSize, retOffset, retSize, address]
     gas                                         // [gas, address, argOffset, argSize, retOffset, retSize, address]
     staticcall                                  // [success, address]
@@ -294,7 +275,7 @@
     0x20                                        // [retSize, newBeacon, data, dataSize]
     0x00                                        // [retOffset, retSize, newBeacon, data, dataSize]
     0x04                                        // [argSize, retOffset, retSize, newBeacon, data, dataSize]
-    0x00                                        // [argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
+    0x1c                                        // [argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
     dup5                                        // [newBeacon, argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
     gas                                         // [gas, newBeacon, argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
     staticcall                                  // [success, newBeacon, data, dataSize]

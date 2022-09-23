@@ -1,0 +1,134 @@
+// Functions
+// Implementation
+#define function implementation() nonpayable returns (address)
+#define function upgradeTo(address) nonpayable returns ()
+#define function upgradeToAndCall(address,bytes,bool) nonpayable returns ()
+#define function upgradeToAndCallUUPS(address,bytes,bool) nonpayable returns ()
+
+// Admin
+#define function admin() view returns (address)
+#define function changeAdmin(address) nonpayable returns ()
+
+// Beacon
+#define function beacon() view returns (address)
+#define function setBeacon(address) nonpayable returns ()
+#define function upgradeBeaconAndCall(address,bytes,bool) nonpayable returns ()
+
+
+// Implementations
+#define macro IMPLEMENTATION_WRAPPER() = {
+    IMPLEMENTATION()
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UPGRADE_TO_WRAPPER() = {
+    0x04 calldataload
+    UPGRADE_TO()
+    stop
+}
+
+#define macro UPGRADE_TO_AND_CALL_WRAPPER() = {
+    0x44 calldataload               // [forceCall]
+    0x24 calldataload               // [data, forceCall]
+    0x04 calldataload               // [implementation, data, forceCall]
+    UPGRADE_TO_AND_CALL()
+    stop
+}
+
+#define macro UPGRADE_TO_AND_CALL_UUPS_WRAPPER() = {
+    0x44 calldataload               // [forceCall]
+    0x24 calldataload               // [data, forceCall]
+    0x04 calldataload               // [implementation, data, forceCall]
+    UPGRADE_TO_AND_CALL_UUPS()
+    stop
+}
+
+// Admin
+#define macro GET_ADMIN_WRAPPER() = {
+    GET_ADMIN()
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro CHANGE_ADMIN_WRAPPER() = {
+    0x04 calldataload
+    CHANGE_ADMIN()
+    stop
+}
+
+
+// Beacon
+#define macro GET_BEACON_WRAPPER() = {
+    GET_BEACON()
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro SET_BEACON_WRAPPER() = {
+    0x04 calldataload
+    SET_BEACON()
+    stop
+}
+
+#define macro UPGRADE_BEACON_TO_AND_CALL_WRAPPER() = {
+    0x44 calldataload               // [forceCall]
+    0x24 calldataload               // [data, forceCall]
+    0x04 calldataload               // [implementation, data, forceCall]
+    UPGRADE_TO_BEACON_AND_CALL()
+    stop
+}
+
+
+// For the sake of this example, the owner will be passed in
+#define macro CONSTRUCTOR() = {
+    // ERC1967_PROXY_CONSTRUCTOR()
+
+    0x20 
+    0x20 codesize sub
+    0x00 
+    codecopy
+    0x00 mload
+
+    SET_ADMIN()
+}
+
+#define macro MAIN() = {
+    pc calldataload 0xe0 shr
+
+    
+    dup1 __FUNC_SIG(implementation)                 eq implementation jumpi
+    dup1 __FUNC_SIG(upgradeTo)                      eq upgradeTo jumpi
+    dup1 __FUNC_SIG(upgradeToAndCall)               eq upgradeToAndCall jumpi
+    dup1 __FUNC_SIG(upgradeToAndCallUUPS)           eq upgradeToAndCallUUPS jumpi
+    
+    dup1 __FUNC_SIG(admin)                          eq getAdmin jumpi
+    dup1 __FUNC_SIG(changeAdmin)                    eq changeAdmin jumpi
+    
+    dup1 __FUNC_SIG(beacon)                         eq getBeacon jumpi
+    dup1 __FUNC_SIG(setBeacon)                      eq setBeacon jumpi
+    dup1 __FUNC_SIG(upgradeBeaconAndCall)           eq upgradeBeaconAndCall jumpi
+
+    0x00 dup1 revert
+
+    implementation:
+        IMPLEMENTATION_WRAPPER()
+    upgradeTo:
+        UPGRADE_TO_WRAPPER()
+    upgradeToAndCall:
+        UPGRADE_TO_AND_CALL_WRAPPER()
+    upgradeToAndCallUUPS:
+        UPGRADE_TO_AND_CALL_UUPS_WRAPPER()
+
+    getAdmin:
+        GET_ADMIN_WRAPPER()
+    changeAdmin:
+        CHANGE_ADMIN_WRAPPER()
+
+    getBeacon:
+        GET_BEACON_WRAPPER()
+    setBeacon:
+        SET_BEACON_WRAPPER()
+    upgradeBeaconAndCall:
+        UPGRADE_BEACON_TO_AND_CALL_WRAPPER()
+}
