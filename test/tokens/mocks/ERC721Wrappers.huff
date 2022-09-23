@@ -8,8 +8,6 @@
 #define function safeMint(address to, uint256 tokenId, bytes memory data) payable returns ()
 #define function safeMint(address to, uint256 tokenId) payable returns ()
 
-#define event LogWord(bytes32)
-
 #define macro MINT() = takes (0) returns (0) {
     0x24 calldataload       // [tokenId]
     0x04 calldataload       // [to, tokenId]
@@ -89,22 +87,14 @@
     0x04 calldataload       // [to, tokenId, data]
     _MINT()
 
-    0xb1 __EVENT_HASH(LogWord) 0x00 0x00 log2
-
     // Make sure we can transfer to the recipient
     0x04 calldataload       // [to]
     dup1 extcodesize        // [to.code.length, to]
     iszero safe jumpi       // [to]
 
-    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
-
     // onERC721Received Selector
     0x150b7a02 dup1         // [onERC721Received, onERC721Received, to]
     0xE0 shl                // [onERC721Received_shifted, onERC721Received, to]
-
-    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
-    dup2 __EVENT_HASH(LogWord) 0x00 0x00 log2
-    dup3 __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Store the left-shifted selector for call
     0x20 mstore             // [onERC721Received, to]
@@ -141,8 +131,6 @@
     dup7                    // [to, value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
     gas                     // [gas, to, value, argOffset, argSize, retOffset, retSize, len(bytes), onERC721Received, to]
     call                    // [success, len(bytes), onERC721Received, to]
-
-    dup1 __EVENT_HASH(LogWord) 0x00 0x00 log2
 
     // Revert if call isn't successful
     selector_call_success jumpi              // [len(bytes), onERC721Received, to]
