@@ -1,0 +1,58 @@
+
+#define macro MAIN() = {
+    0x00 calldataload 0xE0 shr      // [function selector on stack]
+
+    dup1 __FUNC_SIG(mint) eq mint jumpi
+    dup1 __FUNC_SIG(burn) eq burn jumpi
+
+    dup1 __FUNC_SIG(batchMint) eq batchMint jumpi
+    dup1 __FUNC_SIG(batchBurn) eq batchBurn jumpi
+
+    dup1 __FUNC_SIG(safeTransferFrom) eq safeTransferFrom jumpi
+    dup1 __FUNC_SIG(safeBatchTransferFrom) eq batchSafeTransferFrom jumpi
+
+    dup1 __FUNC_SIG(isApprovedForAll) eq isApprovedForAll jumpi
+    dup1 __FUNC_SIG(setApprovalForAll) eq setApprovalForAll jumpi
+
+    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi
+    dup1 __FUNC_SIG(balanceOfBatch) eq balanceOfBatch jumpi
+
+    dup1 __FUNC_SIG(name) eq name jumpi
+    dup1 __FUNC_SIG(symbol) eq symbol jumpi
+    dup1 __FUNC_SIG(supportsInterface) eq supportsInterface jumpi
+
+    // No fallback function
+    0x00 dup1 revert
+
+    mint:
+        MINT()
+    burn:
+        BURN()
+
+    batchMint:
+        BATCH_MINT()
+    batchBurn:
+        BATCH_BURN()
+
+    safeTransferFrom:
+        SAFE_TRANSFER_FROM()
+    batchSafeTransferFrom:
+        BATCH_SAFE_TRANSFER_FROM()
+
+    isApprovedForAll:
+        IS_APPROVED_FOR_ALL()
+    setApprovalForAll:
+        SET_APPROVAL_FOR_ALL()
+
+    balanceOf:
+        BALANCE_OF()
+    balanceOfBatch:
+        BALANCE_OF_BATCH()
+
+    name:
+        NAME()
+    symbol:
+        SYMBOL()
+    supportsInterface:
+        SUPPORTS_INTERFACE()
+}

@@ -1,0 +1,277 @@
+/// @title Custom Errors
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice Wrappers for reverting with common error messages
+
+#include "./Errors.huff"
+
+// Error Constants
+#define constant NOT_AUTHORIZED_ERROR = 0x4e4f545f415554484f52495a4544000000000000000000000000000000000000
+#define constant NOT_AUTHORIZED_LENGTH = 0x0e
+
+#define constant WRONG_FROM_ERROR = 0x57524f4e475f46524f4d00000000000000000000000000000000000000000000
+#define constant WRONG_FROM_LENGTH = 0x0a
+
+#define constant LENGTH_MISMATCH_ERROR = 0x4c454e4754485f4d49534d415443480000000000000000000000000000000000
+#define constant LENGTH_MISMATCH_LENGTH = 0x0f
+
+#define constant UNSAFE_RECIPIENT_ERROR = 0x554e534146455f524543495049454e5400000000000000000000000000000000
+#define constant UNSAFE_RECIPIENT_LENGTH = 0x10
+
+#define constant REENTRANCY_ERROR = 0x5245454e5452414e435900000000000000000000000000000000000000000000
+#define constant REENTRANCY_LENGTH = 0x0a
+
+#define constant DISPATCH_ERROR_MESSAGE = 0x44495350415443485f4552524f52000000000000000000000000000000000000
+#define constant DISPATCH_LENGTH = 0x0e
+
+#define constant INVALID_RECIPIENT_ERROR = 0x494e56414c49445f524543495049454e54000000000000000000000000000000
+#define constant INVALID_RECIPIENT_LENGTH = 0x11
+
+#define constant ALREADY_MINTED_ERROR = 0x414c52454144595f4d494e544544000000000000000000000000000000000000
+#define constant ALREADY_MINTED_LENGTH = 0x0e
+
+#define constant NOT_MINTED_ERROR = 0x4e4f545f4d494e54454400000000000000000000000000000000000000000000
+#define constant NOT_MINTED_LENGTH = 0x0a
+
+#define constant CREATE_FAILED_ERROR = 0x4352454154455f4641494c454400000000000000000000000000000000000000
+#define constant CREATE_FAILED_LENGTH = 0x0d
+
+#define constant OUT_OF_BOUNDS_ERROR = 0x4f55545f4f465f424f554e445300000000000000000000000000000000000000
+#define constant OUT_OF_BOUNDS_LENGTH = 0x0d
+
+#define constant INITIALIZATION_FAILED_ERROR = 0x494e495449414c495a4154494f4e5f4641494c45440000000000000000000000
+#define constant INITIALIZATION_FAILED_LENGTH = 0x15
+
+#define constant DEPLOYMENT_FAILED_ERROR = 0x4445504c4f594d454e545f4641494c4544000000000000000000000000000000
+#define constant DEPLOYMENT_FAILED_LENGTH = 0x11
+
+#define constant NON_CONTRACT_ERROR = 0x4e4f4e5f434f4e54524143540000000000000000000000000000000000000000
+#define constant NON_CONTRACT_LENGTH = 0x0c
+
+#define constant ZERO_ADDRESS_ERROR = 0x5a45524f5f414444524553530000000000000000000000000000000000000000
+#define constant ZERO_ADDRESS_LENGTH = 0x0c
+
+// Ownable Errors
+
+#define constant ONLY_OWNER_ERROR = 0x4F4E4C595F4F574E455200000000000000000000000000000000000000000000
+#define constant ONLY_OWNER_LENGTH = 0x0a
+
+#define constant ONLY_PENDING_OWNER_ERROR = 0x4F4E4C595F50454E44494E475F4F574E45520000000000000000000000000000
+#define constant ONLY_PENDING_OWNER_LENGTH = 0x12
+
+#define constant ALREADY_OWNER_ERROR = 0x414C52454144595F4F574E455200000000000000000000000000000000000000
+#define constant ALREADY_OWNER_LENGTH = 0x0d
+
+// Merkle Distributor Errors
+
+#define constant ALREADY_CLAIMED_ERROR = 0x414c52454144595f434c41494d45440000000000000000000000000000000000
+#define constant ALREADY_CLAIMED_LENGTH = 0x0f
+
+#define constant INVALID_PROOF_ERROR = 0x494e56414c49445f50524f4f4600000000000000000000000000000000000000
+#define constant INVALID_PROOF_LENGTH = 0x0d
+
+#define constant ZERO_SHARES_ERROR = 0x5a45524f5f534841524553000000000000000000000000000000000000000000
+#define constant ZERO_SHARES_LENGTH = 0x0b
+
+#define constant ZERO_ASSETS_ERROR = 0x5a45524f5f415353455453000000000000000000000000000000000000000000
+#define constant ZERO_ASSETS_LENGTH = 0x0b
+
+// Proxy Errors
+// Unsupported Proxiable UUID 
+#define constant ERC1967_UPGRADE_UNSUPPORTED_PROXIABLE_UUID = 0x756E737570706F727465642070726F786961626C655555494400000000000000
+#define constant ERC1967_UPGRADE_UNSUPPORTED_PROXIABLE_UUID_LENGTH = 0x19
+
+#define macro REVERT_UNSUPPORTED_PROXIABLE_UUID(condition) = {
+    [ERC1967_UPGRADE_UNSUPPORTED_PROXIABLE_UUID]
+    [ERC1967_UPGRADE_UNSUPPORTED_PROXIABLE_UUID_LENGTH]
+    <condition>
+    REQUIRE()
+}
+
+// Implementation not uups
+#define constant ERC1967_UPGRADE_IMPLEMENTATION_NOT_UUPS = 0x6E657720696D706C656D656E746174696F6E206973206E6F7420555550530000
+#define constant ERC1967_UPGRADE_IMPLEMENTATION_NOT_UUPS_LENGTH = 0x1e
+
+#define macro REVERT_UPGRADE_IMPLEMENTATION_NOT_UUPS(condition) = {
+    [ERC1967_UPGRADE_IMPLEMENTATION_NOT_UUPS]
+    [ERC1967_UPGRADE_IMPLEMENTATION_NOT_UUPS_LENGTH]
+    <condition>
+    REQUIRE()
+}
+
+
+/// @notice Reverts with an "ZERO_ADDRESS" message if the condition is false
+#define macro ZERO_ADDRESS(condition) = takes (0) returns (0) {
+    [ZERO_ADDRESS_ERROR]            // ["ZERO_ADDRESS"]
+    [ZERO_ADDRESS_LENGTH]           // [12 (length), "ZERO_ADDRESS"]
+    <condition>                     // [condition, 12 (length), "ZERO_ADDRESS"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "NON_CONTRACT" message if the condition is false
+#define macro NON_CONTRACT(condition) = takes (0) returns (0) {
+    [NON_CONTRACT_ERROR]            // ["NON_CONTRACT"]
+    [NON_CONTRACT_LENGTH]           // [12 (length), "NON_CONTRACT"]
+    <condition>                     // [condition, 12 (length), "NON_CONTRACT"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "INITIALIZATION_FAILED" message if the condition is false
+#define macro INITIALIZATION_FAILED(condition) = takes (0) returns (0) {
+    [INITIALIZATION_FAILED_ERROR]   // ["INITIALIZATION_FAILED"]
+    [INITIALIZATION_FAILED_LENGTH]  // [20 (length), "INITIALIZATION_FAILED"]
+    <condition>                     // [condition, 20 (length), "INITIALIZATION_FAILED"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "DEPLOYMENT_FAILED" message if the condition is false
+#define macro DEPLOYMENT_FAILED(condition) = takes (0) returns (0) {
+    [DEPLOYMENT_FAILED_ERROR]       // ["DEPLOYMENT_FAILED"]
+    [DEPLOYMENT_FAILED_LENGTH]      // [16 (length), "DEPLOYMENT_FAILED"]
+    <condition>                     // [condition, 16 (length), "DEPLOYMENT_FAILED"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "ONLY_OWNER" message if the condition is false
+#define macro ONLY_OWNER(condition) = takes (0) returns (0) {
+    [ONLY_OWNER_ERROR]              // ["ONLY_OWNER"]
+    [ONLY_OWNER_LENGTH]             // [10 (length), "ONLY_OWNER"]
+    <condition>                     // [condition, 10 (length), "ONLY_OWNER"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "ONLY_PENDING_OWNER" message if the condition is false
+#define macro ONLY_PENDING_OWNER(condition) = takes (0) returns (0) {
+    [ONLY_PENDING_OWNER_ERROR]      // ["ONLY_PENDING_OWNER"]
+    [ONLY_PENDING_OWNER_LENGTH]     // [18 (length), "ONLY_PENDING_OWNER"]
+    <condition>                     // [condition, 18 (length), "ONLY_PENDING_OWNER"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "ALREADY_OWNER" message if the condition is false
+#define macro ALREADY_OWNER(condition) = takes (0) returns (0) {
+    [ALREADY_OWNER_ERROR]           // ["ALREADY_OWNER"]
+    [ALREADY_OWNER_LENGTH]          // [13 (length), "ALREADY_OWNER"]
+    <condition>                     // [condition, 13 (length), "ALREADY_OWNER"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "OUT_OF_BOUNDS" message if the condition is false
+#define macro OUT_OF_BOUNDS(condition) = takes (0) returns (0) {
+    [OUT_OF_BOUNDS_ERROR]           // ["OUT_OF_BOUNDS"]
+    [OUT_OF_BOUNDS_LENGTH]          // [13 (length), "OUT_OF_BOUNDS"]
+    <condition>                     // [condition, 13 (length), "OUT_OF_BOUNDS"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "ZERO_ASSETS" message if the condition is false
+#define macro ZERO_ASSETS(condition) = takes (0) returns (0) {
+    [ZERO_ASSETS_ERROR]             // ["ZERO_ASSETS"]
+    [ZERO_ASSETS_LENGTH]            // [11 (length), "ZERO_ASSETS"]
+    <condition>                     // [condition, 11 (length), "ZERO_ASSETS"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "CREATE_FAILED" message if the condition is false
+#define macro CREATE_FAILED(condition) = takes (0) returns (0) {
+    [CREATE_FAILED_ERROR]           // ["CREATE_FAILED"]
+    [CREATE_FAILED_LENGTH]          // [13 (length), "CREATE_FAILED"]
+    <condition>                     // [condition, 13 (length), "CREATE_FAILED"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "ZERO_SHARES" message if the condition is false
+#define macro ZERO_SHARES(condition) = takes (0) returns (0) {
+    [ZERO_SHARES_ERROR]             // ["ZERO_SHARES"]
+    [ZERO_SHARES_LENGTH]            // [11 (length), "ZERO_SHARES"]
+    <condition>                     // [condition, 11 (length), "ZERO_SHARES"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "ALREADY_CLAIMED" message if the condition is false
+#define macro ALREADY_CLAIMED(condition) = takes (0) returns (0) {
+    [ALREADY_CLAIMED_ERROR]         // ["ALREADY_CLAIMED"]
+    [ALREADY_CLAIMED_LENGTH]        // [15 (length), "ALREADY_CLAIMED"]
+    <condition>                     // [condition, 15 (length), "ALREADY_CLAIMED"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "INVALID_PROOF" message if the condition is false
+#define macro INVALID_PROOF(condition) = takes (0) returns (0) {
+    [INVALID_PROOF_ERROR]           // ["INVALID_PROOF"]
+    [INVALID_PROOF_LENGTH]          // [13 (length), "INVALID_PROOF"]
+    <condition>                     // [condition, 13 (length), "INVALID_PROOF"]
+    REQUIRE()                       // []
+}
+
+/// @notice Reverts with an "NOT_AUTHORIZED" message if the condition is false
+#define macro UNAUTHORIZED(condition) = takes (0) returns (0) {
+    [NOT_AUTHORIZED_ERROR]      // ["NOT_AUTHORIZED"]
+    [NOT_AUTHORIZED_LENGTH]     // [14 (length), "NOT_AUTHORIZED"]
+    <condition>                 // [condition, 14 (length), "NOT_AUTHORIZED"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "WRONG_FROM" message if the condition is false
+#define macro WRONG_FROM(condition) = takes (0) returns (0) {
+    [WRONG_FROM_ERROR]          // ["WRONG_FROM"]
+    [WRONG_FROM_LENGTH]         // [10 (length), "WRONG_FROM"]
+    <condition>                 // [condition, 10 (length), "WRONG_FROM"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "LENGTH_MISMATCH" message if condition is false
+#define macro LENGTH_MISMATCH(condition) = takes (0) returns (0) {
+    [LENGTH_MISMATCH_ERROR]     // ["LENGTH_MISMATCH"]
+    [LENGTH_MISMATCH_LENGTH]    // [15 (length), "LENGTH_MISMATCH"]
+    <condition>                 // [condition, 15 (length), "LENGTH_MISMATCH"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "UNSAFE_RECIPIENT" message if condition is false
+#define macro UNSAFE_RECIPIENT(condition) = takes (0) returns (0) {
+    [UNSAFE_RECIPIENT_ERROR]    // ["UNSAFE_RECIPIENT"]
+    [UNSAFE_RECIPIENT_LENGTH]   // [16 (length), "UNSAFE_RECIPIENT"]
+    <condition>                 // [condition, 16 (length), "UNSAFE_RECIPIENT"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "ALREADY_MINTED" message if condition is false
+#define macro ALREADY_MINTED(condition) = takes (0) returns (0) {
+    [ALREADY_MINTED_ERROR]      // ["ALREADY_MINTED"]
+    [ALREADY_MINTED_LENGTH]     // [14 (length), "ALREADY_MINTED"]
+    <condition>                 // [condition, 14 (length), "ALREADY_MINTED"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with an "NOT_MINTED" message if condition is false
+#define macro NOT_MINTED(condition) = takes (0) returns (0) {
+    [NOT_MINTED_ERROR]          // ["NOT_MINTED"]
+    [NOT_MINTED_LENGTH]         // [10 (length), "NOT_MINTED"]
+    <condition>                 // [condition, 10 (length), "NOT_MINTED"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with a "INVALID_RECIPIENT" message if condition is false
+#define macro INVALID_RECIPIENT(condition) = takes (0) returns (0) {
+    [INVALID_RECIPIENT_ERROR]    // ["INVALID_RECIPIENT"]
+    [INVALID_RECIPIENT_LENGTH]   // [17 (length), "INVALID_RECIPIENT"]
+    <condition>                  // [condition, 17 (length), "INVALID_RECIPIENT"]
+    REQUIRE()                    // []
+}
+
+/// @notice Reverts with a "REENTRANCY" message if condition is false
+#define macro REENTRANCY(condition) = takes (0) returns (0) {
+    [REENTRANCY_ERROR]          // ["REENTRANCY"]
+    [REENTRANCY_LENGTH]         // [10 (length), "REENTRANCY"]
+    <condition>                 // [condition, 10 (length), "REENTRANCY"]
+    REQUIRE()                   // []
+}
+
+/// @notice Reverts with a "DISPATCH_ERROR" message if condition is false
+#define macro DISPATCH_ERROR(condition) = takes (0) returns (0) {
+    [DISPATCH_ERROR_MESSAGE]    // ["DISPATCH_ERROR"]
+    [DISPATCH_LENGTH]           // [14 (length), "DISPATCH_ERROR"]
+    <condition>                 // [condition, 14 (length), "DISPATCH_ERROR"]
+    REQUIRE()                   // []
+}

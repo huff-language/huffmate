@@ -1,0 +1,23 @@
+/// @title Address
+/// @notice SPDX-License-Identifier: MIT
+/// @author Jet <https://github.com/JetJadeja>
+/// @notice Macros associated with addresses
+
+/// @notice Masks an address to 160 bits
+#define macro MASK_ADDRESS() = takes (1) returns (1) {
+    0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff
+    and
+}
+
+/// @notice Require that the top of the stack is an address
+#define macro REQUIRE_ADDR() = takes (1) returns (0) {
+    // Input Stack: [address]
+
+    // Mask the Address
+    dup1 MASK_ADDRESS()         // [masked_address, address]
+
+    // Revert if the addresses aren't equal
+    eq addresses_match jumpi    // []
+    0x00 dup1 revert            // []
+    addresses_match:            // []
+}

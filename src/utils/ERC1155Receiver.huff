@@ -1,0 +1,12 @@
+/// @title ERC1155 Receiver
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice A minimal interface for receiving ERC1155 tokens.
+
+/// @notice On ERC1155 Received
+/// @notice Returns the function selector for `onERC1155Received`
+#define macro ON_ERC1155_RECEIVED() = takes (0) returns (0) {
+    // 0xf23a6e61 is the 4byte function selector for `onERC1155Received`
+    0xf23a6e61 0x00 mstore    // []
+    0x20 0x00 return          // []
+}

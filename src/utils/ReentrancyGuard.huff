@@ -1,0 +1,87 @@
+/// @title Reentrancy Guard
+/// @notice SPDX-License-Identifier: MIT
+/// @author rayquaza7 <https://github.com/rayquaza7>
+/// @notice Gas optimized reentrancy guard for smart contracts.
+/// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/ReentrancyGuard.sol)
+
+#include "./CommonErrors.huff"
+
+// Interface
+#define function lock() nonpayable returns ()
+#define function unlock() nonpayable returns ()
+
+// Constants
+#define constant LOCKED_SLOT = FREE_STORAGE_POINTER()
+#define constant _UNLOCKED = 0x01
+#define constant _LOCKED = 0x02
+
+/// @title Lock
+/// @notice Locks the contract to prevent reentrancy
+#define fn LOCK() = takes (0) returns (0) {
+    [_LOCKED]                // [0x02]
+    dup1                     // [0x02, 0x02]
+    [LOCKED_SLOT]            // [locked_slot, 0x02, 0x02]
+    sload                    // [locked_slot_value, 0x02, 0x02]
+    lt                       // [locked_slot_value < 0x02, 0x02]
+    lock jumpi
+
+    // Otherwise revert with re-entrancy
+    REENTRANCY(0x00)
+
+    lock:
+        [LOCKED_SLOT] sstore
+}
+
+/// @title Unlock
+/// @notice Unlocks the contract
+#define fn UNLOCK() = takes (0) returns (0) {
+    [_UNLOCKED] [LOCKED_SLOT] sstore
+}
+
+#define macro REENTRANCY_GUARD_MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr
+
+    dup1 __FUNC_SIG(lock) eq lock_jump jumpi
+    dup1 __FUNC_SIG(unlock) eq unlock_jump jumpi
+
+    reentrancy_sig_no_match_found jump
+
+    lock_jump:
+        LOCK()
+    unlock_jump:
+        UNLOCK()
+
+    reentrancy_sig_no_match_found:
+}
+
+/// @notice Test Unlocking
+#define test TEST_LOCK() = takes (0) returns (0) {
+    // Make sure our slot is set to the UNLOCKED state
+    UNLOCK()
+
+    // Lock
+    LOCK()
+    [LOCKED_SLOT] sload
+
+    // We expect the locked slot to be set to 2 - the LOCKED state
+    0x02 eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}
+
+/// @notice Test Unlocking
+#define test TEST_UNLOCK() = takes (0) returns (0) {
+    // Make sure our slot is set to the LOCKED state
+    LOCK()
+
+    // Unlock
+    UNLOCK()
+    [LOCKED_SLOT] sload
+
+    // We expect the locked slot to be set to 1 - the UNLOCKED state
+    0x01 eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}

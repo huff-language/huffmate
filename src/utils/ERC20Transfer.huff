@@ -1,0 +1,51 @@
+/// @title ERC-20 Helper
+/// @notice SPDX-License-Identifier: MIT
+/// @author Ben Leimberger <https://github.com/benleim>
+/// @notice Util macros for ERC-20 interactions
+
+// Interface
+#define function transfer(address,uint256) nonpayable returns (bool)
+
+/// @notice Transfers an ERC-20 token from the caller to the given account
+#define macro ERC20_TRANSFER() = takes (3) returns (0) {
+    // input stack:                [acct_addr, amount, getter_addr]
+    __FUNC_SIG(transfer)        // [sig, acct_addr, amount, getter_addr]
+    0x00 mstore                 // [acct_addr, amount, getter_addr]
+
+    // store args in memory
+    // address, uint256
+    dup1 0x20 mstore            // [acct_addr, amount, getter_addr]
+    dup2 0x40 mstore            // [acct_addr, amount, getter_addr]
+
+    // make call. return size is zero because we can fetch it after the call
+    0x00                        // [ret_size, acct_addr, amount, getter_addr]
+    dup1                        // [ret_offset, ret_size, acct_addr, amount, getter_addr]
+    0x44                        // [args_size, ret_offset, ret_size, acct_addr, amount, getter_addr]
+    0x1c                        // [args_offset, args_size, ret_offset, ret_size, acct_addr, amount, getter_addr]
+    dup3                        // [value, args_offset, args_size, ret_offset, ret_size, acct_addr, amount, getter_addr]
+    dup8                        // [to, value, args_offset, args_size, ret_offset, ret_size, acct_addr, amount, getter_addr]
+    gas                         // [gas, to, value, args_offset, args_size, ret_offset, ret_size, acct_addr, amount, getter_addr]
+    call                        // [successs, acct_addr, amount, getter_addr]
+
+    iszero iszero               // [success, acct_addr, amount, getter_addr]
+    transfer_success jumpi      // [acct_addr, amount, getter_addr]
+    0x00 dup1 revert            // [] - Call failed, revert
+
+    // Resume execution in invoking macro
+    transfer_success:
+}
+
+/// @notice Helper to copy return data into memory
+#define macro COPY_RETURN_DATA(mem_offset, dest_offset) = takes (0) returns (0) {
+    returndatasize          // [returndatasize]
+    <mem_offset>            // [mem_offset, returndatasize]
+    <dest_offset>           // [destOffset, mem_offset, returndatasize]
+    returndatacopy          // [] - This stores the return data in memory
+}
+
+/// @notice Helper to return data with unknown size from memory
+#define macro RETURN_DATA(mem_offset) = takes (0) returns (0) {
+    returndatasize          // [returndatasize]
+    <mem_offset>            // [mem_offset, returndatasize]
+    return                  // []
+}

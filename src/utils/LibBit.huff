@@ -1,0 +1,175 @@
+/// @title LibBit
+/// @notice SPDX-License-Identifier: MIT
+/// @author Vectorized <https://github.com/Vectorized>
+/// @author Solady (https://github.com/Vectorized/solady/blob/main/src/utils/LibBit.sol)
+/// @author Inspired by (https://graphics.stanford.edu/~seander/bithacks.html)
+/// @author clabby <https://github.com/clabby>
+/// @notice Various bit-twiddling macros.
+
+#define constant A = 0xffffffffffffffffffffffffffffffff
+#define constant B = 0xffffffffffffffff
+#define constant C = 0xffffffff
+
+#define constant MSB_DEBRUIJN = 0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+#define constant LSB_DEBRUIJN = 0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09
+
+/// @dev Returns the index of the most significant bit of `x`.
+///      If `x` is zero, returns 256.
+#define macro MSB() = takes (1) returns (1) {
+    // Input stack:   [x]
+
+    dup1 iszero    // [x == 0, x]
+    0x08 shl       // [(x == 0) << 0x08, x]
+
+    dup2 [A] lt    // [A < x, r, x]
+    0x07 shl       // [(A < x) << 0x07, r, x]
+    or             // [r, x]
+
+    dup2 dup2 shr  // [x >> r, r, x]
+    [B] lt         // [B < (x >> r), r, x]
+    0x06 shl       // [(B < (x >> r)) << 0x06, r, x]
+    or             // [r, x]
+
+    dup2 dup2 shr  // [x >> r, r, x]
+    [C] lt         // [C < (x >> r), r, x]
+    0x05 shl       // [(C < (x >> r)) << 0x05, r, x]
+    or             // [r, x]
+
+    // For the remaining 32 bits, use a De Bruijn lookup.
+    swap1 dup2 shr // [x >> r, r]
+    dup1 0x01 shr  // [(x >> r) >> 0x01, x >> r, r]
+    or             // [x, r]
+
+    dup1 0x02 shr  // [x >> 0x02, x, r]
+    or             // [x, r]
+
+    dup1 0x04 shr  // [x >> 0x04, x, r]
+    or             // [x, r]
+
+    dup1 0x08 shr  // [x >> 0x08, x, r]
+    or             // [x, r]
+
+    dup1 0x10 shr  // [x >> 0x10, r]
+    or             // [x, r]
+
+    // Note: This does increase final code size, can shift left by 224 at runtime
+    // if codesize is more of a concern.
+    __RIGHTPAD(0x07c4acdd) // [0x07c4acdd (right padded), x, r]
+    mul                    // [x * 0x07c4acdd, r]
+    0xFB shr               // [(x * 0x07c4acdd) >> 0xFB, r]
+    [MSB_DEBRUIJN] swap1   // [(x * 0x07c4acdd) >> 0xFB, debruijn_lookup, r]
+    byte                   // [b, r]
+    or                     // [b | r]
+
+    // Return stack:  [r]
+}
+
+/// @dev Returns the index of the least significant bit of `x`.
+/// If `x` is zero, returns 256.
+#define macro LSB() = takes (1) returns (1) {
+    // Input stack:   [x]
+
+    dup1 iszero    // [x == 0, x]
+    0x08 shl       // [(x == 0) << 0x08, x]
+
+    // Isolate the least significant bit.
+    swap1 dup1     // [x, x, r]
+    not 0x01 add   // [~x + 1, x, r]
+    and            // [x, r]
+
+    swap1 dup2     // [x, r, x]
+    [A] lt         // [A < x, r, x]
+    0x07 shl       // [(A < x) << 0x07, r, x]
+    or             // [r, x]
+
+    dup2 dup2 shr  // [x >> r, r, x]
+    [B] lt         // [B < (x >> r), r, x]
+    0x06 shl       // [(B < (x >> r)) << 0x06, r, x]
+    or             // [r, x]
+
+    dup2 dup2 shr  // [x >> r, r, x]
+    [C] lt         // [C < (x >> r), r, x]
+    0x05 shl       // [(C < (x >> r)) << 0x05]
+    or             // [r, x]
+
+    // For the remaining 32 bits, use a De Bruijn lookup.
+
+    // Note: This does increase final code size, can shift left by 224 at runtime
+    // if codesize is more of a concern.
+    swap1 dup2 shr         // [x >> r, r]
+    __RIGHTPAD(0x077cb531) // [0x077cb531..., x >> r, r]
+    mul                    // [(x >> r) * 0x077cb531, r]
+    0xFB shr               // [(x * 0x077cb531) >> 0xFB, r]
+    [LSB_DEBRUIJN] swap1   // [(x * 0x077cb531) >> 0xFB, debruijn_lookup, r]
+    byte                   // [b, r]
+    or                     // [b | r]
+
+    // Return stack:  [r]
+}
+
+/// @dev Returns the number of set bits in `x`.
+#define macro POP_COUNT() = takes (1) returns (1) {
+    // Input stack:   [x]
+
+    0x00 not       // [max, x]
+    dup1 dup3 lt   // [is_not_max, max, x]
+
+    swap2          // [x, max, is_not_max]
+    0x03 dup3 div  // [max / 0x03, x, max, is_not_max]
+    dup2 0x01 shr  // [x >> 0x01, max / 0x03, x, max, is_not_max]
+    and            // [(x >> 0x01) & (max / 0x03), x, max, is_not_max]
+    swap1 sub      // [x, max, is_not_max]
+
+    0x05 dup3 div  // [max / 0x05, x, max, is_not_max]
+    dup1           // [max / 0x05, max / 0x05, x, max, is_not_max]
+    dup3 0x02 shr  // [x >> 0x02, max / 0x05, max / 0x05 x, max, is_not_max]
+    and            // [(x >> 0x02) & (max / 0x05), max / 0x05, x, max, is_not_max]
+    swap2          // [max / 0x05, x, (x >> 0x02) & (max / 0x05), max, is_not_max]
+    and add        // [x, max, is_not_max]
+
+    0x11 dup3 div  // [max / 0x11, x, max, is_not_max]
+    swap1          // [x, max / 0x11, max, is_not_max]
+    dup1 0x04 shr  // [x >> 0x04, x, max / 0x11, max, is_not_max]
+    add and        // [x, max, is_not_max]
+
+    swap1 0xFF     // [0xFF, max, x, is_not_max]
+    swap1 div      // [max / 0xFF, x, is_not_max]
+    mul            // [(max / 0xFF) * x, is_not_max]
+    0xF8 shr       // [((max / 0xFF) * x) >> 0xF8, is_not_max]
+    0x100 xor      // [((max / 0xFF) * x) >> 0xF8) ^ 0x100, is_not_max]
+    mul            // [((((max / 0xFF) * x) >> 0xF8) ^ 0x100) * is_not_max]
+    0x100 xor      // [(((((max / 0xFF) * x) >> 0xF8) ^ 0x100) * is_not_max) ^ 0x100]
+
+    // Return stack:  [c]
+}
+
+#define test MSB() = {
+    0xFF 0x03 shl
+    MSB()
+
+    0x0a eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}
+
+#define test LSB() = {
+    0xFF 0x03 shl
+    LSB()
+
+    0x03 eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}
+
+#define test POP_COUNT() = {
+    0x01 dup1
+    0xFF shl or
+    POP_COUNT()
+
+    0x02 eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}

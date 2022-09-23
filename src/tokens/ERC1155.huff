@@ -1,0 +1,887 @@
+/// @title ERC1155
+/// @notice SPDX-License-Identifier: MIT
+/// @author cheethas <https://github.com/cheethas>
+/// @author asnared <https://github.com/abigger87>
+/// @notice Minimal, gas efficient ERC 1155 implementation
+
+#include "../auth/NonPayable.huff"
+#include "../data-structures/Hashmap.huff"
+#include "../math/SafeMath.huff"
+#include "../utils/ERC1155Receiver.huff"
+#include "../utils/CommonErrors.huff"
+
+// Function Interface
+#define function mint(address,uint256,uint256,bytes) nonpayable returns ()
+#define function burn(address,uint256,uint256) nonpayable returns ()
+
+#define function batchMint(address,uint256[],uint256[],bytes) nonpayable returns ()
+#define function batchBurn(address,uint256[],uint256[]) nonpayable returns ()
+
+#define function isApprovedForAll(address,address) view returns (bool)
+#define function setApprovalForAll(address,bool) nonpayable returns ()
+
+#define function safeTransferFrom(address,address,uint256,uint256,bytes) nonpayable returns ()
+#define function safeBatchTransferFrom(address,address,uint256[],uint256[],bytes) nonpayable returns()
+
+#define function balanceOf(address,uint256) view returns (uint256)
+#define function balanceOfBatch(address[],uint256[]) view returns (uint256[])
+
+#define function name() view returns (string)
+#define function symbol() view returns (string)
+#define function supportsInterface(bytes4) view returns (bool)
+
+// Events
+#define event TransferSingle(address,address,address,uint256,uint256)
+#define event TransferBatch(address,address,address,uint256[],uint256[])
+#define event ApprovalForAll(address,address,bool)
+#define event URI(string,uint256)
+
+// Storage Slots
+#define constant NAME_LOCATION = FREE_STORAGE_POINTER()
+#define constant SYMBOL_LOCATION = FREE_STORAGE_POINTER()
+#define constant BALANCE_LOCATION = FREE_STORAGE_POINTER()
+#define constant IS_APPROVED_FOR_ALL_LOCATION = FREE_STORAGE_POINTER()
+
+// Metadata
+// META_NAME = "Token"
+#define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000
+#define constant META_NAME_LENGTH = 0x05
+
+// META_SYMBOL = "TKN"
+#define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
+#define constant META_SYMBOL_LENGTH = 0x03
+
+// Viewable Function Macros
+
+/// @title Balance Of
+/// @notice Entry point for: balaceOf(address,uint256)
+/// @dev Slices account and address from calldata and retreives the balance
+/// @param {calldata} [address account, uint256 tokenId]
+/// @return {return} [uint256 balance]
+#define macro BALANCE_OF() = takes (0) returns(0) {
+    0x24 calldataload                               // [tokenId]
+    0x04 calldataload                               // [account, tokenId]
+
+    GET_BALANCE_OF()                                // [balance]
+    0x00 mstore                                     // [] load into mem
+    0x20 0x00 return                                // [] return 32 bytes
+}
+
+/// @title Name
+/// @notice Returns the name of the contract
+/// @param []
+/// @return {return} [string]
+#define macro NAME() = takes (0) returns (0) {
+    0x20 0x00 mstore                    // []
+    [META_NAME_LENGTH] 0x20 mstore      // []
+    [META_NAME] 0x40 mstore             // []
+    0x60 0x00 return                    // []
+}
+
+/// @title Symbol
+/// @notice Gets the symbol of the contract
+/// @param []
+/// @return {return} [string]
+#define macro SYMBOL() = takes (0) returns (0) {
+    NON_PAYABLE()                       // []
+    0x20 0x00 mstore                    // []
+    [META_SYMBOL_LENGTH] 0x20 mstore    // []
+    [META_SYMBOL] 0x40 mstore           // []
+    0x60 0x00 return                    // []
+}
+
+/// @title Supports Interface
+/// @notice Returns the supported ERC165 interface
+/// @param {calldata} [bytes4 interfaceId]
+/// @return [bool]
+#define macro SUPPORTS_INTERFACE() = takes (0) returns(0) {
+    0x04 calldataload
+    dup1 0x01ffc9a7 eq isTrue jumpi
+    dup1 0xd9b67a26 eq isTrue jumpi
+    dup1 0x0e89341c eq isTrue jumpi
+
+    0x00 dup1 mstore
+    0x20 0x00 return
+
+    isTrue:
+        0x01 0x20 mstore
+        0x20 0x00 return
+}
+
+
+// External State Modifing Macro Functions
+
+/// @title Set Approval for All
+/// @notice Set Approval for All tokens for the provided account
+/// @dev Modifies mapping(adddress => mapping(address => bool)) for a given account
+/// @param {calldata} [address operator, bool approved]
+/// @return []
+#define macro SET_APPROVAL_FOR_ALL() = takes (0) returns(0){
+    0x24 calldataload                   // [approved]
+
+    // store approved in memory for the log
+    dup1 0x00 mstore                    // [approved]
+
+    0x04 calldataload                   // [operator, approved]
+    caller                              // [msg.sender, operator, approved]
+
+    // duplicate for reuse in storage slot calculation
+    dup2 dup2                           // [msg.sender, operator, msg.sender, operator, approved]
+
+    // emit ApprovalForAll(msg.sender, operator, approved)
+    __EVENT_HASH(ApprovalForAll)        // [sig, msg.sender, operator, msg.sender, operator, approved]
+    0x20 0x00                           // [offset, size, sig, msg.sender, operator, msg.sender, operator, approved]
+    log3                                // [msg.sender, operator, approved]
+
+    [IS_APPROVED_FOR_ALL_LOCATION]      // [slot, msg.sender, operator, approved]
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)    // []
+
+    // Stop the execution flow
+    stop
+}
+
+/// @title Is Approved For All
+/// @notice Getter method for approval mapping
+/// @param {calldata} [address owner, address operator]
+/// @return {approved} [bool]
+#define macro IS_APPROVED_FOR_ALL() = takes (0) returns (0) {
+    0x24 calldataload                 // [operator]
+    0x04 calldataload                 // [owner, operator]
+
+    [IS_APPROVED_FOR_ALL_LOCATION]    // [slot, owner, operator]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)   // [val]
+
+    0x00 mstore
+    0x20 0x00 return
+}
+
+/// @title Mint
+/// @notice Mint an nft to the given account
+/// @notice This method does NOT check for any paid ether or remaining supply
+/// @notice Increase the balance of the msg.sender for the given tokenId and amount.
+/// @param {calldata} [uint256 account, uint256 tokenId, uint256 amount, bytes data]
+/// @return []
+#define macro MINT() = takes (0) returns (0) {
+    // increase the balance of the address
+    0x44 calldataload               // [amount]
+
+    // store for log
+    dup1 0x60 mstore                // [amount]
+
+    0x24 calldataload               // [tokenId, amount]
+
+    // store for log
+    dup1 0x40 mstore                // [tokenId, amount]
+
+    0x04 calldataload               // [to, tokenId, amount]
+
+    // Increase the balance of the to account
+    // takes: [to, tokenId, amount]
+    INCREASE_BALANCE(0x00)
+
+    // emit transfer event
+    0x04 calldataload dup1          // [to]
+    0x00                            // [zero_address, to, to]
+    caller                          // [msg.sender, zero_address, to, to]
+
+    __EVENT_HASH(TransferSingle)    // [sig, msg.sender, zero_address, to, to]
+
+    0x40 0x40                       // [offset, size, TransferSingle, msg.sender, address(0), to, to]
+    log4                            // [to]
+
+    0x00                            // [from, to]
+    0x04                            // [&ids, from, to]
+    swap2
+
+    // [to, from, &ids]
+    SAFE_CALL()
+}
+
+/// @title Safe Transfer From
+/// @dev Performs safe transfer hook within the SAFE_CALL macro
+/// @param {calldata} [address from, address to, uint256 tokenId, uint256 amount, bytes data]
+/// @return []
+#define macro SAFE_TRANSFER_FROM() = takes (0) returns (0) {
+    0x04 calldataload               // [from]
+    IS_OWNER_OR_APPROVED(error)     // []
+
+    // Place calldata args onto the stack
+    0x64 calldataload               // [amount]
+    0x44 calldataload               // [tokenId, amount]
+    dup2 dup1                       // [amount, amount, tokenId, amount]
+    dup3                            // [tokenId, amount, amount, tokenId, amount]
+    0x04 calldataload               // [from, tokenId, amount, amount, tokenId, amount]
+
+    // Decrease the balance of the from account
+    // takes: [from, tokenId, amount]
+    DECREASE_BALANCE()              // [amount, tokenId, amount]
+
+    dup2                            // [tokenId, amount, tokenId, amount]
+    0x24 calldataload               // [to, tokenId, amount, tokenId, amount]
+
+    // Increase the balance of the to account
+    // takes: [to, tokenId, amount]
+    INCREASE_BALANCE()              // [tokenId, amount]
+
+    // Emit transfer log            // [tokenId, amount]
+    0x00 mstore                     // store tokenId in memory for log can store in 0x00 as scratch space is no longer in use
+    0x20 mstore                     // store amount in memory for log
+
+    0x24 calldataload               // [to]
+    0x04 calldataload               // [from, to]
+    dup2 dup2                       // [from, to, from, to]
+    caller                          // [msg.sender, from, to, from, to]
+    __EVENT_HASH(TransferSingle)    // [sig, msg.sender, from, to, from, to]
+    0x00 0x40                       // [from, to] log data
+    log4                            // [from, to]
+
+    // &ids is stored on the stack as it is used to calculate the size of the calldata to be sent in SAFE_CALL to a receiving contract
+    0x24 swap2                      // [to, from, &ids]
+
+    // takes: [to, from, &ids]
+    // note execution terminates within safe call
+    SAFE_CALL()
+
+    error:
+        UNAUTHORIZED(0x00)
+}
+
+/// @title Burn
+/// @notice Decreases the balance of a given account by the given amount.
+/// @notice This function is NOT protected in this contract - be sure to protect accordingly in production.
+/// @param {calldata} [address from, uint256 tokenId, uint256 amount]
+/// @return []
+#define macro BURN() = takes(0) returns(0) {
+    0x44 calldataload               // [amount]
+    0x24 calldataload               // [tokenId, amount]
+    dup2 dup2                       // [tokenId, amount, tokenId, amount]
+    0x04 calldataload               // [from, tokenId, amount]
+
+    DECREASE_BALANCE()              // [tokenId, amount]
+
+    // Emit transfer log
+    0x00 mstore                     // store tokenId in memory for log
+    0x20 mstore                     // store amount in memory for log
+
+    0x00                            // [zero_address]
+    0x04 calldataload               // [from, zero_address]
+    caller                          // [msg.sender, from,zero_address]
+    __EVENT_HASH(TransferSingle)    // [sig, msg.sender, from, zero_address]
+    0x00 0x40                       // log data
+    log4
+
+    stop
+}
+
+/// @title Batch Mint
+/// @notice Mint multople tokens at once
+/// @dev Loop over the the given tokend and amounts
+/// @param {calldata} [address from, uint256[] tokenIds, uint256[] amounts, bytes data]
+/// @return []
+#define macro BATCH_MINT() = takes(0) returns(0){
+    // Calldata:
+    // 0x04 -> from
+    // 0x24 -> &tokenIds
+    // 0x44 -> &amounts
+    // 0x64 -> &data
+    // 0x84 -> len(tokenIds)
+    // 0xa4 -> tokenIds[0]
+    // ???  -> [...tokenIds]
+    // ???  ->  len(amounts)
+    // ???  -> [...amounts]
+    // ???  -> data[0]
+    // ???  -> [...data]
+
+    // push 0x00 onto the stack for use as the from field in logging
+    0x00                            // [from]
+    0x04 calldataload               // [to, from]
+
+    // get length of the ids array - stash arr pointers at end of stack
+    0x44 calldataload 0x4 add dup1  // [&amount, &amount, to, from]
+    0x24 calldataload 0x4 add dup1  // [&ids, &ids, &amount, &amount, to, from]
+    swap2                           // [&amount, &ids, &ids, &amount, to, from]
+    calldataload swap1              // [&ids, amounts.length, &ids, &amount, to, from]
+    calldataload dup1               // [ids.length, ids.length, amounts.length, &ids, &amount, to, from]
+    swap2                           // [amounts.len, ids.len, ids.len, &ids, &amount, to, from]
+
+    eq isTrue                       // [amounts.length == ids.length, ids.len, &amount, &ids, to, from]
+    jumpi                           // [ids.len, &amount, &ids, to, from]
+    0x00 dup1 revert
+
+    isTrue:
+
+    // loop over the arrays of ids and amounts and increase the balance
+    0x00    // [i, ids.length, &amount, &ids, to, from]
+    loop:
+        dup2 dup2           // [i, ids.length, i, ids.length, &amount, &ids, to, from]
+        eq exit jumpi       // [i, ids.length, &amount, &ids, to, from]
+
+
+        // takes: to, tokenId, amount
+        swap2               // [&amount, ids.length, i,  &ids, to, from]
+        0x20 add            // [&amount++, ids.len, i,  &ids, to, from]
+        dup1                // [&amount++, &amount++, ids.len, i, &ids, to, from]
+        swap3               // [i, &amount++, ids.len, &amount++, &ids, to, from]
+        swap1               // [&amount++, i, ids.len, &amount++, &ids, to, from]
+        calldataload        // [amount[0], i, ids.len, &amount++, &ids, to, from]
+
+        swap1               // [i, amount[0], ids.len, &amount++, &ids, to, from]
+        swap4               // [&ids, amount[0], ids.len, &amount++, i, to, from]
+        0x20 add            // [&ids++, amount[0], ids.len, &amount++, i, to, from]
+        dup1                // [&ids++, &ids++, amount[0], ids.len, &amount++, i, to, from]
+        swap5 swap1         // [&ids++, i, amount[0], ids.len, &amount++, &ids++, to, from]
+        calldataload        // [ids[0], i, amount[0], ids.len, &amount++, &ids++, to, from]
+
+        swap1 swap2         // [ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+
+        0x04 calldataload   // [to, ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+
+        // Increase the balance of the to account
+        // takes: [to, tokenId, amount]
+        INCREASE_BALANCE()  // [i, ids.len, &amount++, &ids++, to, from]
+
+        0x01 add            // increment loop counter
+                            // [i,  ids.len, &amount++, &ids++, to, from]
+    loop jump
+    exit:
+
+    // We can assume that the arrays of ids starts at 0x84 due to the structure of calldata for this function - see above
+    // &data the same as &amount[-1] + 20
+    dup4 0x20 add           // [&data, i,  ids.len, &amount++, &ids++, to, from]
+    0x84                    // [&ids, &amounts + 20, i,  ids.len, &amount++, &ids++, to, from]
+
+    EMIT_BATCH_LOG()        // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    pop pop                 // [i, ids.len, &amount++, &ids++, to, from]
+
+    // 0x24 is the location of the &ids pointer
+    0x24                    // [0x24, i, ids.len, &amount++, &ids++, to, from]
+    dup7                    // [from, 0x24, i, ids.len, &amount++, &ids++, to, from]
+    dup7                    // [to, from, 0x24, i, ids.len, &amount++, &ids++, to, from]
+
+    SAFE_BATCH()
+}
+
+/// @title Emit Batch Log
+/// @notice Helper macro to emit logs for batch transfers.
+/// @dev Used within batchMint, batchBurn and batchTransfer.
+/// @param {stack} [uint256 &ids, uint256 &data, uint256 i, uint256 ids.len, uint256 &amount++, uint256 &ids++, address to, address from]
+/// @return [uint256 len(ids, amounts), uint256 &ids, uint256 i, uint256 ids.len,  uint256 &amount++, uint256 &ids++, address to, address from]
+#define macro EMIT_BATCH_LOG() = takes (9) returns (8) {
+    // takes:                       // [&ids, &data, i, ids.len, &amount++, &ids++, to, from]
+    dup1                            // [&ids, &ids, &data, i, ids.len, &amount++, &ids++, to, from]
+    swap2                           // [&data. &ids, &ids, i, ids.len, &amount++, &ids++, to, from]
+    sub                             // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    dup1                            // [len(ids, amounts), len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+
+    dup3                            // [&ids, len(ids, amounts), len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    0x60                            // [0x60, &ids, len(ids, amounts), len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]]   // offset, &ids
+    calldatacopy                    // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+
+    // Store the pointers to the ids and amounts in memory
+    0x40 0x20 mstore                // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    0x40 0x20 dup5 dup2             // [0x40, i, 0x20, 0x40, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    mul add add 0x40 mstore         // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+
+    dup8                            // [to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    dup8                            // [from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    caller                          // [caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    dup5 0x40 add                   // [len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    0x20                            // [offset, len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    log4                            // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+}
+
+
+/// @title Batch Burn
+/// @notice Burn a multiple tokens from an account.
+/// @dev Protect this function before deploying to production
+/// @param {calldata} [address from, uint256[] ids, uint256[] amounts]
+/// @return []
+#define macro BATCH_BURN() = takes (0) returns (0) {
+    // Stash to and from and the end of the stack
+    0x04 calldataload               // [from]
+    0x00                            // [to, from]
+
+    // get length of the ids array - stash arr pointers at end of stack
+    0x44 calldataload 0x4 add dup1  // [&amount, &amount, to, to, from]
+    0x24 calldataload 0x4 add dup1  // [&ids, &ids, &amount, &amount, to, from]
+    swap2                           // [&amount, &ids, &ids, &amount, to, from]
+    calldataload swap1              // [&ids, amounts.length, &ids, &amount, to, from]
+    calldataload dup1               // [ids.length, ids.length, amounts.length, &ids, &amount, to, from]
+    swap2                           // [amounts.len, ids.len, ids.len, &ids, &amount, to, from]
+
+    0x00 swap2                      // [ids.len, amounts.len, 0, ids.len, &ids, &amount, to, from]
+    eq                              // [ids.len == amounts.length, 0, ids.len, &ids, &amount, to, from]
+    loop jumpi                      // [0, ids.len, &ids, &amount, to, from]
+    dup1 revert
+
+    // Loop over the arrays of ids and amounts and increase the balance
+    loop:
+        dup2 dup2           // [i, ids.length, i, ids.length, &amount, &ids, to, from]
+        eq exit jumpi       // [i, ids.length, &amount, &ids, to, from]
+
+        // takes: to, tokenId, amount
+        swap2               // [&amount, ids.length, i,  &ids, to, from]
+        0x20 add            // [&amount++, ids.len, i,  &ids, to, from]
+        dup1                // [&amount++, &amount++, ids.len, i, &ids, to, from]
+        swap3               // [i, &amount++, ids.len, &amount++, &ids, to, from]
+        swap1               // [&amount++, i, ids.len, &amount++, &ids, to, from]
+        calldataload        // [amount[0], i, ids.len, &amount++, &ids, to, from]
+
+        swap1               // [i, amount[0], ids.len, &amount++, &ids, to, from]
+        swap4               // [&ids, amount[0], ids.len, &amount++, i, to, from]
+        0x20 add            // [&ids++, amount[0], ids.len, &amount++, i, to, from]
+        dup1                // [&ids++, &ids++, amount[0], ids.len, &amount++, i, to, from]
+        swap5 swap1         // [&ids++, i, amount[0], ids.len, &amount++, &ids++, to, from]
+        calldataload        // [ids[0], i, amount[0], ids.len, &amount++, &ids++, to, from]
+
+        swap1 swap2         // [ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+
+        dup8                // [from, ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+        DECREASE_BALANCE()  // [i, ids.len, &amount++, &ids++, to, from]
+
+        0x01 add            // [i, ids.len, &amount++, &ids++, to, from]
+        loop jump
+
+    exit:
+        dup4 0x20 add       // [&data, i,  ids.len, &amount++, &ids++, to, from]
+        0x84                // [&ids, &data, i,  ids.len, &amount++, &ids++, to, from]
+
+        EMIT_BATCH_LOG()    // emit batch transfer to zero address log
+        stop                // executed successfully
+}
+
+/// @title Batch Safe Transfer From
+/// @notice Transfer a multiple tokens from an account to another.
+/// @param {calldata} [address from, address to, uint256[] ids, uint256[] amounts, uint256[] data]
+/// @return []
+#define macro BATCH_SAFE_TRANSFER_FROM() = takes (0) returns (0) {
+    // Load to and from addresses
+    0x04 calldataload               // [from]
+    0x24 calldataload               // [to, from]
+
+    // Get length of the ids array - stash arr pointers at end of stack
+    0x64 calldataload 0x4 add dup1  // [&amount, &amount, to, from]
+    0x44 calldataload 0x4 add dup1  // [&ids, &ids, &amount, &amount, to, from]
+    swap2                           // [&amount, &ids, &ids, &amount, to, from]
+    calldataload swap1              // [&ids, amounts.length, &ids, &amount, to, from]
+    calldataload dup1               // [ids.length, ids.length, amounts.length, &ids, &amount, to, from ]
+    swap2                           // [amounts.len, ids.len, ids.len, &ids, &amount, to, from]
+
+    // Check array length mismatch
+    0x00 swap2                      // [ids.len, amounts.len, 0, ids.len, &ids, &amount, to, from]
+    eq iszero                       // [ids.len != amounts.length, 0, ids.len, &ids, &amount, to, from]
+    error jumpi                     // [0, ids.len, &ids, &amount, to, from]
+
+    // Check approvals
+    dup6                            // [from, 0, ids.len, &ids, &amount, to, from]
+    IS_OWNER_OR_APPROVED(error)     // [0, ids.len, &ids, &amount, to, from]
+
+    loop:
+        dup2 dup2           // [i, ids.length, i, ids.length, &amount, &ids, to, from]
+
+        // Exit if the loop has finished
+        eq exit jumpi       // [i, ids.length, &amount, &ids, from]
+
+        swap2               // [&amount, ids.length, i,  &ids, to, from]
+        0x20 add            // [&amount++, ids.len, i,  &ids, to, from]
+        dup1                // [&amount++, &amount++, ids.len, i, &ids, to, from]
+        swap3               // [i, &amount++, ids.len, &amount++, &ids, to, from]
+        swap1               // [&amount++, i, ids.len, &amount++, &ids, to, from]
+        calldataload        // [amount[0], i, ids.len, &amount++, &ids, to, from]
+
+        swap1               // [i, amount[0], ids.len, &amount++, &ids, to, from]
+        swap4               // [&ids, amount[0], ids.len, &amount++, i, to, from]
+        0x20 add            // [&ids++, amount[0], ids.len, &amount++, i, to, from]
+        dup1                // [&ids++, &ids++, amount[0], ids.len, &amount++, i, to, from]
+        swap5 swap1         // [&ids++, i, amount[0], ids.len, &amount++, &ids++, to, from]
+        calldataload        // [ids[0], i, amount[0], ids.len, &amount++, &ids++, to, from]
+
+        swap1 swap2         // [ ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+
+        // Get to and from addresses from the back of the stack, duplicate ids and
+        // amounts for both DECREASE_BALANCE and INCREASE_BALANCE macros
+        dup7                // [to, ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+        dup3 dup3           // [ids[0], amount[0], to, ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+        dup11               // [from, ids[0], amount[0], to, ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+
+        // decrease the balance of the from account
+        // takes: [from, id, amount]
+        DECREASE_BALANCE()  // [to, ids[0], amount[0], i,  ids.len, &amount++, &ids++, to, from]
+
+        // increase the balance of the to account
+        // takes: [to, id, amount]
+        INCREASE_BALANCE()  // [i, ids.len, &amount++, &ids++, to, from ]
+
+        // increase loop counter
+        0x01 add            // [i,  ids.len, &amount++, &ids++, to, from]
+        loop jump
+
+    exit:
+        // EMIT BATCH TRANSFER LOG
+
+        // [&ids, &amounts[-1], to, from]
+        dup4 0x20 add                  // [&data, i,  ids.len, &amount++, &ids++, amounts[0], to, from]
+        0xa4                           // [&ids, &data, i,  ids.len, &amount++, &ids++, to, from]
+
+        // takes:                      // [&ids, &data, to, from]
+        EMIT_BATCH_LOG()               // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+        pop pop                        // [i, ids.len, &amount++, &ids++, to, from]
+
+        // SAFE_TRANSFER_LOGIC
+        // Get the location of the start of the ids dynamic data
+        0x44                           // [&ids, i, ids.len, &amount++, &ids++, to, from]
+        dup7                           // [from, dyn(ids), i, ids.len, &amount++, &ids++, to, from]
+        dup7                           // [to, from, dyn(ids), i, ids.len, &amount++, &ids++, to, from]
+
+        // takes: [to, from, dyn(ids)]
+        SAFE_BATCH()
+        // execution completes within SAFE_BATCH
+}
+
+/// @title Balance Of Batch
+/// @notice Get the balance of multiple accounts and tokenIds in a single call.
+/// @param {calldata} [address[] owners, uint256[] ids]
+/// @return []
+#define macro BALANCE_OF_BATCH() = takes (0) returns (0) {
+
+    // store pointer for start of return array now, so that it can be found at the end of the stack
+    0x80                           // [&ret]
+
+    // Get lengths of dynamic arrays, duplicate in prepare to compare
+    0x24 calldataload 0x4 add dup1 // [&ids, &ids, &ret]
+    0x04 calldataload 0x4 add dup1 // [&ids, &ids, &owners, &owners, &ret]
+
+    // compare lengths
+    swap2                           // [&owners, &ids, &ids, &owners, &ret]
+    calldataload                    // [ids.length, &ids, &ids, &owners, &ret]
+    swap1 calldataload              // [owners.length, ids.length, &ids, &owners, &ret]
+
+    // stash legnth value for later use inside upcoming loop
+    dup1 swap2                      // [ids.length, oweners.length, owners.length,&ids, &owners, &ret]
+
+    // check lengths
+    eq isTrue jumpi                 // [owners.length, &ids, &owners, &ret]
+    error jumpi
+
+    isTrue:
+
+    // prepare memory for returning dynamic array
+
+    // The dynamic offset will always be 0x20 as there is only one return type
+    // We start from 0x40 as we will need memory bytes 0x00 -> 0x40 to perform hashing (scratch space)
+    0x20 0x40 mstore
+
+    // store the length of the returned array
+    dup1 0x60 mstore
+
+
+    // loop over the arrays of owners and ids
+    0x00                            // [i, &out,owners.length, &ids, &owners, &ret]
+    loop:
+        dup2 dup2                   // [i, owners.length, i, owners.length, &ids, &owners, &ret]
+        // Exit if the loop has finished
+        eq exit jumpi               // [i, owners.length, &ids, &owners, &ret]
+
+        swap2                       // [&ids, owners.length, i, &owners, &ret]
+        0x20 add                    // [&ids++, owners.length, i, &owners, &ret]
+        dup1                        // [&ids++, &ids++, owners.length, i, &owners, &ret]
+        swap3                       // [i, &ids++, owners.length, &ids++, &owners, &ret]
+        swap1                       // [&ids++, i, owners.length, &ids++, &owners, &ret]
+        calldataload                // [ids[i], i, owners.length, &ids++, &owners, &ret]
+
+        swap1                       // [i, owners[i], owners.length, &ids++, &owners, &ret]
+        swap4                       // [&owners, owners[i], owners.length, &ids++, i, &ret]
+        0x20 add                    // [&owners++, owners[i], owners.length, &ids++, i, &ret]
+        dup1                        // [&owners++, &owners++, owners[i], owners.length, &ids++, i, &ret]
+        swap5 swap1                 // [&owners++, i, owners[i], owners.length, &ids++, &owners++, &ret]
+        calldataload                // [&owners[i], i, owners[i], owners.length, &ids++, &owners++, &ret]
+
+        swap1 swap2                 // [owners[i], ids[i], i, owners.length, &ids++, &owners++, &ret]
+
+        // takes: owner, tokenId
+        GET_BALANCE_OF()            // [balance, i, owners.length, &ids++, &owners++, &ret]
+
+        // store balance as next item in the return array
+        dup6                        // [&ret, balance, i, owners.length, &ids++, &owners++, &ret]
+        mstore                      // [i, owners.length, &ids++, &owners++, &ret]
+
+        // increment return array pointer
+        swap4                       // [&ret, owners.length, &ids++, &owners++, i]
+        0x20 add                    // [&ret++, owners.length, &ids++, &owners++, i]
+        swap4                       // [i, owners.length, &ids++, &owners++, &ret++]
+
+        // increment loop counter
+        0x1 add                     // [i++, owners.length, &ids++, &owners++, &ret++]
+
+    // continue loop
+    loop jump
+
+    // end of loop
+    exit:
+        // size of the return data will be where the &ids pointer is now - 0x4 (function selector size)
+        0x04 dup4 sub                 // [size, i++, owners.length, &ids++, &owners++, &ret++]
+        0x40                          // [&ret, size, i++, owners.length, &ids++, &owners++, &ret++]
+        return
+
+    error:
+        LENGTH_MISMATCH(0x00)
+}
+
+// Helper Macros
+// NOTE: Execution flow does not need to stop at the end of these macros
+
+/// @title Get Balance Of
+/// @notice Get the balance of a token for a given account.
+/// @dev Uses LOAD_ELEMENT_FROM_KEYS_2D under the hood to perform a nested mapping lookup
+/// @param {stack} [account, tokenId]
+/// @return {stack} [balance]
+#define macro GET_BALANCE_OF() = takes (2) returns (1) {
+    // input stack: [account, tokenId]
+    [BALANCE_LOCATION]                              // [BALANCE_LOCATION, account, tokenId]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)                 // [balance]
+}
+
+/// @title Decrease Balance
+/// @notice Decreases the balance by amount of a given account for the given tokenId
+/// @param {stack} [address from, uint256 tokenId, uint256 amount]
+/// @return []
+#define macro DECREASE_BALANCE() = takes (3) returns (0) {
+    // takes 3 [from, tokenId, amount]
+    [BALANCE_LOCATION]              // [&balance, from, tokenId, amount]
+    GET_SLOT_FROM_KEYS_2D(0x00)      // [slot, amount]
+    dup1                            // [slot,slot,amount]
+    sload                           // [bal, slot, amount]
+    swap1                           // [slot, bal, amount]
+    swap2                           // [amount, bal, slot]
+    swap1                           // [bal, amount, slot]
+
+    // calc and store new sender balance // Safe sub balance to revert on underflow
+    SAFE_SUB()                      // [(bal-amount), slot]
+
+    // Store decreased balance
+    swap1                           // [slot, (bal-amount)]
+    sstore                          // []
+}
+
+/// @title Increase Balance
+/// @notice Increases the balance by amount of a given account for the given tokenId
+/// @param {stack} [address from, uint256 tokenId, uint256 amount]
+/// @return []
+#define macro INCREASE_BALANCE() = takes (3) returns (0) {
+    // input stack: [to, tokenId, amount]
+
+    [BALANCE_LOCATION]              // [&balance, to, tokenId, amount]
+    GET_SLOT_FROM_KEYS_2D(0x00)     // [slot, amount]
+    dup1                            // [slot, slot,amount]
+    sload                           // [bal, slot, amount]
+    swap1                           // [slot, bal, amount]
+    swap2                           // [amount, bal, slot]
+
+    // calc and store new sender balance // Safe sub balance to revert on underflow
+    SAFE_ADD()                      // [(bal+amount), slot]
+
+    // Store decreased balance
+    swap1                           // [slot, (bal+amount)]
+    sstore                          // []
+}
+
+/// @title Safe Call
+/// @notice Performs safe call hook for functions that are transfering single asserts (i.e. not batch transfers)
+/// @dev Copies calldata into a buffer for to forward to the receivinf contract - panics if selector is not returned
+/// @dev If the sender is an EOA this is skipped
+/// @param {stack} [address to, address from, uint256 &ids]
+/// @return []
+#define macro SAFE_CALL() = takes (3) returns (0) {
+    // input stack: [to, from, &ids]
+
+    // safe transfer if the contract to has code
+
+    dup1                            // [to, to, from, &ids]
+    extcodesize                     // [codesize(to), to, to, from, &ids]
+    iszero                          // [!(codesize(to)), to, to, from, &ids]
+    iszero                          // [!!(codesize(to)), to, to, from, &ids]
+
+    // Jump to do safe check if the caller is a contract
+    isContract                      // jump is sender
+    jumpi                           // [to, to, from, &ids]
+
+    // check for zero address, if sent to the zero address revert, otherwise fin
+    iszero                          // [!to, to, from, &ids]
+    unsafe jumpi                    // [to, from, &ids]
+    continue jump                   // [to, from, &ids]
+
+    isContract:
+        // make external call to contract
+        // get data
+
+        // get value
+        calldatasize                    // [cds, to, from, &ids]
+
+        0xf23a6e61 0xE0 shl             // [selector, cds, to, from, &ids]
+        dup1 0x20 mstore                // [selector, cds, to, from, &ids]
+
+        dup5 dup3 sub                   // [(cds-4), selector, cds, to, from, &ids]
+        dup6                            // [0x04, (cds-4), selector, cds, to, from, &ids]
+        0x44                            // [0x44, 0x04, (cds-4), selector, cds, to, from, &ids]
+        calldatacopy                    // [selector, cds, to, from, &ids]
+
+        // store caller in first calldata slot
+        caller 0x24 mstore              // [selector, cds, to, from, &ids]
+
+        // store from, in the second
+        dup4 0x44 mstore                // [selector, cds, to, from, &ids]]
+
+        // This macro is used for both safeMint and for safeTransferFrom, the following section is only required when calling from mint, as and extra address
+        // parameter is needed when calling the onReceive function on the receiving contract, as safeTransferFrom already has an extra address parameter no 
+        // resizing of dynamic data pointers are required.
+        // We can check if this is coming from mint or safeTransferFrom by checking if the from value on the stack is the zero address or not
+        dup4 iszero iszero skipResize jumpi
+
+        // update location of the bytes calldata
+        0xa0 0xa4 mstore
+
+        // increase calldatasize value by 0x20, when minting
+        swap1                           // [cds, selector, to, from, &ids]
+        0x20 add                        // [cds+0x20, selector, to, from, &ids]
+        swap1                           // [selector, cds+0x20, to, from, &ids]
+
+    skipResize:
+        // using scratch space as return data space as we know it will NOT be used.
+        // clear return space in preparation for the call
+        0x00 dup1 mstore                // [selector, cds, to, from, &ids]
+
+        // call
+        0x20                            // [retSize, selector, cds, to, from, &ids]                                                   retSize: 0x04
+        0x00                            // [retOffset, retSize, selector, cds, to, from, &ids]                                        retOffset: 0x00
+        dup4                            // [argSize, retOffset, retSize, selector, cds, to, from, &ids]                               argSize: calldatasize + 20 // we add one more address into the mix    
+        0x20                            // [argOffset, argSize, retOffset, retSize, selector, cds, to, from, &ids]                    argOffset: 0x20            // read the args from 0x20
+        0x00                            // [value, argOffset, argSize, retOffset, retSize, selector, cds, to, from, &ids]             value: 0x00                // send no ether
+        dup8                            // [to, value, argOffset, argSize, retOffset, retSize, selector, cds, to, from, &ids]         to: to                     // send to the to address
+        gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, selector, cds, to, from, &ids]    gas: gas                   // forward all gas    
+
+        call                            // [success, selector, cds, to, from, &ids]                                                   call
+
+        // error if call reverts
+        iszero error jumpi
+
+        // read response
+        0x00 mload 0xE0 shr             // [response]
+        0xf23a6e61                      // [selector, response]
+        eq iszero unsafe jumpi          // If the selector and the response are not equal, error
+
+    continue:
+        stop                            // execution completed successfully
+
+    unsafe:
+        UNSAFE_RECIPIENT(0x00)
+
+    error:
+        0x00 dup1 revert
+}
+
+/// @title Safe Batch
+/// @notice Helper macro to perform safe transfer checks for batch transfers.
+/// @dev Used within batchMint and batchTransfer.
+/// @param {stack} [address to, address from, &ids]
+/// @return []
+#define macro SAFE_BATCH() = takes (3) returns (0) {
+    // [to, from, &ids]
+
+    // If being sent by a contract then do contract code check, no need to check for zero address and contract as it would not have code
+    dup1 extcodesize iszero iszero  // [!(codesize(to)), to, from, &ids]
+    isContract jumpi                // [to, from, &ids]
+
+    // check is sending to the zero address, if so revert, otherwise continue
+    iszero                          // [iszero(to), from, &ids]
+    unsafe jumpi                    // error if address is zero
+    continue jump                   // continue to end and stop if complete
+
+    // Note: to has not been popped off here as we skip the zero check above
+    isContract:                     // [to, from, &ids]
+
+    // place calldatasize on the stack <- used when sending calldata to a contract
+    calldatasize                    // [cds, to, from, &ids]
+
+    // store selctor in memory for comparison later
+    0xbc197c81 0xE0 shl             // [selector, cds, to, from, &ids]
+    dup1 0x20 mstore                // [selector, cds, to, from, &ids]
+
+    // Here all dynamic calldata is copied into memory to be forwarded to the onReceive function on the receiving contract
+    // Store ENTIRE calldata in memory for batch call
+    dup5 dup3 sub                   // [(cds-4), cds, to, from, &ids]   // sub4 to not overwrite the new selctor
+    dup6                            // [&ids, (cds-4), cds, to, from, &ids]
+    0x64                            // [0x64, &ids, (cds-4), cds, to, from, &ids]
+    calldatacopy                    // [selector, cds, to, from]
+
+    caller 0x24 mstore              // [selector, cds, to, from]
+
+    dup4 0x44 mstore                // [selector, cds, to, from]
+
+    // We can skip this rezise if we are transferring as we can assume the offsets are in the corrrect places, due to the increased address input parameter
+    // We can tell if we are transferring as the from parameter on the stack will NOT be zero
+    dup4 iszero iszero skipResize jumpi
+
+    // increase the dyn pointer balances by 0x20 for each dynamic type, this is due to the introduction of the from value in the call
+    0x20                                    // [0x20, selector, cds, to, from, &ids]
+    0x64 dup1 mload dup3 add swap1 mstore
+    0x84 dup1 mload dup3 add swap1 mstore
+    0xa4 dup1 mload dup3 add swap1 mstore
+                                            // [0x20, selector, cds, to, from, &ids]
+
+    // increase calldatasize value by 0x20, when minting
+    swap1                                   // [selector, 0x20, cds, to, from, &ids]
+    swap2                                   // [cds, 0x20, selector, to, from, &ids]
+    add                                     // [0x20 + cds, selector, to, from, &ids]
+    swap1                                   // [selector, 0x20 + cds, to, from, &ids]
+
+    skipResize:
+
+    // clear return memory space (using scratch space)
+    0x00 dup1 mstore
+
+    // call
+    0x20                            // [retSize, selector, to]                                                   retSize: 0x04
+    0x00                            // [retOffset, retSize, selector, to]                                        retOffset: 0x00
+    dup4                            // [argSize, retOffset, retSize, selector, to]                               argSize: calldatasize (?+ 20) // increased by 20 if we are minting as cds will be increased, if it is a batch transfer then it will not
+    0x20                            // [argOffset, argSize, retOffset, retSize, selector, to]                    argOffset: 0x20            // read the args from 0x20
+    0x00                            // [value, argOffset, argSize, retOffset, retSize, selector, to]             value: 0x00                // send no ether
+    dup8                            // [to, value, argOffset, argSize, retOffset, retSize, selector, to]         to: to                     // send to the to address
+    gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, selector, to]    gas: gas                   // forward all gas    
+    call                            // [success, selector, to]                                                   call
+
+    iszero error jumpi
+
+    // read response - ensure that the function call returns the expected selector
+    0x00 mload 0xE0 shr             // [response]
+    0xbc197c81                      // [selector, response]
+    eq iszero error jumpi           // error if response is not the same as the selector, revert
+
+    continue:
+        stop                        // executed successfully
+
+    error:
+        0x00 dup1 revert
+
+    unsafe:
+        UNSAFE_RECIPIENT(0x00)
+}
+
+/// @title Is Owner Or Approved
+/// @notice Checks if the msg sender is the owner or is approved for the given tokenId
+/// @dev Used within SAFE_TRANSFER_FROM and SAFE_BATCH_TRANSFER_FROM
+/// @param {calldata} [address from]
+/// @param {argument} [(jump_label) error]
+/// @return []
+#define macro IS_OWNER_OR_APPROVED(error) = takes (1) returns (0) {
+    // takes: [from]
+    caller swap1                       // [from, msg.sender]
+    dup2 dup2                          // [from, msg.sender, from, msg.sender]
+    eq continue jumpi                  // [from, msg.sender]
+
+    [IS_APPROVED_FOR_ALL_LOCATION]     // [sig, from, msg.sender]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)    // [approved]
+    iszero <error> jumpi               // []
+
+    continue:
+}

@@ -1,0 +1,22 @@
+/// @title ERC1967 Proxy
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice An upgradeable proxy that uses the ERC1967 storage layout.
+/// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/ERC1967/ERC1967Proxy.sol)
+
+#include "./Proxy.huff"
+#include "./ERC1967Upgrade.huff"
+
+/// @notice An internal constructor that upgrades the proxy to the implementation and calls the implementation
+#define macro ERC1967_PROXY_CONSTRUCTOR() = takes (0) returns (0) {
+    0x00                        // [forceCall]
+    0x24 calldataload           // [data, forceCall]
+    0x04 calldataload           // [address, data, forceCall]
+    UPGRADE_TO_AND_CALL()       // []
+}
+
+/// @notice Returns the current implementation address
+/// @notice Overrideable
+#define macro IMPLEMENTATION() = takes (0) returns (1) {
+    GET_IMPLEMENTATION()
+}

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
 import {HuffConfig} from "foundry-huff/HuffConfig.sol";
@@ -17,7 +17,7 @@ contract HashmapTest is Test {
 
   function setUp() public {
     // Read instantiable hashmap from file
-    string memory instantiable_code = vm.readFile("test/data-structures/mocks/InstantiatedHashmap.huff");
+    string memory instantiable_code = vm.readFile("test/data-structures/mocks/HashmapWrappers.huff");
 
     // Create an Instantiable Hashmap
     HuffConfig config = HuffDeployer.config().with_code(instantiable_code);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity ^0.8.15;
 
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
@@ -19,7 +19,7 @@ contract ArraysTest is Test {
     function setUp() public {
         // Read instantiable arrays from file
         string memory instantiable_code = vm.readFile(
-            "test/data-structures/mocks/InstantiatedArrays.huff"
+            "test/data-structures/mocks/ArrayWrappers.huff"
         );
 
         // Create an Instantiable Arrays

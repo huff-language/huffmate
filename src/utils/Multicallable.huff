@@ -1,8 +1,9 @@
 /// @title Multicallable
+/// @notice SPDX-License-Identifier: MIT
+/// @author clabby <https://github.com/clabby>
 /// @notice Enables a single call to call multiple methods within a contract.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/Multicallable.sol)
-/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
-/// @author clabby <https://github.com/clabby>
+/// @author Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/Multicallable.sol)
 
 // Calldata
 #define constant DATA_LEN = 0x24
@@ -13,7 +14,7 @@
 
 /// @notice Multicall function entry point.
 /// @dev This macro should be placed alone under a function selector's jump label.
-/// 
+///
 ///      Expected calldata: `bytes[]` containing valid ABI-encoded function calls
 ///      as elements.
 ///
@@ -27,7 +28,7 @@
 
     [DATA_LEN]         // [data_len_ptr]
     calldataload       // [data_len]
-    
+
     // Only continue if data length is > 0
     dup1 continue jumpi
 
@@ -82,7 +83,7 @@
         dup4 mstore    // [data_end, mem_ptr, results_offset]
         dup3 0x20 add  // [results_offset + 0x20, data_end, mem_ptr, results_offset]
         swap3 pop      // [data_end, mem_ptr, results_offset]
-        
+
         // Append the `returndatasize()`, and the return data.
         returndatasize // [ret_data_size, data_end, mem_ptr, results_offset]
         dup3           // [mem_ptr, ret_data_size, data_end, mem_ptr, results_offset]

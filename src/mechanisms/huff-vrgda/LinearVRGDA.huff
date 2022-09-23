@@ -1,0 +1,25 @@
+/// @title Linear Variable Rate Gradual Dutch Auction
+/// @notice SPDX-License-Identifier: MIT
+/// @author transmissions11 <t11s@paradigm.xyz>
+/// @author FrankieIsLost <frankie@paradigm.xyz>
+/// @author Maddiaa <https://github.com/cheethas>
+/// @notice VRGDA with a linear issuance curve.
+/// @notice Original Implementation by Maddiaa (https://github.com/cheethas/huff-vrgda/blob/main/src/LinearVRGDA.huff)
+
+#include "./VRGDA.huff"
+
+// These will be overriden with the constructor flag
+// The constructor logic will need to be copied within deploy scripts
+// in order to inline the correct constants
+#define constant PER_TIME_UNIT = 0x00       // ( int256 )
+
+/// @dev Given a number of tokens sold, return the target time that number of tokens should be sold by.
+/// @param {stack} sold A number of tokens sold, scaled by 1e18, to get the corresponding target sale time for.
+/// @return The target time the tokens should be sold by, scaled by 1e18, where the time is
+/// relative, such that 0 means the tokens should be sold immediately when the VRGDA begins.
+#define macro GET_TARGET_SALE_TIME() = takes (1) returns (0) {
+    // init state = [sold]
+    [PER_TIME_UNIT]             // [perTimeUnit, sold]
+    swap1                       // [sold, perTimeUnit]
+    UNSAFE_WAD_DIV()            // [sold / perTimeUnit] (targetSaleTime)
+}

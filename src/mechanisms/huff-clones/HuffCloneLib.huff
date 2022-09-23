@@ -1,0 +1,112 @@
+/// @title HuffCloneLib
+/// @notice SPDX-License-Identifier: MIT
+/// @notice Clones with Immutable Args Library
+/// @author wighawag <https://github.com/wighawag>
+/// @author zefram <https://github.com/boredGenius>
+/// @author hari <https://github.com/hrkrshnn>
+/// @author z0r0z <https://github.com/z0r0z>
+/// @author clabby <https://github.com/clabby>
+/// @notice Adapted from wighawag (https://github.com/wighawag/clones-with-immutable-args/blob/master/src/ClonesWithImmutableArgs.sol)
+
+/// @notice Creates a clone proxy of the implementation contract, with immutable args
+/// @dev data cannot exceed 65535 bytes, since 2 bytes are used to store the data length
+/// @param err       The jumpdest to jump to if an error occurs
+/// @param dest_ptr  The memory pointer to store the creation code of the clone at
+/// @param impl_addr The address of the implementation contract to clone
+/// @param data_ptr  Pointer to beginning of encoded immutable args in memory
+/// @return instance The address of the created clone
+#define macro CLONE(err, dest_ptr) = takes(2) returns (1) {
+    // Input Stack:        [impl_addr, data_ptr]
+    dup2 mload          // [data_len, impl_addr, data_ptr]
+    dup1 0x02 add       // [extra_len, data_len, impl_addr, data_ptr]
+    dup1 0x41 add       // [creation_size, extra_len, data_len, impl_addr, data_ptr]
+    0x0A dup2 sub       // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    __RIGHTPAD(0x61)    // [0x61..., run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    <dest_ptr> mstore   // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    dup1 0xF0 shl       // [run_size << 0xF0, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    <dest_ptr> 0x01 add // [dest_ptr + 0x01, run_size << 0xF0, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    mstore              // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    __RIGHTPAD(0x3d81600a3d39f33d3d3d3d363d3d3761)
+    <dest_ptr> 0x03 add // [dest_ptr + 0x03, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    mstore              // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    dup3 0xF0 shl       // [extra_len << 0xF0, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    <dest_ptr> 0x13 add // [dest_ptr + 0x13, extra_len << 0xF0, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    mstore              // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    __RIGHTPAD(0x603736393661)
+    <dest_ptr> 0x15 add // [dest_ptr + 0x15, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    mstore              // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    dup3 0xF0 shl       // [extra_len << 0xF0, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    <dest_ptr> 0x1B add // [dest_ptr + 0x1B, extra_len << 0xF0, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    mstore              // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    __RIGHTPAD(0x013d73)
+    <dest_ptr> 0x1D add // [dest_ptr + 0x1D, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    mstore              // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    dup5 0x60 shl       // [impl_addr << 0x60, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    <dest_ptr> 0x20 add // [dest_ptr + 0x20, impl_addr << 0x60, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    mstore              // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    __RIGHTPAD(0x5af43d3d93803e603557fd5bf3)
+    <dest_ptr> 0x34 add // [dest_ptr + 0x34, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    mstore              // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    ////////////////////////////////
+    //       APPENDED DATA        //
+    ////////////////////////////////
+
+    // Subtract 0x02 from extra_len
+    0x02 dup4 sub       // [extra_len - 0x02, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    swap3 pop           // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    // copy_ptr = data_ptr + 0x41
+    <dest_ptr> 0x41 add // [copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    // Increase data_ptr by 0x20
+    swap6 0x20 add      // [data_ptr + 0x20, run_size, creation_size, extra_len, data_len, impl_addr, copy_ptr]
+    swap6               // [copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+    // counter = extra_len
+    dup4                // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+    memcopy_loop:
+        dup8 mload      // [data, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        dup3 mstore     // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+        swap1 0x20 add  // [copy_ptr + 0x20, counter, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        swap1           // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        swap7 0x20 add  // [data_ptr + 0x20, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, counter]
+        swap7           // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+        0x20 swap1 sub  // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+        dup1 0x20 gt    // [0x20 > counter, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        iszero memcopy_loop jumpi
+    post_loop:
+        dup1            // [counter, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        0x01            // [0x01, counter, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        swap1           // [counter, 0x01, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        0x20 sub        // [0x20 - counter, 0x01, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        0x100 exp       // [0x100 ** (0x20 - counter), 0x01, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        sub not         // [mask, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+        dup9 mload and  // [data & mask, counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        dup3 mstore     // [counter, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+        add             // [copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        dup4 0xF0 shl   // [extra_len << 0xF0, copy_ptr, run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        swap1 mstore    // [run_size, creation_size, extra_len, data_len, impl_addr, data_ptr]
+
+        pop <dest_ptr>  // [dest_ptr, creation_size, extra_len, data_len, impl_addr, data_ptr]
+        0x00 create     // [instance, extra_len, data_len, impl_addr, run_size]
+
+        // Revert if deployment failed
+        dup1 iszero err jumpi
+
+        // Clean stack:
+        swap4           // [run_size, extra_len, data_len, impl_addr, instance]
+        pop pop pop pop // [instance]
+
+    // Return stack:       [instance]
+}

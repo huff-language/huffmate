@@ -1,0 +1,25 @@
+
+#define function refundedCall() payable returns ()
+#define function nonRefundedCall() payable returns ()
+
+#define event NonRefundedCall(address)
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(refundedCall)    eq        refunded_call jumpi
+    dup1 __FUNC_SIG(nonRefundedCall) eq        non_refunded_call jumpi
+
+    0x00 dup1 revert
+
+    refunded_logic:
+        caller __EVENT_HASH(NonRefundedCall) 0x00 0x00 log2
+    __Refund_Return_Dest jump
+
+    refunded_call:
+        REFUNDED(refunded_logic)
+        stop
+    non_refunded_call:
+        caller __EVENT_HASH(NonRefundedCall) 0x00 0x00 log2
+        stop
+}

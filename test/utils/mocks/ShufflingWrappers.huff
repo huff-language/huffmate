@@ -1,0 +1,21 @@
+#define function oneWayShuffle(bytes32 seed, uint256 index, uint256 count, uint256 rounds) view returns (uint256)
+
+#define macro SHUFFLE_WRAPPER() = takes (0) returns (0) {
+    0x64 calldataload                       // [rounds]
+    0x44 calldataload                       // [count, rounds]
+    0x24 calldataload                       // [index, count, rounds]
+    0x04 calldataload                       // [seed, index, count, rounds]
+    MECHS__ONE_WAY_SHUFFLE(0x60, 0x80)      // [index']
+    0x00 mstore 0x20 0x00 return            // []
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr  // [selector]
+
+    dup1 __FUNC_SIG(oneWayShuffle) eq shuffle jumpi
+
+    0x00 dup1 revert
+
+    shuffle:
+        SHUFFLE_WRAPPER()
+}

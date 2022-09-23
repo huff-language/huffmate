@@ -1,0 +1,55 @@
+
+// #define function read(address, uint256) view returns (bytes memory)
+// #define function read(address, uint256, uint256) view returns (bytes memory)
+#define function read(address) view returns (bytes memory)
+#define function write(bytes memory) nonpayable returns (address)
+
+#define macro SSTORE2_WRITE_WRAPPER() = takes (0) returns (0) {
+    SSTORE2_WRITE()                 // [address]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+#define macro SSTORE2_READ_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload               // [pointer]
+    SSTORE2_READ()                  // [data_length_in_memory]
+    0x00 return                     // []
+}
+
+#define macro SSTORE2_READ_AT_WRAPPER() = takes (0) returns (0) {
+    0x24 calldataload               // [start]
+    0x04 calldataload               // [pointer, start]
+    SSTORE2_READ_AT()               // [data_length_in_memory]
+    0x00 return                     // []
+}
+
+#define macro SSTORE2_READ_BETWEEN_WRAPPER() = takes (0) returns (0) {
+    0x44 calldataload               // [end]
+    0x24 calldataload               // [start, end]
+    0x04 calldataload               // [pointer, start, end]
+    SSTORE2_READ_BETWEEN()          // [data_length_in_memory]
+    0x00 return                     // []
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xE0 shr  // [selector]
+
+    dup1 __FUNC_SIG(write) eq write_jump jumpi
+    dup1 __FUNC_SIG(read) eq read_jump jumpi
+    dup1 0x014c2add eq read_at_jump jumpi
+    dup1 0x8937dad8 eq read_between_jump jumpi
+
+    0x00 dup1 revert
+
+    write_jump:
+        SSTORE2_WRITE_WRAPPER()
+
+    read_jump:
+        SSTORE2_READ_WRAPPER()
+
+    read_at_jump:
+        SSTORE2_READ_AT_WRAPPER()
+
+    read_between_jump:
+        SSTORE2_READ_BETWEEN_WRAPPER()
+}

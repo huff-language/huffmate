@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.15;
 
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
@@ -51,7 +51,7 @@ contract ErrorsTest is Test {
     IErrorsMock eLib;
 
     function setUp() public {
-        string memory wrapper_code = vm.readFile("test/utils/mocks/ErrorsMock.huff");
+        string memory wrapper_code = vm.readFile("test/utils/mocks/ErrorWrappers.huff");
         eLib = IErrorsMock(HuffDeployer.deploy_with_code("utils/Errors", wrapper_code));
     }
 

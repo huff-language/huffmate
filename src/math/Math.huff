@@ -1,15 +1,29 @@
+/// @title Math
+/// @notice SPDX-License-Identifier: MIT
+/// @author manas <https://github.com/manasbir>
+/// @author kadenzipfel <https://github.com/kadenzipfel>
+/// @notice Math module over Solidity's arithmetic operations
+/// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/Math.sol)
+
+#include "../utils/Errors.huff"
+
+// Interface
 #define function sqrt(uint256) pure returns(uint256)
 #define function max(uint256, uint256) pure returns(uint256)
 #define function min(uint256, uint256) pure returns(uint256)
 #define function average(uint256, uint256) pure returns(uint256)
 #define function ceilDiv(uint256, uint256) pure returns(uint256)
 
+// Negative 1 in two's compliment
+#define constant NEG1 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+/// @notice Calculates the square root of a stack input
 #define macro SQRT() = takes (1) returns (1) {
     // input stack          // [num]
     // if num == 0 return 0
     dup1                    // [number, number]
     iszero                  // [is_zero, number]
-    is_zero jumpi 
+    is_zero jumpi
 
     // assign stack vars
     dup1                    // [x, num]
@@ -23,7 +37,7 @@
     0x80 shr                // [x >> 128, result, x, num]
     dup1                    // [x >> 128, x >> 128, result, x, num]
     iszero                  // [x >> 128 == 0, x >> 128, result, x, num]
-    sh_128_0 jumpi          
+    sh_128_0 jumpi
     swap1 0x40 shl          // [result, x >> 128, x, num]
     swap1 swap2             // [x, result, x >> 128, num]
     sh_128_0:
@@ -37,7 +51,7 @@
     0x40 shr                // [x >> 64, result, x, num]
     dup1                    // [x >> 64, x >> 64, result, x, num]
     iszero                  // [x >> 64 == 0, x >> 64, result, x, num]
-    sh_64_0 jumpi          
+    sh_64_0 jumpi
     swap1 0x20 shl          // [result, x >> 64, x, num]
     swap1 swap2             // [x, result, x >> 64, num]
     sh_64_0:
@@ -51,7 +65,7 @@
     0x20 shr                // [x >> 32, result, x, num]
     dup1                    // [x >> 32, x >> 32, result, x, num]
     iszero                  // [x >> 32 == 0, x >> 32, result, x, num]
-    sh_32_0 jumpi          
+    sh_32_0 jumpi
     swap1 0x10 shl          // [result, x >> 32, x, num]
     swap1 swap2             // [x, result, x >> 32, num]
     sh_32_0:
@@ -65,7 +79,7 @@
     0x10 shr                // [x >> 16, result, x, num]
     dup1                    // [x >> 16, x >> 16, result, x, num]
     iszero                  // [x >> 16 == 0, x >> 16, result, x, num]
-    sh_16_0 jumpi          
+    sh_16_0 jumpi
     swap1 0x08 shl          // [result, x >> 16, x, num]
     swap1 swap2             // [x, result, x >> 16, num]
     sh_16_0:
@@ -79,7 +93,7 @@
     0x08 shr                // [x >> 8, result, x, num]
     dup1                    // [x >> 8, x >> 8, result, x, num]
     iszero                  // [x >> 8 == 0, x >> 8, result, x, num]
-    sh_8_0 jumpi          
+    sh_8_0 jumpi
     swap1 0x04 shl          // [result, x >> 8, x, num]
     swap1 swap2             // [x, result, x >> 8, num]
     sh_8_0:
@@ -93,7 +107,7 @@
     0x04 shr                // [x >> 4, result, x, num]
     dup1                    // [x >> 4, x >> 4, result, x, num]
     iszero                  // [x >> 4 == 0, x >> 4, result, x, num]
-    sh_4_0 jumpi          
+    sh_4_0 jumpi
     swap1 0x02 shl          // [result, x >> 4, x, num]
     swap1 swap2             // [x, result, x >> 4, num]
     sh_4_0:
@@ -107,7 +121,7 @@
     0x02 shr                // [x >> 2, result, x, num]
     dup1                    // [x >> 2, x >> 2, result, x, num]
     iszero                  // [x >> 2 == 0, x >> 2, result, x, num]
-    sh_2_0 jumpi          
+    sh_2_0 jumpi
     swap1 0x01 shl          // [result, x >> 2, x, num]
     swap1 swap2             // [x, result, x >> 2, num]
     sh_2_0:
@@ -172,6 +186,7 @@
     is_zero:
 }
 
+/// @notice Returns the maximum value of two values on the stack
 #define macro MAX() = takes (2) returns (1) {
     // input stack:     // [num1, num2]
     dup2                // [num2, num1, num2]
@@ -182,9 +197,10 @@
     swap1               // [num1, num2]
 
     less_than:
-    pop                 // [min(num2, num1)]
+    pop                 // [max(num2, num1)]
 }
 
+/// @notice Returns the ceiling of the division of two values on the stack
 #define macro CEIL_DIV() = takes (2) returns (1) {
     // input stack:     // [num1, num2]
     dup1 iszero         // [is_zero, num1, num2]
@@ -200,7 +216,7 @@
     dest jump
 
     divide_by_zero:
-    0x00 0x00 revert
+        [DIVIDE_BY_ZERO] PANIC()
 
     if_zero:
     swap1               // [num2, num1]
@@ -209,6 +225,7 @@
     dest:
 }
 
+/// @notice Returns the minimum value of two values on the stack
 #define macro MIN() = takes (2) returns (1) {
     // input stack:     // [num1, num2]
     dup2 dup2 gt        // [is_greater_than, num1, num2]
@@ -217,9 +234,10 @@
     swap1               // [num2, num1]
 
     greater_than:
-    pop                 // [max(num1, num2)]
+        pop             // [min(num1, num2)]
 }
 
+/// @notice Returns the average of two values on the stack
 #define macro AVG() = takes (2) returns (1) {
     // input stack:     // [num1, num2]
     dup2 dup2 and       // [num1 & num2, num1, num2]
@@ -229,63 +247,10 @@
     add                 // [sum]
 }
 
-#define macro SQRT_WRAPPER() = takes (0) returns (0) {
-    0x04 calldataload
-    SQRT()
-    0x00 mstore
-    0x20 0x00 return
-}
+/// @notice Unsafely subtracts 1 from a uint256 using the 2's complement representation
+#define macro UNSAFE_SUB() = takes (1) returns (1) {
+    // Input Stack:    [x]
+    // Output Stack:   [x - 1]
 
-#define macro MAX_WRAPPER() = takes (0) returns (0) {
-    0x04 calldataload
-    0x24 calldataload
-    MAX()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro MIN_WRAPPER() = takes (0) returns (0) {
-    0x04 calldataload
-    0x24 calldataload
-    MIN()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro AVG_WRAPPER() = takes (0) returns (0) {
-    0x04 calldataload
-    0x24 calldataload
-    AVG()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro CEIL_DIV_WRAPPER() = takes (0) returns (0) {
-    0x24 calldataload
-    0x04 calldataload
-    CEIL_DIV()
-    0x00 mstore
-    0x20 0x00 return
-}
-
-#define macro MAIN() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr
-    dup1 0x677342ce eq sqrt jumpi
-    dup1 0x6d5433e6 eq max jumpi
-    dup1 0x7ae2b5c7 eq min jumpi
-    dup1 0x2b7423ab eq average jumpi
-    dup1 0x9cb35327 eq ceilDiv jumpi
-
-    0x00 0x00 revert
-
-    sqrt:
-        SQRT_WRAPPER()
-    max:
-        MAX_WRAPPER()
-    min:
-        MIN_WRAPPER()
-    average:
-        AVG_WRAPPER()
-    ceilDiv:
-        CEIL_DIV_WRAPPER()
+    [NEG1] add      // [x - 1]
 }
