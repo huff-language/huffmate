@@ -9,8 +9,9 @@ import { Bytes32AddressLib } from "solmate/utils/Bytes32AddressLib.sol";
 import { MockBeacon } from "./mocks/MockBeacon.sol";
 import { MockProxiableUUID } from "./mocks/MockProxiableUUID.sol";
 import { NotUUPSMockProxiableUUID } from "./mocks/NotUUPSMockProxiableUUID.sol";
-
 import { ERC1155Recipient } from "solmate/test/ERC1155.t.sol";
+import {MockReturner} from "./mocks/MockReturner.sol";
+
 
 interface Proxy {
     // Implementation
@@ -173,5 +174,37 @@ contract ProxiesTest is Test, ERC1155Recipient {
         (bool success, bytes memory returnData) = address(proxy).call(mintCalldata);
 
         assertEq(success, true);
+    }
+
+    function testProxyPassthroughBytes() public {
+        MockReturner returner = new MockReturner();
+        // set implementation
+        proxy.upgradeTo(address(returner));
+
+        // perform a call on the implementation
+        bytes memory boomerangString = bytes(string("return this string"));
+        bytes memory returnData = MockReturner(address(proxy)).returnBytes(boomerangString);
+
+        assertEq(returnData,boomerangString);
+    }
+
+    function testProxyPassthroughUint(uint256 x) public {
+        MockReturner returner = new MockReturner();
+        // set implementation
+        proxy.upgradeTo(address(returner));
+
+        // perform a call on the implementation
+        uint256 returnData = MockReturner(address(proxy)).returnUint(x);
+        assertEq(returnData,x);
+    }
+
+    function testProxyPassthroughAddress(address add) public {
+        MockReturner returner = new MockReturner();
+        // set implementation
+        proxy.upgradeTo(address(returner));
+
+        // perform a call on the implementation
+        address returnData = MockReturner(address(proxy)).returnAddress(add);
+        assertEq(returnData,add);
     }
 }
