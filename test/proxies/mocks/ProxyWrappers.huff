@@ -84,9 +84,9 @@
 #define macro CONSTRUCTOR() = {
     // ERC1967_PROXY_CONSTRUCTOR()
 
-    0x20 
+    0x20
     0x20 codesize sub
-    0x00 
+    0x00
     codecopy
     0x00 mload
 
@@ -96,21 +96,20 @@
 #define macro MAIN() = {
     pc calldataload 0xe0 shr
 
-    
     dup1 __FUNC_SIG(implementation)                 eq implementation jumpi
     dup1 __FUNC_SIG(upgradeTo)                      eq upgradeTo jumpi
     dup1 __FUNC_SIG(upgradeToAndCall)               eq upgradeToAndCall jumpi
     dup1 __FUNC_SIG(upgradeToAndCallUUPS)           eq upgradeToAndCallUUPS jumpi
-    
+
     dup1 __FUNC_SIG(admin)                          eq getAdmin jumpi
     dup1 __FUNC_SIG(changeAdmin)                    eq changeAdmin jumpi
-    
+
     dup1 __FUNC_SIG(beacon)                         eq getBeacon jumpi
     dup1 __FUNC_SIG(setBeacon)                      eq setBeacon jumpi
     dup1 __FUNC_SIG(upgradeBeaconAndCall)           eq upgradeBeaconAndCall jumpi
 
     GET_IMPLEMENTATION()        // [implementation]
-    DELEGATE()    
+    DELEGATE()
 
     implementation:
         IMPLEMENTATION_WRAPPER()

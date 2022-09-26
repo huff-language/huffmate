@@ -43,7 +43,7 @@
 #define constant TYPE_UINT_256_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 /// @notice Constructor
-#define macro INNER_4626_CONSTRUCTOR() = takes (0) returns (0) {
+#define macro ERC4626_CONSTRUCTOR() = takes (0) returns (0) {
     // Copy the asset address into memory and then the stack from the bytecode
     0x20                    // [size] - byte size to copy
     0x20 codesize sub       // [offset, size] - offset in the code to copy from
@@ -686,7 +686,7 @@
 // ------------------------------------------------------
 
 /// @notice An internal function dispatcher
-#define macro INNER_4626_MAIN() = takes (1) returns (1) {
+#define macro ERC4626_MAIN() = takes (1) returns (1) {
     // Input stack: [func_selector]
     // Output stack: [func_selector]
 
@@ -711,9 +711,10 @@
     dup1 __FUNC_SIG(maxWithdraw) eq max_withdraw_jump jumpi             // [func_selector]
     dup1 __FUNC_SIG(maxRedeem) eq max_redeem_jump jumpi                 // [func_selector]
 
-    MAIN_ERC20()                                                        // [func_selector]
+    ERC20_MAIN()                                                        // [func_selector]
 
-    cont jump
+    // Bubble up to the parent macro
+    no_match jump
 
     decimals_jump:
         ERC4626_DECIMALS()
@@ -754,5 +755,5 @@
         MAX_REDEEM()
 
     // Resume parent dispatching
-    cont:                                               // [func_selector]
+    no_match:                                               // [func_selector]
 }

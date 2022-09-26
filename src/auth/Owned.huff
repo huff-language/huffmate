@@ -18,7 +18,7 @@
 #define constant OWNER = FREE_STORAGE_POINTER()
 
 // CONSTRUCTOR
-#define macro CONSTRUCTOR() = takes (0) returns (0) {
+#define macro OWNED_CONSTRUCTOR() = takes (0) returns (0) {
   // Copy the owner into memory
   0x20                        // [size] - byte size to copy
   0x20 codesize sub           // [offset, size] - offset in the code to copy from
@@ -39,7 +39,7 @@
 }
 
 /// @notice Only Owner Modifier
-#define macro IS_OWNER() = takes(0) returns(0) {
+#define macro IS_OWNER() = takes (0) returns (0) {
   caller                      // [msg.sender]
   [OWNER] sload               // [owner, msg.sender]
   eq authed jumpi             // [authed]
@@ -52,7 +52,7 @@
 
 /// @notice Set the Owner
 /// @param {owner} [address] - The new owner
-#define macro SET_OWNER() = takes(0) returns(0) {
+#define macro SET_OWNER() = takes (0) returns (0) {
   // Check that the caller is authorized
   IS_OWNER()
 
@@ -72,24 +72,26 @@
 
 /// @notice Get the owner of the contract
 /// @return {owner} [address] - The owner of the contract
-#define macro OWNER() = takes(0) returns (0) {
+#define macro OWNER() = takes (0) returns (0) {
   [OWNER] sload                  // [owner]
   0x00 mstore                    // []
   0x20 0x00 return
 }
 
 /// @notice Main Function Dispatcher
-#define macro MAIN() = takes(0) returns(0) {
-  pc calldataload 0xE0 shr
+#define macro OWNED_MAIN() = takes (1) returns (1) {
+  // Input Stack: [function_selector]
 
   dup1 __FUNC_SIG(setOwner) eq set_owner jumpi
   dup1 __FUNC_SIG(owner)    eq owner jumpi
 
-  // Revert if no signatures match
-  0x00 0x00 revert
+  // Bubble up to parent macro
+  no_match jump
 
   set_owner:
       SET_OWNER()
   owner:
       OWNER()
+
+  no_match:
 }

@@ -24,7 +24,7 @@
 #define constant AUTHORITY = FREE_STORAGE_POINTER()
 
 /// @notice Constructor
-#define macro CONSTRUCTOR() = takes (0) returns (0) {
+#define macro AUTH_CONSTRUCTOR() = takes (0) returns (0) {
   // Copy the owner into memory
   0x20                        // [size] - byte size to copy
   0x40 codesize sub           // [offset, size] - offset in the code to copy from
@@ -176,17 +176,16 @@
 }
 
 /// @notice Main Function Dispatcher
-#define macro MAIN() = takes(0) returns (0) {
-    // Identify which function is being called using the 4 byte function signature
-    pc calldataload 0xE0 shr
+#define macro AUTH_MAIN() = takes (1) returns (1) {
+    // Input Stack: [function_selector]
 
     dup1 __FUNC_SIG(setOwner)                 eq set_owner jumpi
     dup1 __FUNC_SIG(setAuthority)             eq set_authority jumpi
     dup1 __FUNC_SIG(owner)                    eq owner jumpi
     dup1 __FUNC_SIG(authority)                eq authority jumpi
 
-    // Revert if no signatures match
-    0x00 0x00 revert
+    // Bubble up to parent if no function selector matches
+    no_match jump
 
     set_owner:
         SET_OWNER()
@@ -196,4 +195,6 @@
         OWNER()
     authority:
         AUTHORITY()
+
+    no_match:
 }

@@ -6,7 +6,7 @@
 #define constant AFTER_HOOK_COUNTER = FREE_STORAGE_POINTER()
 
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
-    INNER_4626_CONSTRUCTOR()        // []
+    ERC4626_CONSTRUCTOR()           // []
 }
 
 #define macro BEFORE_WITHDRAW() = takes (2) returns (0) {
@@ -78,7 +78,7 @@
     dup1 __FUNC_SIG(beforeWithdrawHookCalledCounter) eq before_jump jumpi   // [sig]
     dup1 __FUNC_SIG(afterDepositHookCalledCounter) eq after_jump jumpi      // [sig]
 
-    INNER_4626_MAIN()               // [sig]
+    ERC4626_MAIN()                  // [sig]
 
     0x00 dup1 revert
 

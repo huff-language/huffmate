@@ -39,7 +39,7 @@
 #define constant PENDING_OWNER_SLOT = FREE_STORAGE_POINTER()
 
 /// @notice Inner TSOwnable Constructor
-#define macro CONSTRUCTOR_TSOWNABLE() = takes (0) returns (0) {
+#define macro TSOWNABLE_CONSTRUCTOR() = takes (0) returns (0) {
     // Store msg.sender as owner
     caller [OWNER_SLOT] sstore          // []
 }
@@ -135,7 +135,7 @@
 }
 
 // Function Dispatching
-#define macro MAIN_TSOWNABLE() = takes (1) returns (1) {
+#define macro TSOWNABLE_MAIN() = takes (1) returns (1) {
     // Input stack: [sig]
     // Output stack: [sig]
 
@@ -144,7 +144,8 @@
     dup1 __FUNC_SIG(owner)              eq get_owner jumpi
     dup1 __FUNC_SIG(pendingOwner)       eq get_pending_owner jumpi
 
-    not_found jump
+    // Bubble up to the parent macro
+    no_match jump
 
     set_pending_owner:
         OWNABLE_SET_PENDING_OWNER()
@@ -155,5 +156,5 @@
     get_pending_owner:
         OWNABLE_GET_PENDING_OWNER()
 
-    not_found:
+    no_match:
 }

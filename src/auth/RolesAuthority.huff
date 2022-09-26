@@ -260,9 +260,8 @@
 }
 
 /// @notice Main Function Dispatcher
-#define macro MAIN() = takes(0) returns (0) {
-    // Identify which function is being called using the 4 byte function signature
-    pc calldataload 0xe0 shr
+#define macro ROLES_AUTHORITY_MAIN() = takes (1) returns (1) {
+    // Input Stack: [function_selector]
 
     dup1 __FUNC_SIG(hasRole)                  eq has_role jumpi
     dup1 __FUNC_SIG(doesRoleHaveCapability)   eq role_capability jumpi
@@ -277,8 +276,8 @@
     dup1 __FUNC_SIG(owner)                    eq owner jumpi
     dup1 __FUNC_SIG(authority)                eq authority jumpi
 
-    // Revert if no signatures match
-    0x00 0x00 revert
+    // Bubble up function selector to parent macro
+    no_match jump
 
     has_role:
       HAS_ROLE()
@@ -301,6 +300,8 @@
         OWNER()
     authority:
         AUTHORITY()
+
+    no_match:
 }
 
 

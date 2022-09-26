@@ -2,8 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
-import {HuffConfig} from "foundry-huff/HuffConfig.sol";
+import { HuffDeployer } from "foundry-huff/HuffDeployer.sol";
+import { HuffConfig } from "foundry-huff/HuffConfig.sol";
 
 interface RolesAuthority {
   function hasRole(address user, uint8 role) external returns (bool);
@@ -28,8 +28,13 @@ contract RolesAuthorityTest is Test {
     bytes memory owner = abi.encode(OWNER);
     bytes memory authority = abi.encode(INIT_AUTHORITY);
 
-    // Deploy RolesAuthority
-    HuffConfig config = HuffDeployer.config().with_args(bytes.concat(owner, authority));
+    // Grab wrapper code
+    string memory wrapper_code = vm.readFile("test/auth/mocks/RolesAuthorityWrappers.huff");
+
+    // Create the config deployer
+    HuffConfig config = HuffDeployer.config().with_code(wrapper_code).with_args(bytes.concat(owner, authority));
+
+    // Deploy and expect events
     vm.expectEmit(true, true, true, true);
     emit AuthorityUpdated(address(config), INIT_AUTHORITY);
     emit OwnerUpdated(address(config), OWNER);
