@@ -11,9 +11,6 @@
 // Events
 #define event OwnerUpdated(address indexed user, address indexed newOwner)
 
-// Event Signatures
-#define constant OWNER_UPDATED_SIG = 0x8292fce18fa69edf4db7b94ea2e58241df0ae57f97e0a6c9b29067028bf92d76
-
 // Storage Slots
 #define constant OWNER = FREE_STORAGE_POINTER()
 
@@ -33,7 +30,7 @@
 
   // Emit the owner updated event
   caller                      // [from, owner]
-  [OWNER_UPDATED_SIG]         // [sig, from, owner]
+  __EVENT_HASH(OwnerUpdated)  // [sig, from, owner]
   0x00 0x00                   // [0, 0, sig, from, owner]
   log3                        // []
 }
@@ -63,7 +60,7 @@
 
   // Emit the owner updated event
   caller                      // [from, newOwner]
-  [OWNER_UPDATED_SIG]         // [sig, from, newOwner]
+  __EVENT_HASH(OwnerUpdated)  // [sig, from, newOwner]
   0x00 0x00                   // [0, 32, sig, from, newOwner]
   log3                        // []
 
