@@ -36,8 +36,8 @@
 
     dup1 __FUNC_SIG(write) eq write_jump jumpi
     dup1 __FUNC_SIG(read) eq read_jump jumpi
-    dup1 0x014c2add eq read_at_jump jumpi
-    dup1 0x8937dad8 eq read_between_jump jumpi
+    dup1 __FUNC_SIG("read(address,uint256)") eq read_at_jump jumpi
+    dup1 __FUNC_SIG("read(address,uint256,uint256)") eq read_between_jump jumpi
 
     0x00 dup1 revert
 
