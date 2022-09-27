@@ -60,14 +60,14 @@
 
     __RIGHTPAD(0xa9059cbb) // [transfer_selector, to, amount, token]
     <mem_ptr> mstore    // [to, amount, token]
-    
+
     // TODO: If we designate a 96 byte scratch space for this macro,
     //       no need to do these additions at runtime.
     <mem_ptr> 0x04 add  // [mem_ptr + 0x04, to, amount, token]
     mstore              // [amount, token]
     <mem_ptr> 0x24 add  // [mem_ptr + 0x24, amount, token]
-    mstore 
-    
+    mstore
+
     <mem_ptr>           // [mem_ptr, token]
     0x44 dup2 0x00      // [0x00, mem_ptr, 0x44, mem_ptr, token]
     0x20 swap5          // [token, 0x00, mem_ptr, 0x44, mem_ptr, 0x20]
@@ -81,10 +81,10 @@
 
     and                 // [success & (data == 0x01 | returndatasize == 0)]
     success jumpi       // []
-    
+
     0x90b8ec18 0x00 mstore
     0x04 0x1c revert
-    
+
     success:
     // Return stack:       []
 }
@@ -94,14 +94,14 @@
 
     __RIGHTPAD(0x095ea7b3) // [transfer_selector, to, amount, token]
     <mem_ptr> mstore    // [to, amount, token]
-    
+
     // TODO: If we designate a 96 byte scratch space for this macro,
     //       no need to do these additions at runtime.
     <mem_ptr> 0x04 add  // [mem_ptr + 0x04, to, amount, token]
     mstore              // [amount, token]
     <mem_ptr> 0x24 add  // [mem_ptr + 0x24, amount, token]
-    mstore 
-    
+    mstore
+
     <mem_ptr>           // [mem_ptr, token]
     0x44 dup2 0x00      // [0x00, mem_ptr, 0x44, mem_ptr, token]
     0x20 swap5          // [token, 0x00, mem_ptr, 0x44, mem_ptr, 0x20]
@@ -115,10 +115,10 @@
 
     and                 // [success & (data == 0x01 | returndatasize == 0)]
     success jumpi       // []
-    
+
     0x3e3f8f73 0x00 mstore
     0x04 0x1c revert
-    
+
     success:
     // Return stack:       []
 }

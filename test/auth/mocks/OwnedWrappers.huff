@@ -1,10 +1,10 @@
 
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
-    MERKLE_DISTRIBUTOR_CONSTRUCTOR()
+    OWNED_CONSTRUCTOR()
 }
 
 #define macro MAIN() = takes (0) returns (0) {
-    pc calldataload 0xE0 shr
-    MERKLE_DISTRIBUTOR_MAIN()
+    pc calldataload 0xe0 shr
+    OWNED_MAIN()
     0x00 dup1 revert
 }

@@ -24,42 +24,42 @@
 #define constant AUTHORITY = FREE_STORAGE_POINTER()
 
 /// @notice Constructor
-#define macro CONSTRUCTOR() = takes (0) returns (0) {
+#define macro AUTH_CONSTRUCTOR() = takes (0) returns (0) {
   // Copy the owner into memory
-  0x20                        // [size] - byte size to copy
-  0x40 codesize sub           // [offset, size] - offset in the code to copy from
-  0x00                        // [mem, offset, size] - offset in memory to copy to
-  codecopy                    // []
+  0x20                                // [size] - byte size to copy
+  0x40 codesize sub                   // [offset, size] - offset in the code to copy from
+  0x00                                // [mem, offset, size] - offset in memory to copy to
+  codecopy                            // []
 
   // Copy the authority into memory
-  0x20                        // [size] - byte size to copy
-  0x20 codesize sub           // [offset, size] - offset in the code to copy from
-  0x20                        // [mem, offset, size] - offset in memory to copy to
-  codecopy                    // []
+  0x20                                // [size] - byte size to copy
+  0x20 codesize sub                   // [offset, size] - offset in the code to copy from
+  0x20                                // [mem, offset, size] - offset in memory to copy to
+  codecopy                            // []
 
   // Set the new owner
-  0x00 mload                  // [owner]
-  dup1                        // [owner, owner]
-  [OWNER]                     // [OWNER, owner, owner]
-  sstore                      // [owner]
+  0x00 mload                          // [owner]
+  dup1                                // [owner, owner]
+  [OWNER]                             // [OWNER, owner, owner]
+  sstore                              // [owner]
 
   // Set the new Authority
-  0x20 mload                  // [authority, owner]
-  dup1                        // [authority, authority, owner]
-  [AUTHORITY]                 // [AUTHORITY, authority, authority, owner]
-  sstore                      // [authority, owner]
+  0x20 mload                          // [authority, owner]
+  dup1                                // [authority, authority, owner]
+  [AUTHORITY]                         // [AUTHORITY, authority, authority, owner]
+  sstore                              // [authority, owner]
 
   // Emit the authority updated event
-  caller                      // [from, authority, owner]
-  [AUTHORITY_UPDATED_SIG]     // [sig, from, authority, owner]
-  0x00 0x00                   // [0, 0, sig, from, authority, owner]
-  log3                        // [owner]
+  caller                              // [from, authority, owner]
+  __EVENT_HASH(AuthorityUpdated)      // [sig, from, authority, owner]
+  0x00 0x00                           // [0, 0, sig, from, authority, owner]
+  log3                                // [owner]
 
   // Emit the owner updated event
-  caller                      // [from, owner]
-  [OWNER_UPDATED_SIG]         // [sig, from, owner]
-  0x00 0x00                   // [0, 0, sig, from, owner]
-  log3                        // []
+  caller                              // [from, owner]
+  [OWNER_UPDATED_SIG]                 // [sig, from, owner]
+  0x00 0x00                           // [0, 0, sig, from, owner]
+  log3                                // []
 }
 
 /// @notice Modifier that enforces caller authorization
@@ -84,8 +84,8 @@
   iszero post jumpi          // [authority, user, sig]
 
   // WARN: If an account has no code, the call will unintendedly return successfully
-  dup1 extcodesize      // [code, authority, user, sig]
-  iszero post jumpi     // [authority, user, sig]
+  dup1 extcodesize           // [code, authority, user, sig]
+  iszero post jumpi          // [authority, user, sig]
 
   // Store the auth.canCall arguments in memory at offset 0
   // function canCall(address user, address target, bytes4 functionSig) external view returns (bool)
@@ -126,15 +126,15 @@
   REQUIRES_AUTH()
 
   // Set the new authority
-  0x04 calldataload           // [newAuthority]
-  dup1                        // [newAuthority, newAuthority]
-  [AUTHORITY] sstore          // [newAuthority]
+  0x04 calldataload                   // [newAuthority]
+  dup1                                // [newAuthority, newAuthority]
+  [AUTHORITY] sstore                  // [newAuthority]
 
   // Emit the authority updated event
-  caller                      // [from, newAuthority]
-  [AUTHORITY_UPDATED_SIG]     // [sig, from, newAuthority]
-  0x00 0x00                   // [0, 32, sig, from, newAuthority]
-  log3                        // []
+  caller                              // [from, newAuthority]
+  __EVENT_HASH(AuthorityUpdated)      // [sig, from, newAuthority]
+  0x00 0x00                           // [0, 32, sig, from, newAuthority]
+  log3                                // []
 
   stop
 }
@@ -176,17 +176,16 @@
 }
 
 /// @notice Main Function Dispatcher
-#define macro MAIN() = takes(0) returns (0) {
-    // Identify which function is being called using the 4 byte function signature
-    pc calldataload 0xE0 shr
+#define macro AUTH_MAIN() = takes (1) returns (1) {
+    // Input Stack: [function_selector]
 
     dup1 __FUNC_SIG(setOwner)                 eq set_owner jumpi
     dup1 __FUNC_SIG(setAuthority)             eq set_authority jumpi
     dup1 __FUNC_SIG(owner)                    eq owner jumpi
     dup1 __FUNC_SIG(authority)                eq authority jumpi
 
-    // Revert if no signatures match
-    0x00 0x00 revert
+    // Bubble up to parent if no function selector matches
+    no_match jump
 
     set_owner:
         SET_OWNER()
@@ -196,4 +195,6 @@
         OWNER()
     authority:
         AUTHORITY()
+
+    no_match:
 }

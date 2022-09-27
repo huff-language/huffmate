@@ -61,7 +61,7 @@
 
 /// @notice Constructor
 /// @notice Sets the initial domain separator and chain ID
-#define macro INNER_ERC20_CONSTRUCTOR() = takes (0) returns (0) {
+#define macro ERC20_CONSTRUCTOR() = takes (0) returns (0) {
     // Copy the decimals into memory from the bytecode
     0x20                                    // [size] - byte size to copy
     0x20 codesize sub                       // [offset, size] - offset in the code to copy from
@@ -549,7 +549,7 @@
 
 
 // Function Dispatching
-#define macro MAIN_ERC20() = takes (1) returns (1) {
+#define macro ERC20_MAIN() = takes (1) returns (1) {
     // Identify which function is being called.
     // [func sig]
 
@@ -569,7 +569,8 @@
     dup1 __FUNC_SIG(transferFrom)       eq transferFromJump     jumpi
     dup1 __FUNC_SIG(approve)            eq approveJump          jumpi
 
-    cont jumpi
+    // Bubble up to the parent macro
+    no_match jumpi
 
     allowanceJump:
         ALLOWANCE()
@@ -596,5 +597,5 @@
     transferJump:
         TRANSFER()
 
-    cont:
+    no_match:
 }

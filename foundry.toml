@@ -4,6 +4,10 @@ libs = ['lib']
 ffi = true
 fuzz_runs = 1000
 fs_permissions = [
+    { access = "read", path = "./test/auth/mocks/AuthWrappers.huff" },
+    { access = "read", path = "./test/auth/mocks/OwnedWrappers.huff" },
+    { access = "read", path = "./test/auth/mocks/RolesAuthorityWrappers.huff" },
+
     { access = "read", path = "./test/data-structures/mocks/ArrayWrappers.huff" },
     { access = "read", path = "./test/data-structures/mocks/HashmapWrappers.huff" },
 

@@ -184,7 +184,7 @@
 /// @notice Constructor
 /// @param address The address of the token to distribute
 /// @param merkleRoot The merkle root of the merkle tree
-#define macro INNER_MERKLE_CONSTRUCTOR() = takes (0) returns (0) {
+#define macro MERKLE_DISTRIBUTOR_CONSTRUCTOR() = takes (0) returns (0) {
     // Copy the first argument into memory
     0x20                        // [size] - byte size to copy
     0x40 codesize sub           // [offset, size] - offset in the code to copy from
@@ -211,14 +211,16 @@
 /// @notice Function Dispatch
 /// @notice Takes the first 4 bytes of calldata (aka the function selector) and dispatches to the appropriate function
 /// @notice If non match, execution proceeds as the code is inlined
-#define macro INNER_MERKLE_MAIN() = takes (1) returns (1) {
+#define macro MERKLE_DISTRIBUTOR_MAIN() = takes (1) returns (1) {
+    // Input Stack: [function_selector]
+
     dup1 __FUNC_SIG(getTokenAddress) eq getTokenAddress jumpi
     dup1 __FUNC_SIG(getMerkleRoot) eq getMerkleRoot jumpi
     dup1 __FUNC_SIG(isClaimed) eq isClaimed jumpi
     dup1 __FUNC_SIG(claim) eq claim jumpi
 
     // Jump to the end if non match
-    non_match jump
+    no_match jump
 
     getMerkleRoot:
         GET_MERKLE_ROOT()
@@ -229,5 +231,5 @@
     claim:
         CLAIM()
 
-    non_match:
+    no_match:
 }
