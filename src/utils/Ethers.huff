@@ -1,0 +1,24 @@
+/// @title Ethers
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice Utilities for working with ether at a low level
+
+/// @notice Sends an amount of ether to the specified [amount, address]
+#define macro SEND_ETH() = takes (2) returns (1) {
+    // Input Stack: [amount, address]
+
+    // Send the ether
+    0x00    // [0, amount, address]
+    dup1    // [0, 0, amount, address]
+    dup1    // [0, 0, 0, amount, address]
+    dup1    // [0, 0, 0, 0, amount, address]
+    dup5    // [amount, 0, 0, 0, 0, amount, address]
+    dup7    // [address, amount, 0, 0, 0, 0, amount]
+    gas     // [gas, address, amount, 0, 0, 0, 0, amount, address]
+    call    // [success, amount, address]
+
+    // Clean the stack
+    swap2   // [address, amount, success]
+    pop     // [success, address]
+    pop     // [success]
+}
