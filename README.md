@@ -66,6 +66,7 @@ utils
 ├─ CustomErrors — "Wrappers for reverting with common error messages"
 ├─ ERC1155Receiver — "A minimal interface for receiving ERC1155 tokens"
 ├─ Errors — "Custom error utilities"
+├─ Ethers — "Utilities for working with ether at a low level"
 ├─ JumpTableUtil — "Utility macros for retrieving jumpdest pcs from jump tables"
 ├─ LibBit — "A library ported from solady for bit twiddling operations"
 ├─ MerkleProofLib — "Gas optimized merkle proof verification library"
