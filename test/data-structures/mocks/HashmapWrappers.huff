@@ -50,17 +50,18 @@
     stop
 }
 
-/* Main Macro - The contract entrypoint */
+// Main Macro - The contract entrypoint
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
-    0x00 calldataload 0xE0 shr
-    dup1 0x437b8ad6 eq load_element jumpi
-    dup1 0xf268de10 eq load_element_from_keys jumpi
-    dup1 0x376caf9f eq store_element jumpi
-    dup1 0x2fdb44d8 eq store_element_from_keys jumpi
+    pc calldataload 0xE0 shr
+
+    dup1 __FUNC_SIG(loadElement)            eq load_element jumpi
+    dup1 __FUNC_SIG(loadElementFromKeys)    eq load_element_from_keys jumpi
+    dup1 __FUNC_SIG(storeElement)           eq store_element jumpi
+    dup1 __FUNC_SIG(storeElementFromKeys)   eq store_element_from_keys jumpi
 
     // Revert if otherwise
-    0x00 0x00 revert
+    0x00 dup1 revert
 
     load_element:
         GET()

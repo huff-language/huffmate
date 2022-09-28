@@ -158,8 +158,8 @@
     dup1 __FUNC_SIG(mint)                       eq mint_jump jumpi
     dup1 __FUNC_SIG(burn)                       eq burn_jump jumpi
 
-    dup1 0xa1448194                             eq safe_mint jumpi
-    dup1 0x8832e6e3                             eq safe_mint_with_data jumpi
+    dup1 __FUNC_SIG("safeMint(address,uint256)") eq safe_mint jumpi
+    dup1 __FUNC_SIG("safeMint(address,uint256,bytes)") eq safe_mint_with_data jumpi
 
     dup1 __FUNC_SIG(approve)                    eq approve jumpi
     dup1 __FUNC_SIG(setApprovalForAll)          eq setApprovalForAll jumpi

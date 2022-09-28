@@ -46,16 +46,14 @@
 //                         BASIC TRIG                         //
 ////////////////////////////////////////////////////////////////
 
-/**
- * @notice Return the sine of a value, specified in radians scaled by 1e18
- * @dev This algorithm for converting sine only uses integer values, and it works by dividing the
- * circle into 30 bit angles, i.e. there are 1,073,741,824 (2^30) angle units, instead of the
- * standard 360 degrees (2pi radians). From there, we get an output in range -2,147,483,647 to
- * 2,147,483,647, (which is the max value of an int32) which is then converted back to the standard
- * range of -1 to 1, again scaled by 1e18
- * @param _angle Angle to convert
- * @return Result scaled by 1e18
- */
+/// @notice Return the sine of a value, specified in radians scaled by 1e18
+/// @dev This algorithm for converting sine only uses integer values, and it works by dividing the
+/// circle into 30 bit angles, i.e. there are 1,073,741,824 (2^30) angle units, instead of the
+/// standard 360 degrees (2pi radians). From there, we get an output in range -2,147,483,647 to
+/// 2,147,483,647, (which is the max value of an int32) which is then converted back to the standard
+/// range of -1 to 1, again scaled by 1e18
+/// @param _angle Angle to convert
+/// @return Result scaled by 1e18
 #define macro SIN() = takes (1) returns (1) {
     // Input stack:          [angle]
 
@@ -174,14 +172,12 @@
     // Return stack:         [1e18 * sine / I32_MAX]
 }
 
-/**
- * @notice Return the cosine of a value, specified in radians scaled by 1e18
- * @dev This is identical to the sin() method, and just computes the value by delegating to the
- * sin() method using the identity cos(x) = sin(x + pi/2)
- * @dev Overflow when `angle + PI_OVER_TWO > type(uint256).max` is ok, results are still accurate
- * @param _angle Angle to convert
- * @return Result scaled by 1e18
- */
+/// @notice Return the cosine of a value, specified in radians scaled by 1e18
+/// @dev This is identical to the sin() method, and just computes the value by delegating to the
+/// sin() method using the identity cos(x) = sin(x + pi/2)
+/// @dev Overflow when `angle + PI_OVER_TWO > type(uint256).max` is ok, results are still accurate
+/// @param _angle Angle to convert
+/// @return Result scaled by 1e18
 #define macro COS() = takes (1) returns (1) {
     // Input stack:         [angle]
 

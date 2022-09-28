@@ -21,11 +21,6 @@
 #define event PublicCapabilityUpdated(address indexed target, bytes4 indexed functionSig, bool enabled)
 #define event RoleCapabilityUpdated(uint8 indexed role, address indexed target, bytes4 indexed functionSig, bool enabled)
 
-// Event Signatures
-#define constant USER_ROLE_UPDATED_SIG = 0x4c9bdd0c8e073eb5eda2250b18d8e5121ff27b62064fbeeeed4869bb99bc5bf2
-#define constant PUBLIC_CAPABILITY_UPDATED_SIG = 0x950a343f5d10445e82a71036d3f4fb3016180a25805141932543b83e2078a93e
-#define constant ROLE_CAPABILITY_UPDATED_SIG = 0xa52ea92e6e955aa8ac66420b86350f7139959adfcc7e6a14eee1bd116d09860e
-
 // MAPPINGS
 #define constant USER_ROLES_LOCATION = FREE_STORAGE_POINTER()
 #define constant IS_CAPABILITY_PUBLIC_LOCATION = FREE_STORAGE_POINTER()
@@ -117,18 +112,18 @@
   REQUIRES_AUTH()
 
   // Set the capability to the passed in value
-  0x44 calldataload                  // [value]
-  0x24 calldataload                  // [sig, value]
-  0x04 calldataload                  // [target, sig, value]
-  STORE_ELEMENT_FROM_KEYS(0x00)      // []
+  0x44 calldataload                         // [value]
+  0x24 calldataload                         // [sig, value]
+  0x04 calldataload                         // [target, sig, value]
+  STORE_ELEMENT_FROM_KEYS(0x00)             // []
 
   // Emit the capability updated event
-  0x44 calldataload                  // [value]
-  0x24 calldataload                  // [func, value]
-  0x04 calldataload                  // [target, func, value]
-  [PUBLIC_CAPABILITY_UPDATED_SIG]    // [sig, target, func, value]
-  0x00 0x00                          // [0, 0, sig, target, func, value]
-  log3                               // []
+  0x44 calldataload                         // [value]
+  0x24 calldataload                         // [func, value]
+  0x04 calldataload                         // [target, func, value]
+  __EVENT_HASH(PublicCapabilityUpdated)     // [sig, target, func, value]
+  0x00 0x00                                 // [0, 0, sig, target, func, value]
+  log3                                      // []
 
   // End Execution
   stop
@@ -145,25 +140,25 @@
   REQUIRES_AUTH()
 
   // Check if enabled
-  0x64 calldataload                    // [value]
-  enable jumpi                         // []
+  0x64 calldataload                           // [value]
+  enable jumpi                                // []
 
   // Disable the capability
   disable:
     // Get the current roles with the capability
-    0x44 calldataload                  // [sig]
-    0x24 calldataload                  // [target, sig]
-    GET_ROLE_FOR_CAPABILITY()          // [roles]
+    0x44 calldataload                         // [sig]
+    0x24 calldataload                         // [target, sig]
+    GET_ROLE_FOR_CAPABILITY()                 // [roles]
 
     // Shift 1 left the role
-    0x01 0x04 calldataload shl         // [role, roles]
-    not                                // [others, roles]
-    and                                // [updated]
+    0x01 0x04 calldataload shl                // [role, roles]
+    not                                       // [others, roles]
+    and                                       // [updated]
 
     // Store the new capability
-    0x44 calldataload                  // [sig, updated]
-    0x24 calldataload                  // [target, sig, updated]
-    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+    0x44 calldataload                         // [sig, updated]
+    0x24 calldataload                         // [target, sig, updated]
+    STORE_ELEMENT_FROM_KEYS(0x00)             // []
 
     // Jump to the emit log label
     emit_log jump
@@ -171,28 +166,28 @@
   // Enable the capability
   enable:
     // Get the current roles with the capability
-    0x44 calldataload                  // [sig]
-    0x24 calldataload                  // [target, sig]
-    GET_ROLE_FOR_CAPABILITY()          // [roles]
+    0x44 calldataload                         // [sig]
+    0x24 calldataload                         // [target, sig]
+    GET_ROLE_FOR_CAPABILITY()                 // [roles]
 
     // Shift 1 left the role
-    0x01 0x04 calldataload shl         // [role, roles]
-    or                                 // [capabilies]
+    0x01 0x04 calldataload shl                // [role, roles]
+    or                                        // [capabilies]
 
     // Store the new capability
-    0x44 calldataload                  // [sig, capabilies]
-    0x24 calldataload                  // [target, sig, capabilies]
-    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+    0x44 calldataload                         // [sig, capabilies]
+    0x24 calldataload                         // [target, sig, capabilies]
+    STORE_ELEMENT_FROM_KEYS(0x00)             // []
 
   // Emit the capability updated event
   emit_log:
-    0x64 calldataload                  // [enabled]
-    0x44 calldataload                  // [func, enabled]
-    0x24 calldataload                  // [target, func, enabled]
-    0x04 calldataload                  // [role, target, func, enabled]
-    [ROLE_CAPABILITY_UPDATED_SIG]      // [sig, role, target, func, enabled]
-    0x00 0x00                          // [0, 0, sig, role, target, func, enabled]
-    log4                               // []
+    0x64 calldataload                         // [enabled]
+    0x44 calldataload                         // [func, enabled]
+    0x24 calldataload                         // [target, func, enabled]
+    0x04 calldataload                         // [role, target, func, enabled]
+    __EVENT_HASH(RoleCapabilityUpdated)       // [sig, role, target, func, enabled]
+    0x00 0x00                                 // [0, 0, sig, role, target, func, enabled]
+    log4                                      // []
 
     // End Execution
     stop
@@ -251,7 +246,7 @@
     0x44 calldataload                  // [enabled]
     0x24 calldataload                  // [role, enabled]
     0x04 calldataload                  // [account, role, enabled]
-    [USER_ROLE_UPDATED_SIG]            // [sig, account, role, enabled]
+    __EVENT_HASH(UserRoleUpdated)      // [sig, account, role, enabled]
     0x00 0x00                          // [0, 0, sig, account, role, enabled]
     log3                               // []
 
@@ -260,9 +255,8 @@
 }
 
 /// @notice Main Function Dispatcher
-#define macro MAIN() = takes(0) returns (0) {
-    // Identify which function is being called using the 4 byte function signature
-    pc calldataload 0xe0 shr
+#define macro ROLES_AUTHORITY_MAIN() = takes (1) returns (1) {
+    // Input Stack: [function_selector]
 
     dup1 __FUNC_SIG(hasRole)                  eq has_role jumpi
     dup1 __FUNC_SIG(doesRoleHaveCapability)   eq role_capability jumpi
@@ -277,8 +271,8 @@
     dup1 __FUNC_SIG(owner)                    eq owner jumpi
     dup1 __FUNC_SIG(authority)                eq authority jumpi
 
-    // Revert if no signatures match
-    0x00 0x00 revert
+    // Bubble up function selector to parent macro
+    no_match jump
 
     has_role:
       HAS_ROLE()
@@ -301,6 +295,8 @@
         OWNER()
     authority:
         AUTHORITY()
+
+    no_match:
 }
 
 

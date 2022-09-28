@@ -18,7 +18,8 @@ contract OwnedTest is Test {
 
   function setUp() public {
     // Create Owner
-    HuffConfig config = HuffDeployer.config().with_args(abi.encode(OWNER));
+    string memory wrapper_code = vm.readFile("test/auth/mocks/OwnedWrappers.huff");
+    HuffConfig config = HuffDeployer.config().with_code(wrapper_code).with_args(abi.encode(OWNER));
     vm.expectEmit(true, true, true, true);
     emit OwnerUpdated(address(config), OWNER);
     owner = Owned(config.deploy("auth/Owned"));

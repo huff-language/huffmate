@@ -35,19 +35,21 @@ contract AuthTest is Test {
     bytes memory owner = abi.encode(OWNER);
     bytes memory authority = abi.encode(INIT_AUTHORITY);
 
-    // Deploy a roles authority for later use
-    HuffConfig roleConfig = HuffDeployer.config().with_args(bytes.concat(owner, authority));
-    vm.expectEmit(true, true, true, true);
-    emit AuthorityUpdated(address(roleConfig), INIT_AUTHORITY);
-    emit OwnerUpdated(address(roleConfig), OWNER);
-    rolesAuth = RolesAuthority(roleConfig.deploy("auth/RolesAuthority"));
-
-    // Create Auth
-    HuffConfig config = HuffDeployer.config().with_args(bytes.concat(owner, authority));
+    // Deploy the roles authority
+    string memory wrapper_code = vm.readFile("test/auth/mocks/RolesAuthorityWrappers.huff");
+    HuffConfig config = HuffDeployer.config().with_code(wrapper_code).with_args(bytes.concat(owner, authority));
     vm.expectEmit(true, true, true, true);
     emit AuthorityUpdated(address(config), INIT_AUTHORITY);
     emit OwnerUpdated(address(config), OWNER);
-    auth = Auth(config.deploy("auth/Auth"));
+    rolesAuth = RolesAuthority(config.deploy("auth/RolesAuthority"));
+
+    // Deploy the authority
+    string memory auth_wrapper_code = vm.readFile("test/auth/mocks/AuthWrappers.huff");
+    HuffConfig auth_config = HuffDeployer.config().with_code(auth_wrapper_code).with_args(bytes.concat(owner, authority));
+    vm.expectEmit(true, true, true, true);
+    emit AuthorityUpdated(address(auth_config), INIT_AUTHORITY);
+    emit OwnerUpdated(address(auth_config), OWNER);
+    auth = Auth(auth_config.deploy("auth/Auth"));
   }
 
   /// @notice Test that a non-matching signature reverts
@@ -140,11 +142,9 @@ contract AuthTest is Test {
 
   function testAuthoritiesCanSetAuthority() public {
     // Create Roles Auth for authority
-    rolesAuth = RolesAuthority(
-      HuffDeployer.deploy_with_args(
-        "auth/RolesAuthority",
-        bytes.concat(abi.encode(OWNER), abi.encode(OWNER))
-    ));
+    string memory wrapper_code = vm.readFile("test/auth/mocks/RolesAuthorityWrappers.huff");
+    HuffConfig config = HuffDeployer.config().with_code(wrapper_code).with_args(bytes.concat(abi.encode(OWNER), abi.encode(OWNER)));
+    rolesAuth = RolesAuthority(config.deploy("auth/RolesAuthority"));
 
     // Set roles auth as the authority
     vm.prank(OWNER);

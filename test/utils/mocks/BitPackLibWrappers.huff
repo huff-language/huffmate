@@ -41,10 +41,11 @@
 #define macro MAIN() = takes (0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
     pc calldataload 0xE0 shr
-    dup1 0x20cf269e eq packValue jumpi
-    dup1 0x0ec88d16 eq unpackValueFromRight jumpi
-    dup1 0xf59c8b86 eq unpackValueFromLeft jumpi
-    dup1 0xe6022afd eq unpackValueFromCenter jumpi
+
+    dup1 __FUNC_SIG(packValue)                  eq packValue jumpi
+    dup1 __FUNC_SIG(unpackValueFromRight)       eq unpackValueFromRight jumpi
+    dup1 __FUNC_SIG(unpackValueFromLeft)        eq unpackValueFromLeft jumpi
+    dup1 __FUNC_SIG(unpackValueFromCenter)      eq unpackValueFromCenter jumpi
 
     0x00 0x00 revert
 

@@ -11,7 +11,7 @@
 
 #define function implementation() view returns (address)
 
-/// @notice Foreign implementation function 
+/// @notice Foreign implementation function
 #define function proxiableUUID() nonpayable returns (bytes32)
 
 // EIP 1967 Constants
