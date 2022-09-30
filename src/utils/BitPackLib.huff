@@ -30,7 +30,7 @@
     shr                         // [value]
 }
 
-/// @notice Unpcks value of given length from index of word
+/// @notice Unpacks value of given length from index of word
 /// @dev Assumes index < 256 - length
 ///      (word & ((~0 >> 256 - length) << (256 - length - index))) >> (256 - length - index)
 #define macro UNPACK_FROM_CENTER() = takes (3) returns (1) {
