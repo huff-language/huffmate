@@ -1,0 +1,78 @@
+/*
+mem_ptr1 is the location of the start of the 1st bytes array in the memory
+mem_ptr2 is the location of the start of the 2nd bytes array in the memory
+and will be the same location for the output.
+{<mem_ptr><len><data>}
+mem_ptr points to len location
+this macro is non destructive for memory and appends the new concatenated bytes array at the end
+*/
+#define macro CONCAT_MEMORY(mem_ptr1, mem_ptr2) = takes(2) returns(1) {
+  0x20 <mem_ptr1>               // [mem_ptr1, 32]
+  mod iszero mod_check jumpi     // []
+
+  0x00 0x00 revert
+  
+  mod_check:
+
+  0x20 <mem_ptr2>               // [mem_ptr2, 32]
+  mod iszero continue jumpi     // []
+
+  0x00 0x00 revert
+  
+  continue:
+    // get total len of concatenated array
+    <mem_ptr1> mload         // [len1]
+    <mem_ptr2> mload         // [len2, len1]
+    add                      // [total_len]
+
+    // storing the array size at the end (free location)
+    msize                    // [free_loc, total_len]
+    dup1 swap2 swap1         // [free_loc, total_len, free_loc]
+    mstore dup1              // [free_loc, free_loc]
+    
+    0x20 add                 // [index(j), free_loc]
+    <mem_ptr1> dup1          // [mem_ptr1, mem_ptr1, index(j), free_loc]
+    0x20 add swap1           // [mem_ptr1, index(i), index(j), free_loc]
+    dup1 mload add           // [end, index(i), index(j), free_loc]
+    swap2 swap1              // [index(i), index(j), end, free_loc]
+
+    loop jump
+
+    // now we loop so that:
+    // we load val from i
+    // we store val on j
+    // do this until i reaches end
+    loop:                    // [index(i), index(j), end], free_loc
+      dup2 swap1             // [index(i), index(j), index(j), end, free_loc]
+      dup1                   // [index(i), index(i), index(j), index(j), end, free_loc]
+      mload                  // [val, index(i), index(j), index(j), end, free_loc]
+      swap1 swap2            // [index(j), val, index(i), index(j), end, free_loc]
+      mstore                 // [index(i), index(j), end, free_loc]
+      0x20 add               // [index(i + 1), index(j), end, free_loc]
+      swap1 0x20 add         // [index(j + 1), index(i + 1), end, free_loc]
+      swap1 dup3 0x20 add    // [end + 32, index(i + 1), index(j + 1), end, free_loc]
+      dup2                   // [index(i + 1), end + 32, index(i + 1), index(j + 1), end, free_loc]
+      
+      // has other iterations
+      // gt iszero loop jumpi   // [index(i + 1), index(j + 1), end, free_loc]
+      lt loop jumpi          // [index(i + 1), index(j + 1), end, free_loc]
+
+      // Check if still has 2nd loop to do
+      <mem_ptr2> dup2 gt          // [should_loop, index(i + 1), index(j + 1), end, free_loc]
+      break jumpi // else break // TODO: looks like it's never going in break
+      
+      // if should loop, refresh counters
+      pop swap1 pop            // [index(j)] // TODO: index seems off by 1 slot
+      <mem_ptr2> dup1 mload    // [len2, mem_ptr2, index(j), free_loc]
+      add                      // [end, index(j), free_loc]
+      <mem_ptr2> 0x20 add      // [index(i), end, index(j), free_loc]
+      swap1 swap2 swap1        // [index(i), index(j), end, free_loc]
+      
+      loop jump
+      // else has already done 2nd array
+
+    break:                  // [index(i), index(j), end, free_loc]
+    
+    // clear
+    pop pop pop             // [free_loc]
+}
