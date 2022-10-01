@@ -1,0 +1,91 @@
+#define function concatMemoryAndSet() nonpayable returns (bytes memory)
+#define function getStorage(bytes32) view returns (bytes32)
+
+#define macro SET_STOR(offset, value) = takes(2) returns(0) {
+    <value> <offset> sstore        // []
+}
+
+#define macro CONCAT_MEMORY_AND_SET1() = takes (0) returns (0) {
+    pop    // remove func selector
+
+    0x20 0x00 mstore        
+    0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
+    
+    0x20 0x40 mstore
+    0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x60 mstore
+
+    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+        
+    dup1 mload                   // [len, pos]
+    0x00 SET_STOR()              // [pos]
+        
+    dup1 0x20 add mload          // [babe1, pos]
+    0x20 SET_STOR()              // [pos]
+        
+    0x40 add mload          // [babe2, pos]
+    0x40 SET_STOR()              // [pos]
+    
+    stop
+}
+
+#define macro CONCAT_MEMORY_AND_SET2() = takes (0) returns (0) {
+    pop    // remove func selector
+
+    0x20 0x00 mstore        
+    0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
+    
+    0x40 0x40 mstore
+    0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x60 mstore
+    0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x80 mstore
+
+    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+        
+    dup1 mload                   // [len, pos]
+    0x00 SET_STOR()              // [pos]
+        
+    dup1 0x20 add mload          // [babe1, pos]
+    0x20 SET_STOR()              // [pos]
+        
+    dup1 0x40 add mload          // [babe2, pos]
+    0x40 SET_STOR()              // [pos]
+        
+    0x60 add mload               // [babe2]
+    0x60 SET_STOR()              // []
+    
+    stop
+}
+
+#define macro CONCAT_MEMORY_AND_SET3() = takes (0) returns (0) {
+    pop    // remove func selector
+
+    0x20 0x00 mstore        
+    0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
+    
+    0x00 0x40 mstore
+
+    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+        
+    dup1 mload                   // [len, pos]
+    0x00 SET_STOR()              // [pos]
+        
+    dup1 0x20 add mload          // [babe1, pos]
+    0x20 SET_STOR()              // [pos]
+    
+    stop
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xE0 shr
+    dup1 __FUNC_SIG("concatMemoryAndSet1()") eq concatMemoryAndSet1 jumpi
+    dup1 __FUNC_SIG("concatMemoryAndSet2()") eq concatMemoryAndSet2 jumpi
+    dup1 __FUNC_SIG("concatMemoryAndSet3()") eq concatMemoryAndSet3 jumpi
+  
+    0x00 0x00 revert
+
+    concatMemoryAndSet1:
+        CONCAT_MEMORY_AND_SET1()
+    concatMemoryAndSet2:
+        CONCAT_MEMORY_AND_SET2()
+    concatMemoryAndSet3:
+        CONCAT_MEMORY_AND_SET3()
+}

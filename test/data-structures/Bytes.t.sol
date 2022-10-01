@@ -1,23 +1,22 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity ^0.8.15;
 
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
 interface IBytes {
-    function concatMemoryAndSet() external;
-    
-    function getStorage(bytes32) external view returns (bytes32);
+    function concatMemoryAndSet1() external;
+    function concatMemoryAndSet2() external;
+    function concatMemoryAndSet3() external;
 }
 
 contract BytesTest is Test {
     IBytes b;
     
     function setUp() public {
-        emit log("set");
         string memory instantiable_code = vm.readFile(
-            "test/data-structures/mocks/InstantiatedBytes.huff"
+            "test/data-structures/mocks/BytesWrappers.huff"
         );
 
         // Create an Instantiable Arrays
@@ -25,11 +24,28 @@ contract BytesTest is Test {
         b = IBytes(config.deploy("data-structures/Bytes"));
     }
     
-    function testConcat() public {
-        b.concatMemoryAndSet();
+    function testConcat1() public {
+        b.concatMemoryAndSet1();
         
-        assertEq(b.getStorage(bytes32(0)), bytes32(uint256(64)));
-        assertEq(b.getStorage(bytes32(uint256(32))), bytes32(0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe));
-        assertEq(b.getStorage(bytes32(uint256(64))), bytes32(0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe));
+        assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(64)));
+        assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe));
+        assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe));
+    }
+
+    function testConcat2() public {
+        b.concatMemoryAndSet2();
+        
+        assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(96)));
+        assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe));
+        assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe));
+        assertEq(vm.load(address(b), bytes32(uint256(96))), bytes32(0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe));
+    }
+
+    function testConcat3() public {
+        b.concatMemoryAndSet3();
+        
+        assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(32)));
+        assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe));
+        assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(0));
     }
 }
