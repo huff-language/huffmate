@@ -113,20 +113,16 @@ contract ECDSATest is Test {
 
     function testBytesToEthSignedMessageHashShort() public {
         bytes memory message = hex"61626364";
-        // prettier-ignore
         assertTrue(ecdsa.toEthSignedMessageHashDyn(message) == bytes32(0xefd0b51a9c4e5f3449f4eeacb195bf48659fbc00d2f4001bf4c088ba0779fb33));
     }
 
-    // function testBytesToEthSignedMessageHashEmpty() public {
-    //     bytes memory message = hex"";
-    //     // prettier-ignore
-    //     assertTrue(message.toEthSignedMessageHash() == bytes32(0x5f35dce98ba4fba25530a026ed80b2cecdaa31091ba4958b99b52ea1d068adad));
-    // }
-    //
-    // function testBytesToEthSignedMessageHashEmptyLong() public {
-    //     // prettier-ignore
-    //     bytes memory message = hex"4142434445464748494a4b4c4d4e4f505152535455565758595a6162636465666768696a6b6c6d6e6f707172737475767778797a3031323334353637383921402324255e262a28292d3d5b5d7b7d";
-    //     // prettier-ignore
-    //     assertTrue(message.toEthSignedMessageHash() == bytes32(0xa46dbedd405cff161b6e80c17c8567597621d9f4c087204201097cb34448e71b));
-    // }
+    function testBytesToEthSignedMessageHashEmpty() public {
+        bytes memory message = hex"";
+        assertTrue(ecdsa.toEthSignedMessageHashDyn(message) == bytes32(0x5f35dce98ba4fba25530a026ed80b2cecdaa31091ba4958b99b52ea1d068adad));
+    }
+
+    function testBytesToEthSignedMessageHashEmptyLong() public {
+        bytes memory message = hex"4142434445464748494a4b4c4d4e4f505152535455565758595a6162636465666768696a6b6c6d6e6f707172737475767778797a3031323334353637383921402324255e262a28292d3d5b5d7b7d";
+        assertTrue(ecdsa.toEthSignedMessageHashDyn(message) == bytes32(0xa46dbedd405cff161b6e80c17c8567597621d9f4c087204201097cb34448e71b));
+    }
 }
