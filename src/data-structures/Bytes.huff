@@ -76,3 +76,59 @@ this macro is non destructive for memory and appends the new concatenated bytes 
     // clear
     pop pop pop             // [free_loc]
 }
+
+// @param mem_ptr position in memory of the start of the bytes array 
+// @param start position of the slice relative to the array
+// @param length of the output slice
+// @returns position of the output slice in memory
+#define macro SLICE_MEMORY(mem_ptr, start, length) = takes(3) returns(1) {
+  <mem_ptr> mload              // [len]  
+  
+  // TODO: assert that length <= len
+  // TODO: assert that start < len + mem_ptr
+  // Or should we let it free and not loop ?
+  
+  pop
+  
+  msize <length> msize mstore        // [free_loc_pos]
+  msize                  // [free_loc_pos, free_loc]
+  swap1
+  
+  <length>                     // [length, free_loc_pos, free_loc]
+
+  <mem_ptr> 0x20 add           // [arr_start, length, free_loc_pos, free_loc]
+  <start> add                  // [counter, length, free_loc_pos, free_loc]
+
+  // 0x20 add                     // [counter, length, free_loc_pos, free_loc]
+  loop jump
+  
+  loop:                        // [counter, length_left, free_loc_pos, free_loc]
+    dup1 mload                 // [slice_slice, counter, length_left, free_loc_pos, free_loc]
+
+    // if current is not full slot, then load the last bytes and break
+    0x20 dup3 gt iszero        // [is_not_full_slot, slice_slice, counter, length_left, free_loc_pos, free_loc]
+    break jumpi
+    
+    dup5 mstore                // [counter, length_left, free_loc_pos, free_loc]
+    0x00 0x00 revert
+    /*0x20 add swap3             // [free_loc, length_left, free_loc_pos, counter + 1]
+    0x20 add swap3             // [counter + 1, length_left, free_loc_pos, free_loc + 1]
+    swap1 0x20 sub swap1       // [counter + 1, length_left - 1, free_loc_pos, free_loc + 1]
+    
+    swap1                       // [length_left, counter, free_loc_pos, free_loc]
+    0x20 swap1                  // [length_left, 0x20, counter, free_loc_pos, free_loc]
+    sub                         // [length_left - 0x20, counter, free_loc_pos, free_loc]
+    swap1                       // [counter, length_left - 0x20, free_loc_pos, free_loc]*/
+
+    loop jump
+    
+  break:                      // [slice_slice, counter, length, free_loc_pos, free_loc]
+    // store the remaining length
+    dup3 0x20 sub             // [zero_length, slice_slice, counter, length, free_loc_pos, free_loc]
+    0x08 mul swap1 dup2       // [shift, slice_slice, shift, counter, length, free_loc_pos, free_loc]
+    shr                       // [left_pad_slice, shift, counter, length, free_loc_pos, free_loc]
+    swap1 shl                 // [slice_slice, counter, length, free_loc_pos, free_loc]
+    dup5 mstore               // [counter, length, free_loc_pos, free_loc]
+  
+    pop pop swap1 pop         // [free_loc_pos]
+}

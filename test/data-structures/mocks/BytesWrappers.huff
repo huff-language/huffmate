@@ -1,6 +1,3 @@
-#define function concatMemoryAndSet() nonpayable returns (bytes memory)
-#define function getStorage(bytes32) view returns (bytes32)
-
 #define macro SET_STOR(offset, value) = takes(2) returns(0) {
     <value> <offset> sstore        // []
 }
@@ -74,11 +71,29 @@
     stop
 }
 
+#define macro SLICE_MEMORY_AND_SET1() = takes (0) returns (0) {
+    pop
+        
+    0x20 0x00 mstore        
+    0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
+    
+    SLICE_MEMORY(0x00, 0x00, 0x10)
+        
+    dup1 mload
+    0x00 SET_STOR()
+        
+    dup1 0x20 add mload          // [babe1, pos]
+    0x20 SET_STOR()              // [pos]
+    
+    stop
+}
+
 #define macro MAIN() = takes (0) returns (0) {
     0x00 calldataload 0xE0 shr
     dup1 __FUNC_SIG("concatMemoryAndSet1()") eq concatMemoryAndSet1 jumpi
     dup1 __FUNC_SIG("concatMemoryAndSet2()") eq concatMemoryAndSet2 jumpi
     dup1 __FUNC_SIG("concatMemoryAndSet3()") eq concatMemoryAndSet3 jumpi
+    dup1 __FUNC_SIG("sliceMemoryAndSet1()") eq sliceMemoryAndSet1 jumpi
   
     0x00 0x00 revert
 
@@ -88,4 +103,6 @@
         CONCAT_MEMORY_AND_SET2()
     concatMemoryAndSet3:
         CONCAT_MEMORY_AND_SET3()
+    sliceMemoryAndSet1:
+        SLICE_MEMORY_AND_SET1()
 }
