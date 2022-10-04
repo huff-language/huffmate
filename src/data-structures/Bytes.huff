@@ -86,7 +86,7 @@ this macro is non destructive for memory and appends the new concatenated bytes 
   
   // TODO: assert that length <= len
   // TODO: assert that start < len + mem_ptr
-  // Or should we let it free and not loop ?
+  // Or should we let it free ?
   
   pop
   
@@ -106,19 +106,17 @@ this macro is non destructive for memory and appends the new concatenated bytes 
     dup1 mload                 // [slice_slice, counter, length_left, free_loc_pos, free_loc]
 
     // if current is not full slot, then load the last bytes and break
-    0x20 dup3 gt iszero        // [is_not_full_slot, slice_slice, counter, length_left, free_loc_pos, free_loc]
+    0x20 dup4 lt               // [is_not_full_slot, slice_slice, counter, length_left, free_loc_pos, free_loc]
+    // TODO: cant we just use lt?
     break jumpi
     
     dup5 mstore                // [counter, length_left, free_loc_pos, free_loc]
-    0x00 0x00 revert
-    /*0x20 add swap3             // [free_loc, length_left, free_loc_pos, counter + 1]
+
+    0x20 add swap3             // [free_loc, length_left, free_loc_pos, counter + 1]
     0x20 add swap3             // [counter + 1, length_left, free_loc_pos, free_loc + 1]
-    swap1 0x20 sub swap1       // [counter + 1, length_left - 1, free_loc_pos, free_loc + 1]
-    
-    swap1                       // [length_left, counter, free_loc_pos, free_loc]
-    0x20 swap1                  // [length_left, 0x20, counter, free_loc_pos, free_loc]
-    sub                         // [length_left - 0x20, counter, free_loc_pos, free_loc]
-    swap1                       // [counter, length_left - 0x20, free_loc_pos, free_loc]*/
+    swap1 0x20                 // [0x20, length_left, counter + 1, free_loc_pos, free_loc + 1]
+    swap1 sub                  // [length_left - 1, counter + 1, free_loc_pos, free_loc + 1]
+    swap1                      // [counter + 1, length_left - 1, free_loc_pos, free_loc + 1]
 
     loop jump
     

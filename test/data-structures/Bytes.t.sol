@@ -10,6 +10,7 @@ interface IBytes {
     function concatMemoryAndSet2() external;
     function concatMemoryAndSet3() external;
     function sliceMemoryAndSet1() external;
+    function sliceMemoryAndSet2() external;
 }
 
 contract BytesTest is Test {
@@ -54,5 +55,12 @@ contract BytesTest is Test {
         b.sliceMemoryAndSet1();
         assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(16)));
         assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(bytes16(0xbabe1babe1babe1babe1babe1babe1ba)));
+    }
+    
+    function testSlice2() public {
+        b.sliceMemoryAndSet2();
+        assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(36)));
+        assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(0x1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babebabe));
+        assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(bytes4(0x2babe2ba)));
     }
 }

@@ -82,8 +82,29 @@
     dup1 mload
     0x00 SET_STOR()
         
-    dup1 0x20 add mload          // [babe1, pos]
-    0x20 SET_STOR()              // [pos]
+    dup1 0x20 add mload
+    0x20 SET_STOR()
+    
+    stop
+}
+
+#define macro SLICE_MEMORY_AND_SET2() = takes (0) returns (0) {
+    pop
+        
+    0x40 0x00 mstore        
+    0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
+    0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x40 mstore
+    
+    SLICE_MEMORY(0x00, 0x02, 0x24)
+        
+    dup1 mload
+    0x00 SET_STOR()
+        
+    dup1 0x20 add mload
+    0x20 SET_STOR()
+    
+    dup1 0x40 add mload
+    0x40 SET_STOR()
     
     stop
 }
@@ -94,6 +115,7 @@
     dup1 __FUNC_SIG("concatMemoryAndSet2()") eq concatMemoryAndSet2 jumpi
     dup1 __FUNC_SIG("concatMemoryAndSet3()") eq concatMemoryAndSet3 jumpi
     dup1 __FUNC_SIG("sliceMemoryAndSet1()") eq sliceMemoryAndSet1 jumpi
+    dup1 __FUNC_SIG("sliceMemoryAndSet2()") eq sliceMemoryAndSet2 jumpi
   
     0x00 0x00 revert
 
@@ -105,4 +127,6 @@
         CONCAT_MEMORY_AND_SET3()
     sliceMemoryAndSet1:
         SLICE_MEMORY_AND_SET1()
+    sliceMemoryAndSet2:
+        SLICE_MEMORY_AND_SET2()
 }
