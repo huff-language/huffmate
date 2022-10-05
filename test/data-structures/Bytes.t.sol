@@ -9,6 +9,8 @@ interface IBytes {
     function concatMemoryAndSet1() external;
     function concatMemoryAndSet2() external;
     function concatMemoryAndSet3() external;
+    function concatMemoryAndSet4() external;
+    function concatMemoryAndSet5() external;
     function sliceMemoryAndSet1() external;
     function sliceMemoryAndSet2() external;
 }
@@ -36,7 +38,6 @@ contract BytesTest is Test {
 
     function testConcat2() public {
         b.concatMemoryAndSet2();
-        
         assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(96)));
         assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe));
         assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe));
@@ -48,6 +49,22 @@ contract BytesTest is Test {
         
         assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(32)));
         assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe));
+        assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(0));
+    }
+    
+    function testConcat4() public {
+        b.concatMemoryAndSet4();
+        
+        assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(37)));
+        assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe));
+        assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(bytes5(0xbabe2babe2)));
+    }
+    
+    function testConcat5() public {
+        b.concatMemoryAndSet5();
+        
+        assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(15)));
+        assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(bytes15(0xbabe1babe1babe1babe1babe2babe2)));
         assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(0));
     }
     

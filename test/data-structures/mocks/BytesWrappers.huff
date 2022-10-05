@@ -71,6 +71,49 @@
     stop
 }
 
+#define macro CONCAT_MEMORY_AND_SET4() = takes (0) returns (0) {
+    pop    // remove func selector
+
+    0x20 0x00 mstore        
+    0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
+    
+    0x05 0x40 mstore
+    __RIGHTPAD(0xbabe2babe2) 0x60 mstore
+
+    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+        
+    dup1 mload                   // [len, pos]
+    0x00 SET_STOR()              // [pos]
+        
+    dup1 0x20 add mload          // [babe1, pos]
+    0x20 SET_STOR()              // [pos]
+    
+    dup1 0x40 add mload          // [babe2, pos]
+    0x40 SET_STOR()              // [pos]
+    
+    stop
+}
+
+#define macro CONCAT_MEMORY_AND_SET5() = takes (0) returns (0) {
+    pop    // remove func selector
+
+    0x0a 0x00 mstore        
+    __RIGHTPAD(0xbabe1babe1babe1babe1) 0x20 mstore
+    
+    0x05 0x40 mstore
+    __RIGHTPAD(0xbabe2babe2) 0x60 mstore     // don't need to be % 0x20
+
+    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+        
+    dup1 mload                   // [len, pos]
+    0x00 SET_STOR()              // [pos]
+        
+    dup1 0x20 add mload          // [babe1, pos]
+    0x20 SET_STOR()              // [pos]
+    
+    stop
+}
+
 #define macro SLICE_MEMORY_AND_SET1() = takes (0) returns (0) {
     pop
         
@@ -114,6 +157,8 @@
     dup1 __FUNC_SIG("concatMemoryAndSet1()") eq concatMemoryAndSet1 jumpi
     dup1 __FUNC_SIG("concatMemoryAndSet2()") eq concatMemoryAndSet2 jumpi
     dup1 __FUNC_SIG("concatMemoryAndSet3()") eq concatMemoryAndSet3 jumpi
+    dup1 __FUNC_SIG("concatMemoryAndSet4()") eq concatMemoryAndSet4 jumpi
+    dup1 __FUNC_SIG("concatMemoryAndSet5()") eq concatMemoryAndSet5 jumpi
     dup1 __FUNC_SIG("sliceMemoryAndSet1()") eq sliceMemoryAndSet1 jumpi
     dup1 __FUNC_SIG("sliceMemoryAndSet2()") eq sliceMemoryAndSet2 jumpi
   
@@ -125,6 +170,10 @@
         CONCAT_MEMORY_AND_SET2()
     concatMemoryAndSet3:
         CONCAT_MEMORY_AND_SET3()
+    concatMemoryAndSet4:
+        CONCAT_MEMORY_AND_SET4()
+    concatMemoryAndSet5:
+        CONCAT_MEMORY_AND_SET5()
     sliceMemoryAndSet1:
         SLICE_MEMORY_AND_SET1()
     sliceMemoryAndSet2:
