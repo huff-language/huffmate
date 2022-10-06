@@ -19,16 +19,22 @@
     dup3 0x20 gt iszero               // [is_full_slot, word, is_sec_loop, len_left, index(i), index(j), free_loc_pos]
     full_slot jumpi                   // [word, is_sec_loop, len_left, index(i), index(j), free_loc_pos]
 
-    // else it's not a full slot, we're hitting an end. Then clean memory slot
-    swap1 swap2 0x20 sub              // [pad_len, word, is_sec_loop, index(i), index(j), free_loc_pos]
-    0x08 mul swap1 dup2               // [shift, word, shift, is_sec_loop, index(i), index(j), free_loc_pos]
-    shr                               // [left_padded_word, shift, is_sec_loop, index(i), index(j), free_loc_pos]
-    swap1 shl                         // [clean_word, is_sec_loop, index(i), index(j), free_loc_pos]
-    dup4 mstore                       // [is_sec_loop, index(i), index(j), free_loc_pos]
+    // else it's not a full slot, we're hitting an end. Then clean memory slot and update j with a partial length
+    // swap4 dup3 add swap4              // [word, is_sec_loop, len_left, index(i), index(j + 1), free_loc_pos]
+    // TODO: optimize SWAPS
+
+    dup3 0x20 sub                     // [pad_len, word, is_sec_loop, len_left, index(i), index(j), free_loc_pos]
+    // swap1 swap2 0x20 sub              // [pad_len, word, is_sec_loop, len_left, index(i), index(j), free_loc_pos]
+    0x08 mul swap1 dup2               // [shift, word, shift, is_sec_loop, len_left, index(i), index(j), free_loc_pos]
+    shr                               // [left_padded_word, shift, is_sec_loop, len_left, index(i), index(j), free_loc_pos]
+    swap1 shl                         // [clean_word, is_sec_loop, len_left, index(i), index(j), free_loc_pos]
+    dup5 mstore                       // [is_sec_loop, len_left, index(i), index(j), free_loc_pos]
+    swap3 add swap2                   // [is_sec_loop, index(i), index(j + 1), free_loc_pos]
   
     // here we check if current loop is for the 2nd array
-    iszero bridge jumpi               // [index(i), index(j), free_loc_pos]
-    pop pop break jump                // [free_loc_pos]
+    swap1 pop                         // [is_sec_loop, index(j + 1), free_loc_pos]
+    iszero bridge jumpi               // [index(j + 1), free_loc_pos]
+    pop break jump                    // [free_loc_pos]
 
     empty_slot:                       // [is_sec_loop, len_left, index(i), index(j), free_loc_pos]
       swap2 pop pop                   // [is_sec_loop, index(j), free_loc_pos]
