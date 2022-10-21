@@ -16,7 +16,7 @@
 /// - 96 bytes for SAFE_APPROVE
 
 
-/// @notice Safely transfers an `amount` of eth to a `to` (recipient)
+/// @notice Safely transfers an `amount` of eth to the address `to`
 #define macro SAFE_TRANSFER_ETH() = takes (2) {
     // Input stack:            [to, amount]
     // Output stack:           []
@@ -33,7 +33,7 @@
     success:
 }
 
-/// @notice Safely transfers an `amount` from `from` to a `to` recipient of `token`
+/// @notice Safely transfers an `amount` of `token` from an address `from` to the address `to`
 #define macro SAFE_TRANSFER_FROM(mem_ptr) = takes (4) {
     // Input stack:            [from, to, amount, token]
     // Output stack:           []
@@ -70,6 +70,7 @@
     success:
 }
 
+/// @notice Safely transfers an `amount` to an address `to` for the provided `token`
 #define macro SAFE_TRANSFER(mem_ptr) = takes (3) {
     // Input stack:            [to, amount, token]
     // Output stack:           []
@@ -104,6 +105,7 @@
     success:
 }
 
+/// @notice Safely approves an `amount` for an address `to` for the provided `token`
 #define macro SAFE_APPROVE(mem_ptr) = takes (3) {
     // Input stack:        [to, amount, token]
     // Output stack:       []
