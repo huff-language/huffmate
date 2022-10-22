@@ -1,11 +1,6 @@
 name: ci
 
-on:
-  # manual trigger
-  workflow_dispatch:
-
-  # on push
-  push:
+on: [push]
 
 jobs:
   check:
