@@ -5,10 +5,7 @@ on:
   workflow_dispatch:
 
   # on push
-  push:
-    paths:
-      - test/**
-      - src/**
+  [push]
 
 jobs:
   check:
