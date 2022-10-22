@@ -69,9 +69,8 @@ jobs:
         with:
           version: nightly
       - name: Huff Tests
-        uses: abigger87/huff-tests@v2.0.0
+        uses: huff-language/huff-tests-action@v3
         with:
-          with-forge-tests: false
-          test-location: "src"
-          test-extension: "*.huff"
-
+          with-location: "src"
+          with-extension: "*.huff"
+          with-format: "table"
