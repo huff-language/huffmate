@@ -5,12 +5,10 @@ on:
   workflow_dispatch:
 
   # on push
-  [push]
+  push:
 
 jobs:
   check:
-    strategy:
-      fail-fast: true
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
@@ -30,8 +28,6 @@ jobs:
         id: build
 
   tests:
-    strategy:
-      fail-fast: true
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
