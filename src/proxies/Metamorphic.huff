@@ -6,6 +6,56 @@
 /// @notice Adapted from <https://github.com/0age/metamorphic>
 
 
+/// -----------------------
+///
+/// How does Metamorphism work?
+///
+/// In the constructor, set up the initialization code for metamorphic contracts as well as the keccak256 hash of the given initialization code.
+/// The bytes passed into the Metamorphic Factory is used to deploy any transient contracts, which will deploy any metamorphic contracts that require the use of a constructor.
+///
+/// Metamorphic contract initialization code (29 bytes): 0x5860208158601c335a63aaf10f428752fa158151803b80938091923cf3
+///
+/// Breaking down the metamorphic contract initialization code
+///
+///  -----------------------
+///
+/// Format:
+/// pc | op | name | [stack] | <memory> | // Description
+///
+///  -----------------------
+///
+/// 00 58 getpc           [0]                                                 <>            // Set the first stack item to zero (using the program counter (or pc) since it is zero)
+/// 01 60 push1           [0]                                                 <>            // Pushes the next byte onto the stack
+/// 02 20 outsize         [32, 0]                                             <>            // Value pushed to the stack: 32 (the length of word returned from staticcall)
+/// 03 81 dup2            [0, 32, 0]                                          <>            // Duplicates the second stack item (0) (the position of word returned from staticcall)
+/// 04 58 getpc           [4, 0, 32, 0]                                       <>            // Set fourth stack item to 4, length of selector given to staticcall
+/// 05 60 push1           [4, 0, 32, 0]                                       <>            // Pushes the next byte onto the stack
+/// 06 1c inpos           [28, 4, 32, 0]                                      <>            // Value pushed to stack: 28 (position of selector given to staticcall)
+/// 07 33 caller          [caller, 28, 4, 0, 32, 0]                           <>            // Pushes msg.sender to the stack (target address for staticcall)
+/// 08 5a gas             [gas, caller, 28, 4, 0, 32, 0]                      <>            // Pushes msg.gas to the stack (gas to forward for staticcall)
+/// 09 63 push4           [gas, caller, 28, 4, 0, 32, 0]                      <>            // Pushes the next 4 bytes to the stack (the function selector)
+/// 10 aaf10f42 selector  [0xaaf10f42, gas, caller, 28, 4, 0, 32, 0]          <>            // The 4byte function selector pushed to the stack
+/// 11 87 dup8            [0, 0xaaf10f42, gas, caller, 28, 4, 0, 32, 0]       <>            // Push the offset where to store the function selector in memory
+/// 12 52 mstore          [gas, caller, 28, 4, 0, 32, 0]                      <0xaaf10f42>  // Places the function selector in memory at location 0x00 using mstore
+/// 13 fa staticcall      [result (1 if success), 0]                          <address>     // Calls staticcall (places address in memory)
+/// 14 15 iszero          [result == 0, 0]                                    <address>     // Flips the success bit of the staticcall
+/// 15 81 dup2            [0, result == 0, 0]                                 <address>     // Duplicates the second stack item (0) (the position of address in memory)
+/// 16 51 mload           [address, result == 0, 0]                           <>            // Loads address from position in memory onto the stack
+/// 17 80 dup1            [address, address, result == 0, 0]                  <>            // Duplicates the address on the stack (the address for extcodesize to read)
+/// 18 3b extcodesize     [size, address, result == 0, 0]                     <>            // Gets the extcodesize of address and places on the stack
+/// 19 80 dup1            [size, size, address, result == 0, 0]               <>            // Duplicates the size of code at the address (reordering stack for extcodecopy)
+/// 20 93 swap4           [0, size, address, result == 0, size]               <>            // Swaps the size with 0 (reordering stack for extcodecopy)
+/// 21 80 dup1            [0, 0, size, address, result == 0, size]            <>            // Duplicates the first stack item (reordering stack for extcodecopy)
+/// 22 91 swap2           [size, 0, 0, address, result == 0, size]            <>            // Swaps the first and third stack items (reordering stack for extcodecopy)
+/// 23 92 swap3           [address, 0, 0, size, result == 0, size]            <>            // Swaps the first and fourth stack item (reordering stack for extcodecopy)
+/// 24 3c extcodecopy     [result == 0, size]                                 <code>        // Calls extcodecopy with four stack items (placing the runtime code in memory)
+/// 25 f3 return          []                                                                // Return to deploy final code in memory
+///
+/// -----------------------
+
+
+
+
 // Imports
 #include "../data-structures/Hashmap.huff"
 #include "../utils/CommonErrors.huff"

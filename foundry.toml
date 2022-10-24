@@ -22,6 +22,7 @@ fs_permissions = [
     { access = "read", path = "./test/proxies/mocks/ClonesWrappers.huff" },
     { access = "read", path = "./test/proxies/mocks/ProxyWrappers.huff" },
     { access = "read", path = "./test/proxies/mocks/ProxyFactoryWrappers.huff" },
+    { access = "read", path = "./test/proxies/mocks/MetamorphicWrappers.huff" },
 
     { access = "read", path = "./test/tokens/mocks/ERC20MintableWrappers.huff" },
     { access = "read", path = "./test/tokens/mocks/ERC20Wrappers.huff" },
