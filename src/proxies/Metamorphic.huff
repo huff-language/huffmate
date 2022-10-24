@@ -1,0 +1,251 @@
+/// @title Metamorphic Contract Factory
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice A factory to create metamorphic contracts
+/// @notice Metamorphic contracts can be redeployed with new code to the same address
+/// @notice Adapted from <https://github.com/0age/metamorphic>
+
+
+// Imports
+#include "../data-structures/Hashmap.huff"
+#include "../utils/CommonErrors.huff"
+
+// Stateful Interface
+
+
+// Viewable Interface
+#define function getImplementation() view returns (address implementation)
+#define function getInitializationCode() view returns (bytes memory initializationCode)
+#define function getImplementationContractAddress(address metamorphicContractAddress) view returns (address implementationContractAddress)
+
+
+
+
+/// @notice Fires when a metamorphic contract is deployed by cloning another contract
+#define event Metamorphosed(address metamorphicContract, address newImplementation)
+
+/// @notice Fires when a metamorphic contract is deployed through a transient contract
+#define event MetamorphosedWithConstructor(address metamorphicContract, address transientContract)
+
+/// @notice Store the initialization code for metamorphic contracts
+#define constant MEAMORPHIC_CONTRACT_INITIALIZATION_CODE = 0x5860208158601c335a63aaf10f428752fa158151803b80938091923cf3
+
+// TODO: Check this is the correct keccak256(abi.encodePacked(METAMORPHIC_CONTRACT_INITIALIZATION_CODE)) hash
+/// @notice Store hash of the initialization code for metamorphic contracts as well
+#define constant METAMORPHIC_CONTRACT_INITIALIZATION_CODE_HASH = 0x12d22301d1cafd721ca6a4f0d66a2e58d9fb50e318529a683baf5bad2228067a
+
+/// @notice Store init code for transient contracts that deploy metamorphic contracts
+#define constant TRANSIENT_CONTRACT_INITIALIZATION_CODE = FREE_MEMORY_POINTER()
+
+/// @notice Store the hash of the initialization code for transient contracts as well
+#define constant TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH = FREE_MEMORY_POINTER()
+
+/// @notice Maintain a mapping of metamorphic contracts to metamorphic implementations
+/// @notice This is a mapping and should use the hashmap helpers: LOAD_ELEMENTS_FROM_KEYS and STORE_ELEMENT_FROM_KEYS
+#define constant IMPLEMENTATIONS = FREE_MEMORY_POINTER()
+
+/// @notice Maintain a mapping of transient contracts to metamorphic init codes
+/// @notice This is a mapping and should use the hashmap helpers: LOAD_ELEMENTS_FROM_KEYS and STORE_ELEMENT_FROM_KEYS
+#define constant INIT_CODES = FREE_MEMORY_POINTER()
+
+
+
+/// @notice Constructor
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+
+  // Load the transient initialization code from the creation code
+  0x20                      // [size]
+  0x20 codesize sub         // [offset, size]
+  codecopy                  // [transientContractInitializationCode]
+
+  // Store the transient contract initialization code in storage
+  dup1 [TRANSIENT_CONTRACT_INITIALIZATION_CODE] sstore    // [transientContractInitializationCode]
+
+  // Calculate the transient contract initialization code hash
+  0x00 mstore       // []
+  0x20 0x00 sha3    // [hash]
+  [TRANSIENT_CONTRACT_INTIALIZALIZATION_CODE_HASH] sstore   // [] 
+}
+
+/// @notice The function dispatch (main contract entrypoint)
+#define macro MAIN() = takes (0) returns (0) {
+  // Load the function selector
+  pc calldataload 0xE0 shr            // [selector]
+
+  // Dispatch on function selector
+  dup1 __FUNC_SIG(getImplementation) eq getImplJump jumpi               // [selector]
+  dup1 __FUNC_SIG(getInitializationCode) eq getInitJump jumpi           // [selector]
+  dup1 __FUNC_SIG(getImplementationContractAddress) eq getImplContJump jumpi  // [selector]
+
+  // Revert on invalid dispatch
+  0x00 dup1 revert                                                      // _reverts_
+
+  // Jump Dests
+  getImplJump: GET_IMPLEMENTATION()
+  getInitJump: GET_INIT_CODE()
+  getImplContJump: GET_IMPLEMENTATION_FOR_ADDRESS()
+
+}
+
+
+// View Functions
+
+/// @notice Gets the implementation for the msg.sender
+/// @notice Called by the constructor of each metamorphic contract
+#define macro GET_IMPLEMENTATION() = takes (0) returns (0) {
+  // Load the implementation from internal mapping
+  caller [IMPLEMENTATIONS]            // [loc, msg.sender]
+  LOAD_ELEMENTS_FROM_KEYS(0x00)       // [address(implementation)]
+
+  // Return the implementation address
+  0x00 mstore                         // []
+  0x20 0x00 return                    // _returns_
+}
+
+/// @notice Gets the initialization code for the msg.sender
+/// @notice Called by the constructor of each transient contract
+#define macro GET_INIT_CODE() = takes (0) returns (0) {
+  // Load the init code from the internal mapping
+  caller [INIT_CODES]                 // [loc, msg.sender]
+  LOAD_ELEMENT_FROM_KEYS(0x00)        // [init_code]
+
+  // Return the initialization code
+  0x00 mstore                         // []
+  0x20 0x00 return                    // _returns_
+}
+
+/// @notice Gets the implementation contract for a given metamorphic contract address
+/// @param `metamorphic` The metamorphic contract address
+#define macro GET_IMPLEMENTATION_FOR_ADDRESS() = takes (0) returns (0) {
+  // Load the address from calldata
+  0x04 calldataload                   // [address]
+  [IMPLEMENTATIONS]                   // [loc, address]
+  LOAD_ELEMENTS_FROM_KEYS(0x00)       // [implementation]
+
+  // Return the implementation address
+  0x00 mstore                         // []
+  0x20 0x00 return                    // _returns_
+}
+
+/// @notice Gets the init code of a metamorphic contract instance
+#define macro GET_CONTRACT_INIT_CODE() = takes (0) returns (0) {
+  // Load the contract address from calldata
+  0x04 calldataload                   // [contract]
+  [INIT_CODES]                        // [loc, contract]
+  LOAD_ELEMENT_FROM_KEYS(0x00)        // [init_code]
+
+  // Return the init code
+  0x00 mstore                         // []
+  0x20 0x00 return                    // _returns_
+}
+
+/// @notice Compute the address of the metamorphic contract that will be created upon submitting a given salt to the contract
+#define macro COMPUTE_METAMORPHIC_ADDRESS() = takes (0) returns (0) {
+  // Load the bytes32 salt from calldata
+  0x04 calldataload                   // [salt]
+
+  // Get the metamorphic contract address
+  _COMPUTE_METAMORPHIC_ADDRESS()     // [address]
+
+  // Return
+  0x00 mstore
+  0x20 0x00 return                        // 
+}
+
+/// @notice Internal helper for calculating the metamorphic contract address given a salt
+#define macro _COMPUTE_METAMORPHIC_ADDRESS() = takes (1) returns (1) {
+  // Input stack: [salt]
+  // Output stack: [address]
+
+  // Compute the address
+  _COMPUTE_ADDRESS([METAMORPHIC_CONTRACT_INITIALIZATION_CODE_HASH])
+}
+
+/// @notice Internal helper for calculating the transient contract address given a salt
+#define macro _COMPUTE_TRANSIENT_ADDRESS() = takes (1) returns (1) {
+  // Input stack: [salt]
+  // Output stack: [address]
+
+  // Compute the address
+  _COMPUTE_ADDRESS([TRANSIENT_CONTRACT_INITIALIZATION_CODE_HASH])
+}
+
+/// @notice Internal helper for calculating a contract address given a particular salt
+#define macro _COMPUTE_ADDRESS(hash) = takes (1) returns (1) {
+  // Input stack: [salt]
+  // Output stack: [address]
+
+  // Start with 0xff to distinguish from RLP
+  // Stored in memory @ 0x1f:0x20 (the last byte of the first word)
+  0xff 0x00 mstore                    // [salt]
+
+  // Store this address @ 0x20:0x34
+  address 0x60 shl 0x20 mstore        // [salt]
+
+  // Store the salt @ 0x34:0x54
+  0x34 mstore                         // []
+
+  // Store the code hash @ 0x54:0x74
+  <hash> 0x54 mstore                  // []
+
+  // Hash the packed data
+  0x55 0x1f sha3                      // [raw_hash]
+
+  // Clean the upper 12 bytes (96 bits or 0x60)
+  0x60 shl 0x60 shr                   // [address]
+}
+
+#define test TEST_COMPUTE_ADDRESS() = takes (0) returns (0) {
+  // TODO: use a known pre-image to compute the deterministic address
+
+}
+
+/// @notice Compute the address for a metamorphic contract address deployed via a transient contract given the address of the transient contract
+#define macro _COMPUTE_ADDRESS_WITH_CONSTRUCTOR() = takes (1) returns (1) {
+  // Input stack: [address]
+  // Output stack: [address]
+
+  // Store the first RLP byte @ 0x1f:0x20
+  0xd6 0x00 mstore                  // [address]
+
+  // Store the second RLP byte @ 0x20:0x21
+  0x94 0xf8 shl 0x20 mstore         // [address]
+
+  // Store the transient contract address @ 0x21:0x35
+  0x21 mstore                       // []
+
+  // Store the nonce @ 0x35:0x36
+  0x01 0xf8 shl 0x35 mstore         // []
+
+  // Hash the packed data
+  0x17 0x1f sha3                    // [hash]
+
+  // Clean the upper 12 bytes (96 bits or 0x60)
+  0x60 shl 0x60 shr                 // [address]
+}
+
+#define test TEST_COMPUTE_ADDRESS_WITH_CONSTRUCTOR() = takes (0) returns (0) {
+  // TODO: test
+
+}
+
+/// @notice Modifier to check that the first 20 bytes of a submitted salt match those of the calling account
+/// @notice This provides protection against the salt being stolen by frontrunners or other attackers
+#define macro CONTAINS_CALLER() = takes (1) returns (0) {
+  // Input stack: [salt]
+  0x60 shr                              // [calling_account]
+  caller eq                             // [msg.sender == calling_account]
+  __ValidCallingAccountJump jumpi       // []
+    UNAUTHORIZED(0x00)                  // _reverts
+  __ValidCallingAccountJump:            // []
+}
+
+#define test TEST_CONTAINS_VALID_CALLER() = takes (0) returns (0) {
+  // Create a valid salt
+  
+}
+
+#define test FAIL_INVALID_CALLER() = takes (0) returns (0) {
+  // Invalid salt
+
+}
