@@ -70,4 +70,26 @@ contract LibBitTest is Test {
     function testPopCount() public {
         assertEq(lib.popCount((1 << 255) | 1), 2);
     }
+
+    function testIsPowOf2() public {
+        assertEq(lib.isPowOf2(0), 0);
+        assertEq(lib.isPowOf2(type(uint256).max), 0);
+        unchecked {
+            for (uint256 i; i < 256; ++i) {
+                uint256 x = 1 << i;
+                assertEq(lib.isPowOf2(x), 1);
+                assertEq(lib.isPowOf2(~x), 0);
+            }
+        }
+    }
+
+    function testFuzzIsPowOf2(uint256 x) public {
+        vm.assume(x > 0 && x < type(uint256).max);
+        uint256 result;
+        assembly {
+            result := iszero(add(and(x, sub(x, 1)), iszero(x)))
+        }
+
+        assertEq(lib.isPowOf2(x), result);
+    }
 }
