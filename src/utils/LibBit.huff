@@ -194,3 +194,32 @@
 
     succeed:
 }
+
+#define test POP_COUNT() = {
+    0x01 dup1
+    0xFF shl or
+    POP_COUNT()
+
+    0x02 eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}
+
+#define test IS_POW_OF_2() = {
+    0x05 dup1
+    IS_POW_2()
+
+    0x00 eq next jumpi
+    0x00 dup1 revert
+
+    next: 
+    0x08 dup1
+    IS_POW_2()
+
+    0x01 eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}
+
