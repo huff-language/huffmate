@@ -5,9 +5,13 @@ import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
 
 interface ILibBit {
-	function lsb(uint256) external pure returns (uint256);
-	function msb(uint256) external pure returns (uint256);
-	function popCount(uint256) external pure returns (uint256);
+    function lsb(uint256) external pure returns (uint256);
+
+    function msb(uint256) external pure returns (uint256);
+
+    function popCount(uint256) external pure returns (uint256);
+
+    function isPowOf2(uint256) external pure returns (uint256);
 }
 
 contract LibBitTest is Test {
@@ -16,8 +20,12 @@ contract LibBitTest is Test {
     function setUp() public {
         /// @notice deploy a new instance of IJumpTableUtil by
         /// passing in the address of the deployed Huff contract
-        string memory wrapper_code = vm.readFile("test/utils/mocks/LibBitWrappers.huff");
-        lib = ILibBit(HuffDeployer.deploy_with_code("utils/LibBit", wrapper_code));
+        string memory wrapper_code = vm.readFile(
+            "test/utils/mocks/LibBitWrappers.huff"
+        );
+        lib = ILibBit(
+            HuffDeployer.deploy_with_code("utils/LibBit", wrapper_code)
+        );
     }
 
     function testFuzzMSB() public {
@@ -34,7 +42,9 @@ contract LibBitTest is Test {
     }
 
     function testFuzzLSB() public {
-        uint256 brutalizer = uint256(keccak256(abi.encode(address(this), block.timestamp)));
+        uint256 brutalizer = uint256(
+            keccak256(abi.encode(address(this), block.timestamp))
+        );
         for (uint256 i = 0; i < 256; i++) {
             assertEq(lib.lsb(1 << i), i);
             assertEq(lib.lsb(type(uint256).max << i), i);
