@@ -10,7 +10,7 @@
 #define macro PACK_VALUE() = takes (4) returns (1) {
     // Input stack:             // [length, index, value, word]
     0x100 sub sub               // [shift, value, word]
-    shl swap1 or                // [new_word]
+    shl or                      // [new_word]
 }
 
 /// @notice Unpacks value of given length from right of word
@@ -30,14 +30,14 @@
     shr                         // [value]
 }
 
-/// @notice Unpcks value of given length from index of word
-/// @dev Assume index < 256 - length
+/// @notice Unpacks value of given length from index of word
+/// @dev Assumes index < 256 - length
 ///      (word & ((~0 >> 256 - length) << (256 - length - index))) >> (256 - length - index)
 #define macro UNPACK_FROM_CENTER() = takes (3) returns (1) {
     // Input stack:             // [length, index, word]
-    0x100 sub                   // [offset, index, word]
-    swap1 dup2 sub              // [shift, offset, word]
-    [MAX] swap1 swap2 shr       // [offset_shift, shift, word]
-    dup2 shl swap1 swap2 and    // [left_shifted_word, shift]
+    0x100 sub                   // [256 - length, index, word]
+    swap1 dup2 sub              // [256 - length - index, 256 - length, word]
+    [MAX] swap1 swap2 shr       // [~0 >> 256 - length, 256 - length - index, word]
+    dup2 shl swap1 swap2 and    // [(word & ((~0 >> 256 - length) << (256 - length - index))), 256 - length - index]
     swap1 shr                   // [value]
 }

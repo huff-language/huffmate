@@ -1,0 +1,233 @@
+/// @title ECDSA
+/// @notice Gas optimized ECDSA wrapper.
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/ECDSA.sol)
+/// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/ECDSA.sol)
+/// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol)
+/// @author clabby <https://github.com/clabby>
+
+////////////////////////////////////////////////////////////////
+//                         CONSTANTS                          //
+////////////////////////////////////////////////////////////////
+
+/// @dev The number which `s` must not exceed in order for the signature to be non-malleable.
+#define constant MALLEABILITY_THRESHOLD = 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0
+
+/// @dev Ethereum Signed Message header. Used in `TO_ETH_SIGNED_MSG_HASH`
+#define constant SIG_HEADER = 0x0000000019457468657265756d205369676e6564204d6573736167653a0a3332
+
+/// @dev Ethereum Signed Message header. Used in `TO_ETH_SIGNED_MSG_HASH_DYN`
+#define constant SIG_HEADER_DYN = 0x00000000000019457468657265756d205369676e6564204d6573736167653a0a
+
+////////////////////////////////////////////////////////////////
+//                    RECOVERY OPERATIONS                     //
+////////////////////////////////////////////////////////////////
+
+/// @dev Recovers the signer's address from a message digest `hash`,
+/// and the `signature`.
+///
+/// This macro does NOT accept EIP-2098 short form signatures.
+/// Use `recover(bytes32 hash, bytes32 r, bytes32 vs)` for EIP-2098
+/// short form signatures instead.
+///
+/// WARNING!
+/// The result will be the zero address upon recovery failure.
+/// As such, it is extremely important to ensure that the address which
+/// the result is compared against is never zero.
+/// @notice The `sig_ptr` param must point to the *offset* of the signature data
+/// in calldata.
+#define macro RECOVER_CD_SIG(hash_ptr, sig_ptr) = returns (1) {
+    // Input stack:             []
+
+    <hash_ptr> calldataload  // [hash]
+    0x20 <sig_ptr> sub       // [sig_len_ptr, hash]      
+    calldataload             // [len(signature), hash]
+    
+    // If len(signature) != 65, jump to `zero`.
+    0x41 eq iszero           // [len(signature) != 0x41, hash]
+    zero jumpi               // [hash]
+
+    // Copy `r` and `s` from the calldata
+    0x40 <sig_ptr> dup2      // [0x40, sig_ptr, 0x40, hash]
+    calldatacopy             // [hash]
+
+    // If `s` is not in lower half order, such that the signature is malleable,
+    // jump to `zero`.
+    [MALLEABILITY_THRESHOLD] // [malleability_threshold, hash]
+    0x60 mload               // [s, malleability_threshold, hash]
+    gt                       // [s > MALLEABILITY_THRESHOLD, hash]
+    zero jumpi               // [hash]
+
+    // Store `hash` in scratch space @ 0x00
+    0x00 mstore              // []
+    // Compute `v` and store it in scratch space @ 0x20
+    0x40 <sig_ptr> add       // [0x40 + sig_ptr]
+    calldataload             // [cd]
+    0x00 byte                // [v]
+    0x20 mstore              // []
+
+    0x20 0x40 0x80 0x00 0x01 // [0x01, 0x00, 0x80, 0x40, 0x20]
+    gas staticcall pop       // []
+
+    // Restore the zero slot
+    0x00 0x60 mstore         // []
+    
+    // `returndatasize` will be `0x20` upon success, and `0x00` otherwise.
+    returndatasize 0x60 sub  // [0x60 - returndatasize]
+    mload                    // [result]
+    end jump                 // [result]
+
+    zero:
+        pop 0x00             // [0x00]
+    end:
+
+    // Return stack:            [result]
+}
+
+/// @dev Recovers the signer's address from a message digest `hash`,
+/// and the EIP-2098 short form signature defined by `r` and `vs`.
+///
+/// This function only accepts EIP-2098 short form signatures.
+/// See: https://eips.ethereum.org/EIPS/eip-2098
+///
+/// To be honest, I do not recommend using EIP-2098 signatures
+/// for simplicity, performance, and security reasons. Most if not
+/// all clients support traditional non EIP-2098 signatures by default.
+/// As such, this method is intentionally not fully inlined.
+/// It is merely included for completeness. - Vectorized
+///
+/// WARNING!
+/// The `result` will be the zero address upon recovery failure.
+/// As such, it is extremely important to ensure that the address which
+/// the `result` is compared against is never zero.
+#define macro RECOVER_SHORT_SIG() = takes (3) returns (1) {
+    // Input stack:             [vs, r, hash]
+
+    dup1 0xFF shr 0x1B add   // [v, vs, r, hash]
+    swap1                    // [vs, v, r, hash]
+    0x01 shl 0x01 shr        // [s, v, r, hash]
+    swap3                    // [hash, v, r, s]
+    RECOVER_VRS_SIG()        // [result]
+
+    // Return stack:            [result]
+}
+
+/// @dev Recovers the signer's address from a message digest `hash`,
+/// and the signature defined by `v`, `r`, `s`.
+///
+/// WARNING!
+/// The `result` will be the zero address upon recovery failure.
+/// As such, it is extremely important to ensure that the address which
+/// the `result` is compared against is never zero.
+#define macro RECOVER_VRS_SIG() = takes (4) returns (1) {
+    // Input stack:             [hash, v, r, s]
+
+    // If `s` is not in lower half order, such that the signature is malleable,
+    // jump to `zero`.
+    [MALLEABILITY_THRESHOLD] // [malleability_threshold, hash, v, r, s]
+    dup5 gt                  // [s > malleability_threshold, hash, v, r, s]
+    zero jumpi               // [hash, v, r, s]
+
+    0x00 mstore              // [v, r, s]
+    0x20 mstore              // [r, s]
+    0x40 mstore              // [s]
+    0x60 mstore              // []
+
+    0x20 0x40 0x80 0x00 0x01 // [0x01, 0x00, 0x80, 0x40, 0x20]
+    gas staticcall pop       // []
+
+    // Restore the zero slot
+    0x00 0x60 mstore         // []
+    returndatasize 0x60 sub  // [0x60 - returndatasize]
+    mload                    // [result]
+    end jump
+
+    zero:
+        pop pop pop pop 0x00 // [0x00]
+    end:
+
+    // Return stack:            [result]
+}
+
+/// @dev Returns an Ethereum Signed Message, created from a `hash`.
+/// This produces a hash corresponding to the one signed with the
+/// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
+/// JSON-RPC method as part of EIP-191.
+#define macro TO_ETH_SIGNED_MSG_HASH() = takes (1) returns (1) {
+    // Input stack:             [hash]
+
+    // Store in scratch space for hashing.
+    0x20 mstore              // []
+    [SIG_HEADER] 0x00 mstore // []
+
+    0x3c 0x04 sha3           // [result]
+
+    // Return stack:            [result]
+}
+/// @dev Returns an Ethereum Signed Message, created from `s`.
+/// This produces a hash corresponding to the one signed with the
+/// [`eth_sign`](https://eth.wiki/json-rpc/API#eth_sign)
+/// JSON-RPC method as part of EIP-191.
+///
+/// @dev The msg *must* be stored at a memory offset >= 0x60. Otherwise,
+/// the logic that restores the 128 bytes before the `msg_ptr` will
+/// underflow, causing a revert due to excessive memory expansion.
+#define macro TO_ETH_SIGNED_MSG_HASH_DYN(msg_ptr) = returns (1) {
+    // Input stack:             []
+
+    // We need at most 128 bytes for Ethereum signed message header.
+    // The max length of the ASCII reprenstation of a uint256 is 78 bytes.
+    // The length of "\x19Ethereum Signed Message:\n" is 26 bytes (i.e. 0x1a).
+    // The next multiple of 32 above 78 + 26 is 128 (i.e. 0x80).
+
+    // Instead of allocating, we temporarily copy the 128 bytes before the
+    // start of `msg` data to some variables.
+    <msg_ptr>                // [msg_ptr]
+    0x40 dup2 sub mload      // [m2, msg_ptr]
+    0x20 dup3 sub mload      // [m1, m2, msg_ptr]
+    0x60 dup4 sub mload      // [m3, m1, m2, msg_ptr]
+    swap3                    // [msg_ptr, m1, m2, m3]
+    dup1 mload               // [len(msg), msg_ptr, m1, m2, m3]
+    
+    swap1 0x20 add           // [ptr, len(msg), m1, m2, m3]
+    dup2 dup2 add            // [end, ptr, len(msg), m1, m2, m3]
+    swap1                    // [ptr, end, len(msg), m1, m2, m3]
+    dup3 swap1               // [ptr, temp, end, len(msg), m1, m2, m3] 
+
+    loop:
+        0x01 swap1 sub       // [ptr - 0x01, temp, end, len(msg), m1, m2, m3]
+        0x0A dup3 mod        // [temp % 0x0A, ptr, temp, end, len(msg), m1, m2, m3]
+        0x30 add             // [(temp % 0x0A) + 0x30, ptr, temp, end, len(msg), m1, m2, m3]
+        dup2 mstore8         // [ptr, temp, end, len(msg), m1, m2, m3]
+        0x0A dup3 div        // [temp / 0x0A, ptr, temp, end, len(msg), m1, m2, m3]
+        swap2 pop            // [ptr, temp, end, len(msg), m1, m2, m3]
+
+        // Continue loop if temp != 0
+        dup2 loop jumpi      // [ptr, temp, end, len(msg), m1, m2, m3]
+
+        // Copy the header into memory.
+        [SIG_HEADER_DYN]     // [sig_header, ptr, temp, end, len(msg), m1, m2, m3]
+        0x20 dup3 sub        // [ptr - 0x20, sig_header, ptr, temp, end, len(msg), m1, m2, m3]
+        mstore               // [ptr, temp, end, len(msg), m1, m2, m3]
+        swap1 pop            // [ptr, end, len(msg), m1, m2, m3]
+
+        // Compute the keccak256 hash of the memory.
+        0x1A swap1 sub       // [ptr - 0x1A, end, len(msg), m1, m2, m3]
+        dup1                 // [ptr - 0x1A, ptr - 0x1A, end, len(msg), m1, m2, m3]
+        swap2 sub            // [end - (ptr - 0x1A), ptr - 0x1A, len(msg), m1, m2, m3]
+        swap1                // [ptr - 0x1A, end - (ptr - 0x1A), len(msg), m1, m2, m3]
+        sha3                 // [result, len(msg), m1, m2, m3]
+
+        // Restore the previous memory.
+        // TODO: Can keep msg_ptr on stack here and dup rather than pushing it
+        // 4 times.
+        swap4                // [m3, len(msg), m1, m2, result]
+        0x60 <msg_ptr> sub   // [sig_ptr - 0x60, m3, len(msg), m1, m2, result]
+        mstore               // [len(msg), m1, m2, result]
+        <msg_ptr> mstore     // [m1, m2, result]
+        0x20 <msg_ptr> sub   // [sig_ptr - 0x20, m1, m2, result]
+        mstore               // [m2, result]
+        0x40 <msg_ptr> sub   // [sig_ptr - 0x40, m2, result]
+        mstore               // [result]
+
+    // Return stack:            [result]
+}
