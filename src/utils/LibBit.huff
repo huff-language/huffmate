@@ -152,10 +152,10 @@
     sub           // [x-1,x] 
     dup2          // [x,x-1,x]
     and           // [x & x-1,x]  
-    dup2          // [x, x&x-1,x]
-    iszero        // [x==0, x&x-1, x]
-    add           // [(x==0) + (x&x-1), x]   
-    iszero        // [(x==0) + (x&x-1) == 0, x]   
+    swap1         // [x, x&x-1]
+    iszero        // [x==0, x&x-1]
+    add           // [(x==0) + (x&x-1)]   
+    iszero        // [(x==0) + (x&x-1) == 0]   
 
     // Return stack:  [c]
 }
