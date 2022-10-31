@@ -143,6 +143,25 @@
     // Return stack:  [c]
 }
 
+/// @dev Returns 1, if the input is a power of 2.
+#define macro IS_POW_OF_2() = takes (1) returns (1) {
+    // Input stack:   [x]
+
+    dup1          // [x,x]
+    0x01          // [1,x,x]  
+    swap1         // [x,1,x] 
+    sub           // [x-1,x] 
+    dup2          // [x,x-1,x]
+    and           // [x & x-1,x]  
+    dup2          // [x, x&x-1,x]
+    iszero        // [x==0, x&x-1, x]
+    add           // [(x==0) + (x&x-1), x]   
+    iszero        // [(x==0) + (x&x-1) == 0, x]   
+
+    // Return stack:  [c]
+}
+
+
 #define test FLS() = {
     0xFF 0x03 shl
     FLS()
@@ -169,6 +188,23 @@
     POP_COUNT()
 
     0x02 eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}
+
+#define test IS_POW_OF_2() = {
+    0x05 dup1
+    IS_POW_OF_2()
+
+    0x00 eq next jumpi
+    0x00 dup1 revert
+
+    next: 
+    0x08 dup1
+    IS_POW_OF_2()
+
+    0x01 eq succeed jumpi
     0x00 dup1 revert
 
     succeed:
