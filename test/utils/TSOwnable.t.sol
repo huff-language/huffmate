@@ -13,7 +13,7 @@ interface TSOwnable {
 
 contract TSOwnableTest is Test {
     TSOwnable tsOwnable;
-    address immutable huffConfig = 0x18669eb6c7dFc21dCdb787fEb4B3F1eBb3172400;
+    address immutable huffConfig = 0xFEfC6BAF87cF3684058D62Da40Ff3A795946Ab06;
 
     function setUp() public {
         // Deploy TSOwnable
