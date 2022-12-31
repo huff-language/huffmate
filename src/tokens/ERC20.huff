@@ -30,15 +30,6 @@
 #define function name() nonpayable returns (string)
 #define function symbol() nonpayable returns (string)
 
-// META_NAME = "Token"
-#define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000
-#define constant META_NAME_LENGTH = 0x05
-
-// META_SYMBOL = "TKN"
-#define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
-#define constant META_SYMBOL_LENGTH = 0x03
-
-
 // ERC20 Storage
 #define constant TOTAL_SUPPLY_SLOT = FREE_STORAGE_POINTER()
 #define constant BALANCE_SLOT = FREE_STORAGE_POINTER()
@@ -62,6 +53,12 @@
 /// @notice Constructor
 /// @notice Sets the initial domain separator and chain ID
 #define macro ERC20_CONSTRUCTOR() = takes (0) returns (0) {
+    // Constructor arguments:
+    // name_size, name, symbol_size, symbol, decimals
+
+    // This constructor will return the runtime bytecode with all the 
+    // constructor arguments concatenated at the end.
+
     // Copy the decimals into memory from the bytecode
     0x20                                    // [size] - byte size to copy
     0x20 codesize sub                       // [offset, size] - offset in the code to copy from
@@ -75,6 +72,20 @@
     chainid [INITIAL_CHAIN_ID] sstore       // []
     COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
+    
+    // Copy the runtime bytecode with constructor argument concatenated.
+    0x84            // [offset] - constructor code size
+    dup1            // [offset, offset]
+    codesize        // [total_size, offset, offset]
+    sub             // [runtime_size, offset]
+    dup1            // [runtime_size, runtime_size, offset]
+    swap2           // [offset, runtime_size, runtime_size]
+    returndatasize  // [return_offset, offset, runtime_size, runtime_size]
+    codecopy        // [runtime_size]
+
+    // Return the runtime bytecode.
+    returndatasize  // [return_offset, runtime_size]
+    return          // []
 }
 
 /// @notice Approve
@@ -274,8 +285,11 @@
 #define macro COMPUTE_DOMAIN_SEPARATOR() = takes (0) returns (1) {
     // WARNING: 0x00 - 0x3f (64 bytes): scratch space for hashing methods
     // AS SUCH, WE STORE VARIABLES IN MEMORY STARTING AT 0x40
-    [PERMIT_TYPEHASH] 0x40 mstore   // []
-    [META_NAME] 0x60 mstore         // []
+    
+    _NAME_LENGTH_AND_NAME(0xd0) pop // [name]
+
+    [PERMIT_TYPEHASH] 0x40 mstore   // [name]
+    0x60 mstore                     // []
     0x20 0x60 sha3 0x60 mstore      // []
 
     // 0x31 is hex for ascii for 1
@@ -450,20 +464,54 @@
 /// @notice Returns the token name string
 #define macro NAME() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
-    0x20 0x00 mstore                    // []
-    [META_NAME_LENGTH] 0x20 mstore      // []
-    [META_NAME] 0x40 mstore             // []
+    _NAME_LENGTH_AND_NAME(0x00)         // [name_length, name_value]
+    0x20 0x00 mstore                    // [name_length, name_value]
+    0x20 mstore                         // [name_value]
+    0x40 mstore                         // []
     0x60 0x00 return                    // []
+}
+
+#define macro _NAME_LENGTH_AND_NAME(free_memory) = takes (0) returns (2) {
+    // Load name length from code.
+    0x20                // [data_size]
+    0xc0 codesize sub   // [offset_code, data_size] 
+    <free_memory>       // [offset_memory, offset_code, data_size]
+    codecopy            // []
+    // Load name from code.
+    0x00 mload          // [name_length]
+    0x20                // [name_length, name_length]
+    0xa0 codesize sub   // [offset_code, name_length, name_length]
+    <free_memory>       // [offset_memory, offset_code, name_length, name_length]
+    codecopy            // [name_length]
+    <free_memory> mload // [name_value, name_length]
+    swap1               // [name_length, name_value]
 }
 
 /// @notice Symbol
 /// @notice Returns the symbol of the token
 #define macro SYMBOL() = takes (0) returns (0) {
     NON_PAYABLE()                       // []
-    0x20 0x00 mstore                    // []
-    [META_SYMBOL_LENGTH] 0x20 mstore    // []
-    [META_SYMBOL] 0x40 mstore           // []
+    _SYMBOL_LENGTH_AND_SYMBOL(0x00)     // [symbol_length, symbol_value]
+    0x20 0x00 mstore                    // [symbol_length, symbol_value]
+    0x20 mstore                         // [symbol_value]
+    0x40 mstore                         // []
     0x60 0x00 return                    // []
+}
+
+#define macro _SYMBOL_LENGTH_AND_SYMBOL(free_memory) = takes (0) returns (2) {
+    // Load symbol length from code.
+    0x20                // [data_size]
+    0x60 codesize sub   // [offset_code, data_size] 
+    <free_memory>       // [offset_memory, offset_code, data_size]
+    codecopy            // []
+    // Load symbol from code.
+    0x00 mload          // [symbol_length]
+    0x20                // [symbol_length, symbol_length]
+    0x40 codesize sub   // [offset_code, symbol_length, symbol_length]
+    <free_memory>       // [offset_memory, offset_code, symbol_length, symbol_length]
+    codecopy            // [symbol_length]
+    <free_memory> mload // [symbol_value, symbol_length]
+    swap1               // [symbol_length, symbol_value]
 }
 
 /// @notice Decimals
