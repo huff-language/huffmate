@@ -34,7 +34,6 @@
 #define constant TOTAL_SUPPLY_SLOT = FREE_STORAGE_POINTER()
 #define constant BALANCE_SLOT = FREE_STORAGE_POINTER()
 #define constant APPROVAL_SLOT = FREE_STORAGE_POINTER()
-#define constant DECIMALS_SLOT = FREE_STORAGE_POINTER()
 
 // EIP-2612 STORAGE
 #define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
@@ -42,6 +41,7 @@
 #define constant NONCE_SLOT = FREE_STORAGE_POINTER()
 
 // Immutables offsets
+#define constant DECIMALS_OFFSET =      0x0000000000000000000000000000000000000000000000000000000000000020
 #define constant NAME_OFFSET =          0x00000000000000000000000000000000000000000000000000000000000000a0
 #define constant NAME_LENGTH_OFFSET =   0x00000000000000000000000000000000000000000000000000000000000000c0
 #define constant SYMBOL_OFFSET =        0x0000000000000000000000000000000000000000000000000000000000000040
@@ -65,22 +65,12 @@
     // This constructor will return the runtime bytecode with all the 
     // constructor arguments concatenated at the end.
 
-    // Copy the decimals into memory from the bytecode
-    0x20                                    // [size] - byte size to copy
-    0x20 codesize sub                       // [offset, size] - offset in the code to copy from
-    0x00                                    // [mem, offset, size] - offset in memory to copy to
-    codecopy                                // []
-
-    // Copy the decimals from memory into the DECIMALS_SLOT storage location
-    0x00 mload                              // [decimals]
-    [DECIMALS_SLOT] sstore                  // []
-
     chainid [INITIAL_CHAIN_ID] sstore       // []
     COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
     
     // Copy the runtime bytecode with constructor argument concatenated.
-    0x76            // [offset] - constructor code size
+    0x67            // [offset] - constructor code size
     dup1            // [offset, offset]
     codesize        // [total_size, offset, offset]
     sub             // [runtime_size, offset]
@@ -502,10 +492,10 @@
 /// @notice Decimals
 /// @notice Returns the token decimal representation
 #define macro DECIMALS() = takes (0) returns (0) {
-    NON_PAYABLE()                       // []
-    [DECIMALS_SLOT] sload               // [decimals]
-    0x00 mstore                         // []
-    0x20 0x00 return                    // []
+    NON_PAYABLE()                           // []
+    _GET_IMMUTABLE(DECIMALS_OFFSET, 0x00)   // [decimals]
+    0x00 mstore                             // []
+    0x20 0x00 return                        // []
 }
 
 /// @notice Balance Of
