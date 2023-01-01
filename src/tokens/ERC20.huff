@@ -70,18 +70,18 @@
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
     
     // Copy the runtime bytecode with constructor argument concatenated.
-    0x67            // [offset] - constructor code size
-    dup1            // [offset, offset]
-    codesize        // [total_size, offset, offset]
-    sub             // [runtime_size, offset]
-    dup1            // [runtime_size, runtime_size, offset]
-    swap2           // [offset, runtime_size, runtime_size]
-    returndatasize  // [return_offset, offset, runtime_size, runtime_size]
-    codecopy        // [runtime_size]
+    0x67                                    // [offset] - constructor code size
+    dup1                                    // [offset, offset]
+    codesize                                // [total_size, offset, offset]
+    sub                                     // [runtime_size, offset]
+    dup1                                    // [runtime_size, runtime_size, offset]
+    swap2                                   // [offset, runtime_size, runtime_size]
+    returndatasize                          // [return_offset, offset, runtime_size, runtime_size]
+    codecopy                                // [runtime_size]
 
     // Return the runtime bytecode.
-    returndatasize  // [return_offset, runtime_size]
-    return          // []
+    returndatasize                          // [return_offset, runtime_size]
+    return                                  // []
 }
 
 /// @notice Retrives an "immutable" from the runtime bytecode.
