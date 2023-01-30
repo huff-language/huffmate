@@ -3,7 +3,8 @@
 }
 
 #define macro CONCAT_MEMORY_AND_SET1() = takes (0) returns (0) {
-    pop    // remove func selector
+    // remove func selector
+    pop    
 
     0x20 0x00 mstore        
     0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
@@ -11,22 +12,23 @@
     0x20 0x40 mstore
     0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x60 mstore
 
-    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+    0x40 0x00                   // [mem_ptr1, mem_ptr2]
+    CONCAT_MEMORY()             // [pos]
         
-    dup1 mload                   // [len, pos]
-    0x00 SET_STOR()              // [pos]
+    dup1 mload                  // [len, pos]
+    0x00 SET_STOR()             // [pos]
         
-    dup1 0x20 add mload          // [babe1, pos]
-    0x20 SET_STOR()              // [pos]
+    dup1 0x20 add mload         // [babe1, pos]
+    0x20 SET_STOR()             // [pos]
         
-    0x40 add mload          // [babe2, pos]
-    0x40 SET_STOR()              // [pos]
+    0x40 add mload              // [babe2, pos]
+    0x40 SET_STOR()             // [pos]
     
     stop
 }
 
 #define macro CONCAT_MEMORY_AND_SET2() = takes (0) returns (0) {
-    pop    // remove func selector
+    pop    
 
     0x20 0x00 mstore        
     0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
@@ -35,44 +37,46 @@
     0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x60 mstore
     0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x80 mstore
 
-    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+    0x40 0x00
+    CONCAT_MEMORY()    
         
-    dup1 mload                   // [len, pos]
-    0x00 SET_STOR()              // [pos]
+    dup1 mload          
+    0x00 SET_STOR()      
         
-    dup1 0x20 add mload          // [babe1, pos]
-    0x20 SET_STOR()              // [pos]
+    dup1 0x20 add mload   
+    0x20 SET_STOR()        
         
-    dup1 0x40 add mload          // [babe2, pos]
-    0x40 SET_STOR()              // [pos]
+    dup1 0x40 add mload     
+    0x40 SET_STOR()          
         
-    0x60 add mload               // [babe2]
-    0x60 SET_STOR()              // []
+    0x60 add mload            
+    0x60 SET_STOR()            
     
     stop
 }
 
 #define macro CONCAT_MEMORY_AND_SET3() = takes (0) returns (0) {
-    pop    // remove func selector
+    pop   
 
     0x20 0x00 mstore        
     0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
     
     0x00 0x40 mstore
 
-    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+    0x40 0x00
+    CONCAT_MEMORY()    
         
-    dup1 mload                   // [len, pos]
-    0x00 SET_STOR()              // [pos]
+    dup1 mload        
+    0x00 SET_STOR()  
         
-    dup1 0x20 add mload          // [babe1, pos]
-    0x20 SET_STOR()              // [pos]
+    dup1 0x20 add mload          
+    0x20 SET_STOR()             
     
     stop
 }
 
 #define macro CONCAT_MEMORY_AND_SET4() = takes (0) returns (0) {
-    pop    // remove func selector
+    pop    
 
     0x20 0x00 mstore        
     0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
@@ -80,22 +84,23 @@
     0x05 0x40 mstore
     __RIGHTPAD(0xbabe2babe2) 0x60 mstore
 
-    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+    0x40 0x00
+    CONCAT_MEMORY()    
         
-    dup1 mload                   // [len, pos]
-    0x00 SET_STOR()              // [pos]
+    dup1 mload           
+    0x00 SET_STOR()       
         
-    dup1 0x20 add mload          // [babe1, pos]
-    0x20 SET_STOR()              // [pos]
+    dup1 0x20 add mload    
+    0x20 SET_STOR()         
     
-    dup1 0x40 add mload          // [babe2, pos]
-    0x40 SET_STOR()              // [pos]
+    dup1 0x40 add mload      
+    0x40 SET_STOR()           
     
     stop
 }
 
 #define macro CONCAT_MEMORY_AND_SET5() = takes (0) returns (0) {
-    pop    // remove func selector
+    pop
 
     0x0a 0x00 mstore        
     __RIGHTPAD(0xbabe1babe1babe1babe1) 0x20 mstore
@@ -103,33 +108,36 @@
     0x05 0x40 mstore
     __RIGHTPAD(0xbabe2babe2) 0x60 mstore
 
-    CONCAT_MEMORY(0x00, 0x40)    // [pos]
+    0x40 0x00
+    CONCAT_MEMORY()
         
-    dup1 mload                   // [len, pos]
-    0x00 SET_STOR()              // [pos]
+    dup1 mload    
+    0x00 SET_STOR()              
         
-    dup1 0x20 add mload          // [babe1, pos]
-    0x20 SET_STOR()              // [pos]
+    dup1 0x20 add mload         
+    0x20 SET_STOR()            
     
     stop
 }
 
 #define macro CONCAT_MEMORY_AND_SET6() = takes (0) returns (0) {
-    pop    // remove func selector
+    pop                          
 
+    // don't need to be % 0x20
     0x0a 0x05 mstore        
-    __RIGHTPAD(0xbabe1babe1babe1babe1) 0x25 mstore     // don't need to be % 0x20
+    __RIGHTPAD(0xbabe1babe1babe1babe1) 0x25 mstore     
     
     0x05 0x48 mstore
     __RIGHTPAD(0xbabe2babe2) 0x68 mstore
 
-    CONCAT_MEMORY(0x05, 0x48)    // [pos]
+    0x48 0x05
+    CONCAT_MEMORY()               // [pos]
         
-    dup1 mload                   // [len, pos]
-    0x00 SET_STOR()              // [pos]
+    dup1 mload                    // [len, pos]
+    0x00 SET_STOR()               // [pos]
         
-    dup1 0x20 add mload          // [babe1, pos]
-    0x20 SET_STOR()              // [pos]
+    dup1 0x20 add mload           // [babe1, pos]
+    0x20 SET_STOR()               // [pos]
     
     stop
 }
@@ -140,7 +148,8 @@
     0x20 0x00 mstore        
     0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
     
-    SLICE_MEMORY(0x00, 0x00, 0x10)
+    0x10 0x00 0x00                // [mem_ptr, start, length]
+    SLICE_MEMORY()                // [slice_ptr]
         
     dup1 mload
     0x00 SET_STOR()
@@ -158,7 +167,8 @@
     0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
     0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x40 mstore
     
-    SLICE_MEMORY(0x00, 0x02, 0x24)
+    0x24 0x02 0x00
+    SLICE_MEMORY()
         
     dup1 mload
     0x00 SET_STOR()
@@ -179,7 +189,8 @@
     0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x27 mstore
     __RIGHTPAD(0xbabe2bab) 0x47 mstore
 
-    SLICE_MEMORY(0x07, 0x20, 0x04)
+    0x04 0x20 0x07
+    SLICE_MEMORY()
 
     dup1 mload
     0x00 SET_STOR()
