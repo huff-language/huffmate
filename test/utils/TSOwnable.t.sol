@@ -13,16 +13,16 @@ interface TSOwnable {
 
 contract TSOwnableTest is Test {
     TSOwnable tsOwnable;
-    address immutable huffConfig = 0x18669eb6c7dFc21dCdb787fEb4B3F1eBb3172400;
+    address huffConfig;
 
     function setUp() public {
         // Deploy TSOwnable
         string memory wrapper_code = vm.readFile("test/utils/mocks/TSOwnableWrappers.huff");
+        huffConfig = address(HuffDeployer.config());
         tsOwnable = TSOwnable(
-            HuffDeployer
-                .config()
-                .with_code(wrapper_code)
-                .deploy("utils/TSOwnable")
+            HuffConfig(huffConfig).with_code(wrapper_code).deploy(
+                "utils/TSOwnable"
+            )
         );
     }
 
