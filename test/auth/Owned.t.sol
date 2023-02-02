@@ -4,13 +4,15 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import {HuffConfig} from "foundry-huff/HuffConfig.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
+import {NonMatchingSelectorsHelper} from "../test-utils/NonMatchingSelectorHelper.sol";
+
 
 interface Owned {
   function setOwner(address) external;
   function owner() external returns (address);
 }
 
-contract OwnedTest is Test {
+contract OwnedTest is Test, NonMatchingSelectorsHelper {
   Owned owner;
   address constant OWNER = address(0x420);
 
@@ -26,33 +28,23 @@ contract OwnedTest is Test {
   }
 
   /// @notice Test that a non-matching selector reverts
-  function testNonMatchingSelector(bytes32 callData) public {
-    bytes8[] memory func_selectors = new bytes8[](2);
-    func_selectors[0] = bytes8(hex"13af4035");
-    func_selectors[1] = bytes8(hex"8da5cb5b");
+    function testNonMatchingSelector(bytes32 callData) public {
+        bytes4[] memory func_selectors = new bytes4[](2);
+        func_selectors[0] = bytes4(hex"13af4035");
+        func_selectors[1] = bytes4(hex"8da5cb5b");
 
-    bytes8 func_selector = bytes8(callData >> 0xe0);
-    for (uint256 i = 0; i < 2; i++) {
-      if (func_selector != func_selectors[i]) {
-        return;
-      }
-    }
+        // the above would never fail as if a non matching selector
 
-    address target = address(owner);
-    uint256 OneWord = 0x20;
-    bool success = false;
-    assembly {
-      success := staticcall(
-          gas(),
-          target,
-          add(callData, OneWord),
-          mload(callData),
-          0,
-          0
-      )
+        // bytes4 func_selector = bytes4(callData << 0xe0);
+        // the above will always return 0 because after shifting all left bits are 00000000
+
+        bool success = nonMatchingSelectorHelper(
+            func_selectors,
+            callData,
+            address(owner)
+        );
+        assert(!success);
     }
-    assert(!success);
-  }
 
   function testGetOwner() public {
     assertEq(OWNER, owner.owner());

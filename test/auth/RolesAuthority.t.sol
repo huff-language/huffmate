@@ -4,6 +4,8 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import { HuffDeployer } from "foundry-huff/HuffDeployer.sol";
 import { HuffConfig } from "foundry-huff/HuffConfig.sol";
+import {NonMatchingSelectorsHelper} from "../test-utils/NonMatchingSelectorHelper.sol";
+
 
 interface RolesAuthority {
   function hasRole(address user, uint8 role) external returns (bool);
@@ -14,7 +16,7 @@ interface RolesAuthority {
   function setUserRole(address user, uint8 role, bool enabled) external;
 }
 
-contract RolesAuthorityTest is Test {
+contract RolesAuthorityTest is Test, NonMatchingSelectorsHelper {
   RolesAuthority roleAuth;
 
   address constant OWNER = address(0x420);
@@ -41,36 +43,19 @@ contract RolesAuthorityTest is Test {
     roleAuth = RolesAuthority(config.deploy("auth/RolesAuthority"));
   }
 
-  /// @notice Test that a non-matching signature reverts
-  function testNonMatchingSelector(bytes32 callData) public {
-    bytes8[] memory func_selectors = new bytes8[](6);
-    func_selectors[0] = bytes8(hex"95a8c58d");
-    func_selectors[1] = bytes8(hex"b4bad06a");
-    func_selectors[2] = bytes8(hex"b7009613");
-    func_selectors[3] = bytes8(hex"c6b0263e");
-    func_selectors[4] = bytes8(hex"7d40583d");
-    func_selectors[5] = bytes8(hex"67aff484");
-    bytes8 func_selector = bytes8(callData >> 0xe0);
-    for (uint256 i = 0; i < 6; i++) {
-      if (func_selector != func_selectors[i]) {
-        return;
-      }
+  /// @notice Test that a non-matching selector reverts
+    function testNonMatchingSelector(bytes32 callData) public {
+        bytes4[] memory func_selectors = new bytes4[](2);
+        func_selectors[0] = bytes4(hex"13af4035");
+        func_selectors[1] = bytes4(hex"8da5cb5b");
+
+        bool success = nonMatchingSelectorHelper(
+            func_selectors,
+            callData,
+            address(roleAuth)
+        );
+        assert(!success);
     }
-    address target = address(roleAuth);
-    uint256 OneWord = 0x20;
-    bool success = false;
-    assembly {
-      success := staticcall(
-          gas(),
-          target,
-          add(callData, OneWord),
-          mload(callData),
-          0,
-          0
-      )
-    }
-    assert(!success);
-  }
 
   /// @notice Test if a user has a role.
   function testUserHasRole(address user) public {
