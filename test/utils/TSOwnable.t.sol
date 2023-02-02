@@ -18,11 +18,19 @@ contract TSOwnableTest is Test {
     function setUp() public {
         // Deploy TSOwnable
         string memory wrapper_code = vm.readFile("test/utils/mocks/TSOwnableWrappers.huff");
+<<<<<<< HEAD
         huffConfig = address(new HuffConfig());
         tsOwnable = TSOwnable(
             HuffConfig(huffConfig)
                 .with_code(wrapper_code)
                 .deploy("utils/TSOwnable")
+=======
+        huffConfig = address(HuffDeployer.config());
+        tsOwnable = TSOwnable(
+            HuffConfig(huffConfig).with_code(wrapper_code).deploy(
+                "utils/TSOwnable"
+            )
+>>>>>>> e9afee2 (fixed failing test)
         );
     }
 
