@@ -30,6 +30,7 @@ contract OwnedTest is Test, NonMatchingSelectorsHelper {
   /// @notice Test that a non-matching selector reverts
     function testNonMatchingSelector(bytes32 callData) public {
         bytes4[] memory func_selectors = new bytes4[](2);
+<<<<<<< HEAD
         func_selectors[0] = Owned.setOwner.selector;
         func_selectors[1] = Owned.owner.selector;
 
@@ -42,6 +43,24 @@ contract OwnedTest is Test, NonMatchingSelectorsHelper {
         assert(!success);
     }
 
+=======
+        func_selectors[0] = bytes4(hex"13af4035");
+        func_selectors[1] = bytes4(hex"8da5cb5b");
+
+        // the above would never fail as if a non matching selector
+
+        // bytes4 func_selector = bytes4(callData << 0xe0);
+        // the above will always return 0 because after shifting all left bits are 00000000
+
+        bool success = nonMatchingSelectorHelper(
+            func_selectors,
+            callData,
+            address(owner)
+        );
+        assert(!success);
+    }
+
+>>>>>>> 8910c1f (added non matching selectors in auth tests)
   function testGetOwner() public {
     assertEq(OWNER, owner.owner());
   }
