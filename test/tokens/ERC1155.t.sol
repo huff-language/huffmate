@@ -152,7 +152,7 @@ contract WrongReturnDataERC1155Recipient is ERC1155TokenReceiver {
 contract NonERC1155Recipient {}
 
 // Tests modified from https://github.com/transmissions11/solmate/blob/main/src/test/ERC1155.t.sol
-contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
+contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils {
     /// @dev Address of the SimpleStore contract.
     ERC1155 public token;
 
@@ -163,7 +163,12 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
     /// @dev Setup the testing environment.
     function setUp() public {
         string memory wrappers = vm.readFile("test/tokens/mocks/ERC1155Wrappers.huff");
-        token = ERC1155(HuffDeployer.deploy_with_code("tokens/ERC1155", wrappers));
+        token = ERC1155(HuffDeployer.deploy_with_code_args("tokens/ERC1155", wrappers, bytes.concat(abi.encode("Token"), abi.encode("TKN"))));
+    }
+
+    function invariantMetadata() public {
+        assertEq(keccak256(abi.encode(token.name())), keccak256(abi.encode("Token")));
+        assertEq(keccak256(abi.encode(token.symbol())), keccak256(abi.encode("TKN")));
     }
 
     function testMintToEOA() public {
@@ -1805,7 +1810,7 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils{
         token.batchBurn(to, ids, burnAmounts);
     }
 
-    function testFailBalanceOfBatchWithArrayMismatch(address[] memory tos, uint256[] memory ids) public {
+    function testFailBalanceOfBatchWithArrayMismatch(address[] memory tos, uint256[] memory ids) public view {
         if (tos.length == ids.length) revert();
 
         token.balanceOfBatch(tos, ids);
