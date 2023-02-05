@@ -72,7 +72,7 @@ contract ERC4626Test is Test {
             HuffDeployer
                 .config()
                 .with_code(wrapper_code)
-                .with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN"), abi.encode(address(underlying))))
+                .with_args(bytes.concat(abi.encode(address(underlying)), abi.encode("Token"), abi.encode("TKN")))
                 .deploy("tokens/ERC4626")
         );
     }
