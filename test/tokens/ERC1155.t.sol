@@ -163,7 +163,8 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils {
     /// @dev Setup the testing environment.
     function setUp() public {
         string memory wrappers = vm.readFile("test/tokens/mocks/ERC1155Wrappers.huff");
-        token = ERC1155(HuffDeployer.deploy_with_code_args("tokens/ERC1155", wrappers, bytes.concat(abi.encode("Token"), abi.encode("TKN"))));
+        HuffDeployer.config().with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN")));
+        token = ERC1155(HuffDeployer.deploy_with_code("tokens/ERC1155", wrappers));
     }
 
     function invariantMetadata() public {
