@@ -1,0 +1,9 @@
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    PAUSABLE_CONSTRUCTOR()
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xe0 shr    // [sig]
+    PAUSABLE_MAIN()            // [sig]
+    0x00 dup1 revert            // []
+}
