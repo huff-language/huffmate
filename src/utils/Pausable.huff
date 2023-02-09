@@ -30,32 +30,35 @@
 
 /// @notice Paused Storage Slot
 #define constant PAUSED_SLOT = FREE_STORAGE_POINTER()
-
+#define constant _UNPAUSED = 0x01
+#define constant _PAUSED = 0x02
 
 /// @notice Pausable constructor
 #define macro PAUSABLE_CONSTRUCTOR() = takes (0) returns (0) {
-    0x00 [PAUSED_SLOT] sstore              // []
+    [_UNPAUSED] [PAUSED_SLOT] sstore       // []
 }
 
 /// @notice whenNotPaused modifier
 #define macro WHEN_NOT_PAUSED_MODIFIER() = takes (0) returns (0) {
     [PAUSED_SLOT] sload                    // [isPaused]
-    0x00 eq when_not_paused jumpi          // []
-    0x00 0x00 revert                       // []
+    [_UNPAUSED] eq when_not_paused jumpi   // []
+    0x00 dup1 revert                       // []
     when_not_paused:                       // []
 }
 
 /// @notice whenPaused modifier
 #define macro WHEN_PAUSED_MODIFIER() = takes (0) returns (0) {
     [PAUSED_SLOT] sload                    // [isPaused]
-    0x01 eq when_paused jumpi              // []
-    0x00 0x00 revert                       // []
+    [_PAUSED] eq when_paused jumpi         // []
+    0x00 dup1 revert                       // []
     when_paused:                           // []
 }
 
 /// @notice return whether contract is paused
 #define macro PAUSABLE_IS_PAUSED() = takes (0) returns (0) {
-    [PAUSED_SLOT] sload               // [isPaused]
+    0x01                              // [1]
+    [PAUSED_SLOT] sload               // [isPaused, 1]
+    sub                               // [bool]
     0x00 mstore                       // []
     0x20 0x00 return                  // []
 }
@@ -66,7 +69,7 @@
     NON_PAYABLE()                           // []
     WHEN_NOT_PAUSED_MODIFIER()              // []
 
-    0x01 [PAUSED_SLOT] sstore               // []
+    [_PAUSED] [PAUSED_SLOT] sstore          // []
     stop
 }
 
@@ -75,7 +78,7 @@
     NON_PAYABLE()                           // []
     WHEN_PAUSED_MODIFIER()                  // []
 
-    0x00 [PAUSED_SLOT] sstore               // []
+    [_UNPAUSED] [PAUSED_SLOT] sstore        // []
     stop
 }
 
