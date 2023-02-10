@@ -12,6 +12,7 @@ interface IPausable {
 }
 
 
+
 contract PausableTest is Test {
     IPausable pausable;
 
@@ -31,17 +32,21 @@ contract PausableTest is Test {
         pausable.unpause();
         assertEq(pausable.isPaused(), false);
     }
-
-    function testPauseUnPauseModifiers() public {
-
+    
+    function testUnpauseWhenUnpaused() public {
         assertEq(pausable.isPaused(), false);
+
         vm.expectRevert();
         pausable.unpause();
+    }
 
-        assertEq(pausable.isPaused(), false);
+    function testPauseWhenPaused() public {
         pausable.pause();
         assertEq(pausable.isPaused(), true);
+
         vm.expectRevert();
         pausable.pause();
     }
+
+
 }
