@@ -26,12 +26,24 @@
 #define event Unpaused(address)
 
 
+
 // Storage
 
 /// @notice Paused Storage Slot
 #define constant PAUSED_SLOT = FREE_STORAGE_POINTER()
+
+/// @notice Unpaused representation
 #define constant _UNPAUSED = 0x01
+
+/// @notice Paused representation
 #define constant _PAUSED = 0x02
+
+/// @notice cast keccak "Paused(address)"
+#define constant EVENT_PAUSED = 0x62e78cea01bee320cd4e420270b5ea74000d11b0c9f74754ebdbfc544b05a258
+
+/// @notice cast keccak "Unpaused(address)"
+#define constant EVENT_UNPAUSED = 0x5db9ee0a495bf2e6ff9c91a7834c1ba4fdd244a5e8aa4e537bd38aeae4b073aa
+
 
 /// @notice Pausable constructor
 #define macro PAUSABLE_CONSTRUCTOR() = takes (0) returns (0) {
@@ -69,6 +81,9 @@
     NON_PAYABLE()                           // []
     WHEN_NOT_PAUSED_MODIFIER()              // []
 
+    caller [EVENT_PAUSED] 0x00 dup1
+    log2
+
     [_PAUSED] [PAUSED_SLOT] sstore          // []
     stop
 }
@@ -77,6 +92,9 @@
 #define macro PAUSABLE_UNPAUSE() = takes (0) returns (0) {
     NON_PAYABLE()                           // []
     WHEN_PAUSED_MODIFIER()                  // []
+
+    caller [EVENT_UNPAUSED] 0x00 dup1
+    log2
 
     [_UNPAUSED] [PAUSED_SLOT] sstore        // []
     stop
