@@ -71,26 +71,28 @@
 
     // next byte
     <mem_ptr> 0x20 add  // [<mem_ptr> + 32, key1, key2, key3]
-    mstore              // [key2, key3]
+    swap1 dup2          // [<mem_ptr> + 32, key1, <mem_ptr> + 32, key2, key3]
+    mstore              // [<mem_ptr> + 32, key2, key3]
 
-    0x40                // [0x40, key2, key3]
-    <mem_ptr>           // [<mem_ptr>, 0x40, key2, key3]
-    sha3                // [slot1, key2, key3]
+    0x40                // [0x40, <mem_ptr> + 32, key2, key3]
+    <mem_ptr>           // [<mem_ptr>, 0x40, <mem_ptr> + 32, key2, key3]
+    sha3                // [slot1, <mem_ptr> + 32, key2, key3]
 
     // concat the first two keys
-    <mem_ptr> 0x20 add  // [<mem_ptr> + 32, slot1, key2, key3] put slot1 in memory
-    mstore              // [key2, key3]
+    dup2                // [<mem_ptr> + 32, slot1, <mem_ptr> + 32, key2, key3] put slot1 in memory
+    mstore              // [<mem_ptr> + 32, key2, key3]
 
     // put key2 in memory, before slot1
-    <mem_ptr>           // [<mem_ptr>, key2, key3]
+    swap1               // [key2, <mem_ptr> + 32, key3]
+    <mem_ptr>           // [<mem_ptr>, key2, <mem_ptr> + 32, key3]
     mstore              // [key3]
 
-    0x40                // [0x40, key3]
-    <mem_ptr>           // [<mem_ptr>, 0x40, key3]
-    sha3                // [slot2, key3]
+    0x40                // [0x40, <mem_ptr> + 32, key3]
+    <mem_ptr>           // [<mem_ptr>, 0x40, <mem_ptr> + 32, key3]
+    sha3                // [slot2, <mem_ptr> + 32, key3]
 
     // concat with the third key
-    <mem_ptr> 0x20 add  // [<mem_ptr> + 32, slot2, key3] put slot2 in memory
+    swap1               // [<mem_ptr> + 32, slot2, key3] put slot2 in memory
     mstore              // [key3]
 
     // put key3 in memory, before slot2
