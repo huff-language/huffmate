@@ -81,8 +81,9 @@
     NON_PAYABLE()                           // []
     WHEN_NOT_PAUSED_MODIFIER()              // []
 
-    caller [EVENT_PAUSED] 0x00 dup1
-    log2
+    //emit Paused(address)
+    caller [EVENT_PAUSED] 0x00 dup1         // [0, 0, EVENT_PAUSED, msg.sender]
+    log2                                    // []
 
     [_PAUSED] [PAUSED_SLOT] sstore          // []
     stop
@@ -93,8 +94,9 @@
     NON_PAYABLE()                           // []
     WHEN_PAUSED_MODIFIER()                  // []
 
-    caller [EVENT_UNPAUSED] 0x00 dup1
-    log2
+    //emit Unpaused(address)
+    caller [EVENT_UNPAUSED] 0x00 dup1       // [0, 0, EVENT_UNPAUSED, msg.sender]
+    log2                                    // []
 
     [_UNPAUSED] [PAUSED_SLOT] sstore        // []
     stop
