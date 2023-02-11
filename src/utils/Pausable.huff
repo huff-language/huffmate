@@ -91,26 +91,3 @@
     [_UNPAUSED] [PAUSED_SLOT] sstore        // []
     stop
 }
-
-
-// Function Dispatching
-#define macro PAUSABLE_MAIN() = takes (1) returns (1) {
-    // Input stack: [sig]
-    // Output stack: [sig]
-
-    dup1 __FUNC_SIG(pause)      eq pause jumpi
-    dup1 __FUNC_SIG(unpause)    eq unpause jumpi
-    dup1 __FUNC_SIG(isPaused)   eq is_paused jumpi
-
-    // Bubble up to the parent macro
-    no_match jump
-
-    pause:
-        PAUSABLE_PAUSE()
-    unpause:
-        PAUSABLE_UNPAUSE()
-    is_paused:
-        PAUSABLE_IS_PAUSED()
-
-    no_match:
-}
