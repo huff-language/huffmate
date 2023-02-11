@@ -3,8 +3,6 @@
 /// @author zarf.eth <https://github.com/zarfsec>
 /// @notice A Pausable implementation
 
-#include "../auth/NonPayable.huff"
-
 
 // Interface
 
@@ -72,7 +70,6 @@
 
 /// @notice Pause the contract
 #define macro PAUSABLE_PAUSE() = takes (0) returns (0) {
-    NON_PAYABLE()                           // []
     WHEN_NOT_PAUSED_MODIFIER()              // []
 
     //emit Paused(address)
@@ -85,7 +82,6 @@
 
 /// @notice Unpause the contract
 #define macro PAUSABLE_UNPAUSE() = takes (0) returns (0) {
-    NON_PAYABLE()                           // []
     WHEN_PAUSED_MODIFIER()                  // []
 
     //emit Unpaused(address)
