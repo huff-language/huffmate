@@ -7,6 +7,7 @@ import "forge-std/Test.sol";
 <<<<<<< HEAD
 abstract contract NonMatchingSelectorsHelper {
     /// @dev Expected to return false.
+<<<<<<< HEAD
 =======
 /**
  * expected to fail
@@ -15,6 +16,8 @@ abstract contract NonMatchingSelectorsHelper {
 >>>>>>> a2d6ce3 (fixed comments and simplified changes, added all selectors to rolesAuthority test)
 abstract contract NonMatchingSelectorsHelper {
 >>>>>>> bde0a4d (added helper for testing non matching selectors)
+=======
+>>>>>>> 9ecff36 (fixed comments and simplified changes, added all selectors to rolesAuthority test)
     function nonMatchingSelectorHelper(
         bytes4[] memory func_selectors,
         bytes32 callData,
