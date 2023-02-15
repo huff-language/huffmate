@@ -4,12 +4,15 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 abstract contract NonMatchingSelectorsHelper {
     /// @dev Expected to return false.
 =======
 /**
  * expected to fail
  */
+=======
+>>>>>>> a2d6ce3 (fixed comments and simplified changes, added all selectors to rolesAuthority test)
 abstract contract NonMatchingSelectorsHelper {
 >>>>>>> bde0a4d (added helper for testing non matching selectors)
     function nonMatchingSelectorHelper(
@@ -17,6 +20,7 @@ abstract contract NonMatchingSelectorsHelper {
         bytes32 callData,
         address target
     ) internal returns (bool) {
+<<<<<<< HEAD
 <<<<<<< HEAD
         bytes4 func_selector = bytes4(callData);
     
@@ -32,6 +36,10 @@ abstract contract NonMatchingSelectorsHelper {
         console.logBytes4(func_selectors[0]);
 
 >>>>>>> bde0a4d (added helper for testing non matching selectors)
+=======
+        bytes4 func_selector = bytes4(callData);
+    
+>>>>>>> a2d6ce3 (fixed comments and simplified changes, added all selectors to rolesAuthority test)
         for (uint256 i = 0; i < func_selectors.length; i++) {
             if (func_selector == func_selectors[i]) {
                 return false;

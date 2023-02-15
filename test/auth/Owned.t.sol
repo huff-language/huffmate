@@ -31,6 +31,7 @@ contract OwnedTest is Test, NonMatchingSelectorsHelper {
     function testNonMatchingSelector(bytes32 callData) public {
         bytes4[] memory func_selectors = new bytes4[](2);
 <<<<<<< HEAD
+<<<<<<< HEAD
         func_selectors[0] = Owned.setOwner.selector;
         func_selectors[1] = Owned.owner.selector;
 
@@ -51,7 +52,12 @@ contract OwnedTest is Test, NonMatchingSelectorsHelper {
 
         // bytes4 func_selector = bytes4(callData << 0xe0);
         // the above will always return 0 because after shifting all left bits are 00000000
+=======
+        func_selectors[0] = Owned.setOwner.selector;
+        func_selectors[1] = Owned.owner.selector;
+>>>>>>> a2d6ce3 (fixed comments and simplified changes, added all selectors to rolesAuthority test)
 
+        
         bool success = nonMatchingSelectorHelper(
             func_selectors,
             callData,
