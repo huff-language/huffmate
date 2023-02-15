@@ -56,10 +56,10 @@ contract AuthTest is Test, NonMatchingSelectorsHelper {
   /// @notice Test that a non-matching signature reverts
     function testNonMatchingSelector(bytes32 callData) public {
         bytes4[] memory func_selectors = new bytes4[](6);
-        func_selectors[0] = bytes4(hex"13af4035");
-        func_selectors[1] = bytes4(hex"7a9e5e4b");
-        func_selectors[2] = bytes4(hex"8da5cb5b");
-        func_selectors[3] = bytes4(hex"bf7e214f");
+        func_selectors[0] = Auth.setOwner.selector;
+        func_selectors[1] = Auth.setAuthority.selector;
+        func_selectors[2] = Auth.owner.selector;
+        func_selectors[3] = Auth.authority.selector;
 
         bool success = nonMatchingSelectorHelper(
             func_selectors,

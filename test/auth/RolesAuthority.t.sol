@@ -45,9 +45,13 @@ contract RolesAuthorityTest is Test, NonMatchingSelectorsHelper {
 
   /// @notice Test that a non-matching selector reverts
     function testNonMatchingSelector(bytes32 callData) public {
-        bytes4[] memory func_selectors = new bytes4[](2);
-        func_selectors[0] = bytes4(hex"13af4035");
-        func_selectors[1] = bytes4(hex"8da5cb5b");
+        bytes4[] memory func_selectors = new bytes4[](6);
+        func_selectors[0] = RolesAuthority.hasRole.selector;
+        func_selectors[1] = RolesAuthority.doesRoleHaveCapability.selector;
+        func_selectors[2] = RolesAuthority.canCall.selector;
+        func_selectors[3] = RolesAuthority.setPublicCapability.selector;
+        func_selectors[4] = RolesAuthority.setRoleCapability.selector;
+        func_selectors[5] = RolesAuthority.setUserRole.selector;
 
         bool success = nonMatchingSelectorHelper(
             func_selectors,
