@@ -1,19 +1,9 @@
 name: ci
 
-on:
-  # manual trigger
-  workflow_dispatch:
-
-  # on push
-  push:
-    paths:
-      - test/**
-      - src/**
+on: [push]
 
 jobs:
   check:
-    strategy:
-      fail-fast: true
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
@@ -33,8 +23,6 @@ jobs:
         id: build
 
   tests:
-    strategy:
-      fail-fast: true
     name: Foundry project
     runs-on: ubuntu-latest
     steps:
@@ -69,9 +57,8 @@ jobs:
         with:
           version: nightly
       - name: Huff Tests
-        uses: abigger87/huff-tests@v2.0.0
+        uses: huff-language/huff-tests-action@v3
         with:
-          with-forge-tests: false
-          test-location: "src"
-          test-extension: "*.huff"
-
+          with-location: "src"
+          with-extension: "*.huff"
+          with-format: "table"

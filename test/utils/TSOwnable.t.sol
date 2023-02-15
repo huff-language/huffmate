@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "foundry-huff/HuffDeployer.sol";
+import "foundry-huff/HuffConfig.sol";
 import "forge-std/Test.sol";
 
 interface TSOwnable {
@@ -18,11 +18,11 @@ contract TSOwnableTest is Test {
     function setUp() public {
         // Deploy TSOwnable
         string memory wrapper_code = vm.readFile("test/utils/mocks/TSOwnableWrappers.huff");
-        huffConfig = address(HuffDeployer.config());
+        huffConfig = address(new HuffConfig());
         tsOwnable = TSOwnable(
-            HuffConfig(huffConfig).with_code(wrapper_code).deploy(
-                "utils/TSOwnable"
-            )
+            HuffConfig(huffConfig)
+                .with_code(wrapper_code)
+                .deploy("utils/TSOwnable")
         );
     }
 

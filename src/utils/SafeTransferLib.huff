@@ -1,124 +1,141 @@
 /// @title SafeTransferLib
+/// @notice SPDX-License-Identifier: MIT
 /// @notice Safe ETH and ERC20 transfer library that gracefully handles missing return values.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SafeTransferLib.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/SafeTransferLib.sol)
 /// @author clabby <https://github.com/clabby>
 /// @dev Caution! This library won't check that a token has code, responsibility is delegated to the caller.
 
-#define macro SAFE_TRANSFER_ETH() = takes (2) {
-    // Input stack:        [to, amount]
-    0x00 dup1 dup1 dup1 // [0x00, 0x00, 0x00, 0x00, to, amount]
-    swap5 swap1 swap4   // [to, amount, 0x00, 0x00, 0x00, 0x00]
-    gas call            // [call_success]
-    success jumpi       // []
+/// CONSIDERATION:
+/// We could designate byte scratch space for memory
+/// which would spare us runtime operations shifting the dynamic memory pointer
+///
+/// Designations:
+/// - 128 bytes for SAFE_TRANSFER_FROM
+/// - 96 bytes for SAFE_TRANSFER
+/// - 96 bytes for SAFE_APPROVE
 
-    // Revert with `ETHTransferFailed()` error
+
+/// @notice Safely transfers an `amount` of eth to the address `to`
+#define macro SAFE_TRANSFER_ETH() = takes (2) {
+    // Input stack:            [to, amount]
+    // Output stack:           []
+
+    0x00 dup1 dup1 dup1     // [0x00, 0x00, 0x00, 0x00, to, amount]
+    swap5 swap1 swap4       // [to, amount, 0x00, 0x00, 0x00, 0x00]
+    gas call                // [call_success]
+    success jumpi           // []
+
+    // `ETHTransferFailed()` error
     0xb12d13eb 0x00 mstore
     0x04 0x1c revert
 
     success:
-    // Return stack:       []
 }
 
+/// @notice Safely transfers an `amount` of `token` from an address `from` to the address `to`
 #define macro SAFE_TRANSFER_FROM(mem_ptr) = takes (4) {
-    // Input stack:        [from, to, amount, token]
-    __RIGHTPAD(0x23b872dd) // [transferFrom_selector, from, to, amount, token]
-    <mem_ptr> mstore    // [from, to, amount, token]
+    // Input stack:            [from, to, amount, token]
+    // Output stack:           []
 
-    // TODO: If we designate a 128 byte scratch space for this macro,
-    //       no need to do these additions at runtime.
-    <mem_ptr> 0x04 add  // [mem_ptr + 0x04, from, to, amount, token]
-    mstore              // [to, amount, token]
-    <mem_ptr> 0x24 add  // [mem_ptr + 0x24, to, amount, token]
-    mstore              // [amount, token]
-    <mem_ptr> 0x44 add  // [mem_ptr + 0x44, amount, token]
-    mstore              // [token]
+    0x23b872dd              // [transferFrom_selector, from, to, amount, token]
+    <mem_ptr>               // [mem[0x00:0x1c..0x1c:0x20], transferFrom_selector, from, to, amount, token]
+    mstore                  // [from, to, amount, token]
 
-    <mem_ptr>           // [mem_ptr, token]
-    0x64 dup2 0x00      // [0x00, mem_ptr, 0x64, mem_ptr, token]
-    0x20 swap5          // [token, 0x00, mem_ptr, 0x64, mem_ptr, 0x20]
-    gas call            // [success]
+    <mem_ptr> 0x20 add      // [mem_ptr + 0x20, from, to, amount, token]
+    mstore                  // [to, amount, token]
+    <mem_ptr> 0x40 add      // [mem_ptr + 0x40, to, amount, token]
+    mstore                  // [amount, token]
+    <mem_ptr> 0x60 add      // [mem_ptr + 0x60, amount, token]
+    mstore                  // [token]
 
-    returndatasize      // [returndatasize, success]
-    iszero              // [returndatasize == 0, success]
-    <mem_ptr> mload     // [data, returndatasize == 0, success]
-    0x01 eq             // [data == 0x01, returndatasize == 0, success]
-    or                  // [data == 0x01 | returndatasize == 0, success]
+    <mem_ptr> 0x1c add      // [mem_ptr, token]
+    0x64 dup2 0x00          // [0x00, mem_ptr, 0x64, mem_ptr, token]
+    0x20 swap5              // [token, 0x00, mem_ptr, 0x64, mem_ptr, 0x20]
+    gas call                // [success]
 
-    and                 // [success & (data == 0x01 | returndatasize == 0)]
-    success jumpi       // []
+    returndatasize          // [returndatasize, success]
+    iszero                  // [returndatasize == 0, success]
+    <mem_ptr> 0x1c add      // [offset, returndatasize == 0, success]
+    mload                   // [data, returndatasize == 0, success]
+    0x01 eq                 // [data == 0x01, returndatasize == 0, success]
+    or                      // [data == 0x01 | returndatasize == 0, success]
+
+    and                     // [success & (data == 0x01 | returndatasize == 0)]
+    success jumpi           // []
 
     0x7939f424 0x00 mstore
     0x04 0x1c revert
 
     success:
-    // Return stack:       []
 }
 
+/// @notice Safely transfers an `amount` to an address `to` for the provided `token`
 #define macro SAFE_TRANSFER(mem_ptr) = takes (3) {
-    // Input stack:        [to, amount, token]
+    // Input stack:            [to, amount, token]
+    // Output stack:           []
 
-    __RIGHTPAD(0xa9059cbb) // [transfer_selector, to, amount, token]
-    <mem_ptr> mstore    // [to, amount, token]
+    0xa9059cbb              // [transfer_selector, to, amount, token]
+    <mem_ptr>               // [mem[0x00:0x1c..0x1c:0x20], transfer_selector, to, amount, token]
+    mstore                  // [to, amount, token]
 
-    // TODO: If we designate a 96 byte scratch space for this macro,
-    //       no need to do these additions at runtime.
-    <mem_ptr> 0x04 add  // [mem_ptr + 0x04, to, amount, token]
-    mstore              // [amount, token]
-    <mem_ptr> 0x24 add  // [mem_ptr + 0x24, amount, token]
+    <mem_ptr> 0x20 add      // [mem_ptr + 0x20, to, amount, token]
+    mstore                  // [amount, token]
+    <mem_ptr> 0x40 add      // [mem_ptr + 0x40, amount, token]
     mstore
 
-    <mem_ptr>           // [mem_ptr, token]
-    0x44 dup2 0x00      // [0x00, mem_ptr, 0x44, mem_ptr, token]
-    0x20 swap5          // [token, 0x00, mem_ptr, 0x44, mem_ptr, 0x20]
-    gas call            // [success]
+    <mem_ptr> 0x1c add      // [mem_ptr, token]
+    0x44 dup2 0x00          // [0x00, mem_ptr, 0x44, mem_ptr, token]
+    0x20 swap5              // [token, 0x00, mem_ptr, 0x44, mem_ptr, 0x20]
+    gas call                // [success]
 
-    returndatasize      // [returndatasize, success]
-    iszero              // [returndatasize == 0, success]
-    <mem_ptr> mload     // [data, returndatasize == 0, success]
-    0x01 eq             // [data == 0x01, returndatasize == 0, success]
-    or                  // [data == 0x01 | returndatasize == 0, success]
+    returndatasize          // [returndatasize, success]
+    iszero                  // [returndatasize == 0, success]
+    <mem_ptr> 0x1c add      // [offset, returndatasize == 0, success]
+    mload                   // [data, returndatasize == 0, success]
+    0x01 eq                 // [data == 0x01, returndatasize == 0, success]
+    or                      // [data == 0x01 | returndatasize == 0, success]
 
-    and                 // [success & (data == 0x01 | returndatasize == 0)]
-    success jumpi       // []
+    and                     // [success & (data == 0x01 | returndatasize == 0)]
+    success jumpi           // []
 
     0x90b8ec18 0x00 mstore
     0x04 0x1c revert
 
     success:
-    // Return stack:       []
 }
 
+/// @notice Safely approves an `amount` for an address `to` for the provided `token`
 #define macro SAFE_APPROVE(mem_ptr) = takes (3) {
     // Input stack:        [to, amount, token]
+    // Output stack:       []
 
-    __RIGHTPAD(0x095ea7b3) // [transfer_selector, to, amount, token]
-    <mem_ptr> mstore    // [to, amount, token]
+    0x095ea7b3              // [transfer_selector, to, amount, token]
+    <mem_ptr>               // [mem[0x00:0x1c..0x1c:0x20], transfer_selector, to, amount, token]
+    mstore                  // [to, amount, token]
 
-    // TODO: If we designate a 96 byte scratch space for this macro,
-    //       no need to do these additions at runtime.
-    <mem_ptr> 0x04 add  // [mem_ptr + 0x04, to, amount, token]
-    mstore              // [amount, token]
-    <mem_ptr> 0x24 add  // [mem_ptr + 0x24, amount, token]
+    <mem_ptr> 0x20 add      // [mem_ptr + 0x20, to, amount, token]
+    mstore                  // [amount, token]
+    <mem_ptr> 0x40 add      // [mem_ptr + 0x40, amount, token]
     mstore
 
-    <mem_ptr>           // [mem_ptr, token]
-    0x44 dup2 0x00      // [0x00, mem_ptr, 0x44, mem_ptr, token]
-    0x20 swap5          // [token, 0x00, mem_ptr, 0x44, mem_ptr, 0x20]
-    gas call            // [success]
+    <mem_ptr> 0x1c add      // [mem_ptr, token]
+    0x44 dup2 0x00          // [0x00, mem_ptr, 0x44, mem_ptr, token]
+    0x20 swap5              // [token, 0x00, mem_ptr, 0x44, mem_ptr, 0x20]
+    gas call                // [success]
 
-    returndatasize      // [returndatasize, success]
-    iszero              // [returndatasize == 0, success]
-    <mem_ptr> mload     // [data, returndatasize == 0, success]
-    0x01 eq             // [data == 0x01, returndatasize == 0, success]
-    or                  // [data == 0x01 | returndatasize == 0, success]
+    returndatasize          // [returndatasize, success]
+    iszero                  // [returndatasize == 0, success]
+    <mem_ptr> 0x1c add      // [offset, returndatasize == 0, success]
+    mload                   // [data, returndatasize == 0, success]
+    0x01 eq                 // [data == 0x01, returndatasize == 0, success]
+    or                      // [data == 0x01 | returndatasize == 0, success]
 
-    and                 // [success & (data == 0x01 | returndatasize == 0)]
-    success jumpi       // []
+    and                     // [success & (data == 0x01 | returndatasize == 0)]
+    success jumpi           // []
 
     0x3e3f8f73 0x00 mstore
     0x04 0x1c revert
 
     success:
-    // Return stack:       []
 }

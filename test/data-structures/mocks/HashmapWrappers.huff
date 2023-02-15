@@ -1,18 +1,45 @@
-// Returns the slot for the given key.
+// Returns the slot value for the given key.
 // sig: 0x437b8ad6
 #define function loadElement(bytes32) view returns (bytes32)
 
-// Returns the slot by hashing the given keys.
+// Returns the slot value by hashing the given keys.
 // sig: 0xf268de10
 #define function loadElementFromKeys(bytes32, bytes32) view returns (bytes32)
 
+// Returns the slot value by hashing the given slot and two keys.
+// sig: 0xef5b4768
+#define function loadElementFromKeys2D(bytes32, bytes32, bytes32) view returns (bytes32)
+
+// Returns the slot value by hashing the given slot and three keys.
+// sig: 0x0cc703f5
+#define function loadElementFromKeys3D(bytes32, bytes32, bytes32, bytes32) view returns (bytes32)
+
 // Stores the value for the given key.
 // sig: 0x376caf9f
-#define function storeElement(bytes32 key, bytes32 value) view returns ()
+#define function storeElement(bytes32 key, bytes32 value) nonpayable returns ()
 
 // Stores the value for the given keys
 // sig: 0x2fdb44d8
-#define function storeElementFromKeys(bytes32 key1, bytes32 key2, bytes32 value) view returns ()
+#define function storeElementFromKeys(bytes32 key1, bytes32 key2, bytes32 value) nonpayable returns ()
+
+// Stores the value given a slot and two keys
+// sig: 0x64fab984
+#define function storeElementFromKeys2D(
+    bytes32 slot,
+    bytes32 key1,
+    bytes32 key2,
+    bytes32 value
+) nonpayable returns ()
+
+// Stores the value given a slot and three keys
+// sig: 0xd3b12314
+#define function storeElementFromKeys3D(
+    bytes32 slot,
+    bytes32 key1,
+    bytes32 key2,
+    bytes32 key3,
+    bytes32 value
+) nonpayable returns ()
 
 #define constant LOCATION = FREE_STORAGE_POINTER()
 
@@ -29,6 +56,27 @@
     0x24 calldataload
     0x04 calldataload
     LOAD_ELEMENT_FROM_KEYS(0x00)
+    0x00 mstore
+    0x20 0x00 return
+}
+
+// Get the value for the given slot and two keys
+#define macro GET_FROM_KEYS_2D() = takes(0) returns(0) {
+    0x44 calldataload
+    0x24 calldataload
+    0x04 calldataload
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)
+    0x00 mstore
+    0x20 0x00 return
+}
+
+// Get the value for the given slot and three keys
+#define macro GET_FROM_KEYS_3D() = takes(0) returns(0) {
+    0x64 calldataload
+    0x44 calldataload
+    0x24 calldataload
+    0x04 calldataload
+    LOAD_ELEMENT_FROM_KEYS_3D(0x00)
     0x00 mstore
     0x20 0x00 return
 }
@@ -50,6 +98,27 @@
     stop
 }
 
+// Store the value for the given slot and two keys.
+#define macro STORE_FROM_KEYS_2D() = takes(0) returns(0) {
+    0x64 calldataload
+    0x44 calldataload
+    0x24 calldataload
+    0x04 calldataload
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)
+    stop
+}
+
+// Store the value for the given slot and three keys.
+#define macro STORE_FROM_KEYS_3D() = takes(0) returns(0) {
+    0x84 calldataload
+    0x64 calldataload
+    0x44 calldataload
+    0x24 calldataload
+    0x04 calldataload
+    STORE_ELEMENT_FROM_KEYS_3D(0x00)
+    stop
+}
+
 // Main Macro - The contract entrypoint
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
@@ -57,8 +126,12 @@
 
     dup1 __FUNC_SIG(loadElement)            eq load_element jumpi
     dup1 __FUNC_SIG(loadElementFromKeys)    eq load_element_from_keys jumpi
+    dup1 __FUNC_SIG(loadElementFromKeys2D)  eq load_element_from_keys_2d jumpi
+    dup1 __FUNC_SIG(loadElementFromKeys3D)  eq load_element_from_keys_3d jumpi
     dup1 __FUNC_SIG(storeElement)           eq store_element jumpi
     dup1 __FUNC_SIG(storeElementFromKeys)   eq store_element_from_keys jumpi
+    dup1 __FUNC_SIG(storeElementFromKeys2D) eq store_element_from_keys_2d jumpi
+    dup1 __FUNC_SIG(storeElementFromKeys3D) eq store_element_from_keys_3d jumpi
 
     // Revert if otherwise
     0x00 dup1 revert
@@ -67,8 +140,16 @@
         GET()
     load_element_from_keys:
         GET_FROM_KEYS()
+    load_element_from_keys_2d:
+        GET_FROM_KEYS_2D()
+    load_element_from_keys_3d:
+        GET_FROM_KEYS_3D()
     store_element:
         STORE()
     store_element_from_keys:
         STORE_FROM_KEYS()
+    store_element_from_keys_2d:
+        STORE_FROM_KEYS_2D()
+    store_element_from_keys_3d:
+        STORE_FROM_KEYS_3D()
 }
