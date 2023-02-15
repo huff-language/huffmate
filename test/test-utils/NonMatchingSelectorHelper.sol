@@ -4,6 +4,7 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 
 abstract contract NonMatchingSelectorsHelper {
+    /// @dev Expected to return false.
     function nonMatchingSelectorHelper(
         bytes4[] memory func_selectors,
         bytes32 callData,
