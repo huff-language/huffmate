@@ -21,15 +21,13 @@
 
 /// @notice Ternary
 /// @notice In shorthand, this is `condition ? x : y`, where the input stack is [condition, x, y]
+/// @dev ((x ^ y) * condition) ^ y
 #define macro TERNARY() = takes(3) returns(1) {
     // Input Stack: [condition, x, y]
+    swap1           // [x, condition, y]
+    dup3            // [y, x, condition, y]
+    xor mul xor     // [((x ^ y) * condition) ^ y]
     // Output Stack: [condition ? x : y]
-
-    // If the condition is false, jump and pop
-    iszero __Utils_Misc__ternaryNoSwap jumpi
-        swap1
-    __Utils_Misc__ternaryNoSwap:
-        pop
 }
 
 // TESTS
