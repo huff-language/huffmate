@@ -13,7 +13,7 @@
     __Utils_Misc__ternaryNoSwap jumpi
         swap1       // [y, x]
     __Utils_Misc__ternaryNoSwap:
-        // Stack: condition ? [y, x] : [x, y]
+        // Stack: condition ? [x, y] : [y, x]
         pop
 
     // Output Stack: [condition ? y : x]
