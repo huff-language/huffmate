@@ -5,16 +5,18 @@
 
 
 /// @notice Not Ternary
-/// @notice In shorthand, this is `!condition ? x : y`, where the input stack is [!condition, x, y]
+/// @notice In shorthand, this is `!condition ? x : y`, where the input stack is [condition, x, y]
 #define macro NOT_TERNARY() = takes(3) returns(1) {
-    // Input Stack: [!condition, x, y]
-    // Output Stack: [!condition ? x : y]
+    // Input Stack: [condition, x, y]
 
     // If the condition is true, jump and pop
     __Utils_Misc__ternaryNoSwap jumpi
-        swap1
+        swap1       // [y, x]
     __Utils_Misc__ternaryNoSwap:
+        // Stack: condition ? [y, x] : [x, y]
         pop
+
+    // Output Stack: [condition ? y : x]
 }
 
 /// @notice Ternary
