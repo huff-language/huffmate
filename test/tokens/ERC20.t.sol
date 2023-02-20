@@ -55,7 +55,7 @@ contract ERC20Test is Test {
         vm.startPrank(deployer);
         address mintableTokenAddress = HuffDeployer.config()
             .with_code(mintable_wrapper)
-            .with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN"), abi.encode(DECIMALS)))
+            .with_args(abi.encode(DECIMALS))
             .deploy("tokens/ERC20");
         token = IMintableERC20(mintableTokenAddress);
         vm.stopPrank();
@@ -64,7 +64,7 @@ contract ERC20Test is Test {
         vm.startPrank(deployer);
         address mockTokenAddress = HuffDeployer.config()
             .with_code(mock_wrapper)
-            .with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN"), abi.encode(DECIMALS)))
+            .with_args(abi.encode(DECIMALS))
             .deploy("tokens/ERC20");
         mockToken = IERC20(mockTokenAddress);
         vm.stopPrank();
