@@ -34,11 +34,12 @@
 }
 
 #define macro MAIN() = takes (0) returns (0) {
-    0x00 calldataload 0xE0 shr
-    ERC20_MAIN()
+    0x00 calldataload 0xE0 shr              // [sig]
 
-    dup1 __FUNC_SIG(mint) eq mint jumpi
-    dup1 __FUNC_SIG(burn) eq burn jumpi
+    dup1 __FUNC_SIG(mint) eq mint jumpi     // [sig]
+    dup1 __FUNC_SIG(burn) eq burn jumpi     // [sig]
+
+    ERC20_MAIN()                            // [sig]
 
     // Revert if no selector matches
     0x00 0x00 revert
