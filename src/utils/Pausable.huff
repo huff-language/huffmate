@@ -24,49 +24,47 @@
 #define event Unpaused(address)
 
 
-
 // Storage
 
 /// @notice Paused Storage Slot
 #define constant PAUSED_SLOT = FREE_STORAGE_POINTER()
 
 /// @notice Unpaused representation
-#define constant _UNPAUSED = 0x01
+#define constant NOT_PAUSED = 0x01
 
 /// @notice Paused representation
-#define constant _PAUSED = 0x02
+#define constant PAUSED = 0x02
 
 
 /// @notice Pausable constructor
 #define macro PAUSABLE_CONSTRUCTOR() = takes (0) returns (0) {
-    [_UNPAUSED] [PAUSED_SLOT] sstore       // []
+    [NOT_PAUSED] [PAUSED_SLOT] sstore       // []
 }
 
 /// @notice whenNotPaused modifier
 #define macro WHEN_NOT_PAUSED_MODIFIER() = takes (0) returns (0) {
-    [PAUSED_SLOT] sload                    // [isPaused]
-    [_UNPAUSED] eq when_not_paused jumpi   // []
-    0x00 dup1 revert                       // []
-    when_not_paused:                       // []
+    [PAUSED_SLOT] sload                     // [isPaused]
+    [NOT_PAUSED] eq when_not_paused jumpi   // []
+    0x00 dup1 revert                        // []
+    when_not_paused:                        // []
 }
 
 /// @notice whenPaused modifier
 #define macro WHEN_PAUSED_MODIFIER() = takes (0) returns (0) {
-    [PAUSED_SLOT] sload                    // [isPaused]
-    [_PAUSED] eq when_paused jumpi         // []
-    0x00 dup1 revert                       // []
-    when_paused:                           // []
-}
+    [PAUSED_SLOT] sload                     // [isPaused]
+    [PAUSED] eq when_paused jumpi           // []
+    0x00 dup1 revert                        // []
+    when_paused:                            // []
+}                                           
 
 /// @notice return whether contract is paused
 #define macro PAUSABLE_IS_PAUSED() = takes (0) returns (0) {
-    0x01                              // [1]
-    [PAUSED_SLOT] sload               // [isPaused, 1]
-    sub                               // [bool]
-    0x00 mstore                       // []
-    0x20 0x00 return                  // []
+    0x01                                    // [1]
+    [PAUSED_SLOT] sload                     // [isPaused, 1]
+    sub                                     // [bool]
+    0x00 mstore                             // []
+    0x20 0x00 return                        // []
 }
-
 
 /// @notice Pause the contract
 #define macro PAUSABLE_PAUSE() = takes (0) returns (0) {
@@ -76,7 +74,7 @@
     caller __EVENT_HASH(Paused) 0x00 dup1   // [0, 0, EVENT_PAUSED, msg.sender]
     log2                                    // []
 
-    [_PAUSED] [PAUSED_SLOT] sstore          // []
+    [PAUSED] [PAUSED_SLOT] sstore           // []
     stop
 }
 
@@ -88,6 +86,6 @@
     caller __EVENT_HASH(Unpaused) 0x00 dup1 // [0, 0, EVENT_UNPAUSED, msg.sender]
     log2                                    // []
 
-    [_UNPAUSED] [PAUSED_SLOT] sstore        // []
+    [NOT_PAUSED] [PAUSED_SLOT] sstore       // []
     stop
 }
