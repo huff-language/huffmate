@@ -31,21 +31,21 @@
 #define constant PAUSED_SLOT = FREE_STORAGE_POINTER()
 
 /// @notice Unpaused representation
-#define constant _UNPAUSED = 0x01
+#define constant NOT_PAUSED = 0x01
 
 /// @notice Paused representation
-#define constant _PAUSED = 0x02
+#define constant PAUSED = 0x02
 
 
 /// @notice Pausable constructor
 #define macro PAUSABLE_CONSTRUCTOR() = takes (0) returns (0) {
-    [_UNPAUSED] [PAUSED_SLOT] sstore       // []
+    [NOT_PAUSED] [PAUSED_SLOT] sstore      // []
 }
 
 /// @notice whenNotPaused modifier
 #define macro WHEN_NOT_PAUSED_MODIFIER() = takes (0) returns (0) {
     [PAUSED_SLOT] sload                    // [isPaused]
-    [_UNPAUSED] eq when_not_paused jumpi   // []
+    [NOT_PAUSED] eq when_not_paused jumpi  // []
     0x00 dup1 revert                       // []
     when_not_paused:                       // []
 }
@@ -53,7 +53,7 @@
 /// @notice whenPaused modifier
 #define macro WHEN_PAUSED_MODIFIER() = takes (0) returns (0) {
     [PAUSED_SLOT] sload                    // [isPaused]
-    [_PAUSED] eq when_paused jumpi         // []
+    [PAUSED] eq when_paused jumpi          // []
     0x00 dup1 revert                       // []
     when_paused:                           // []
 }
@@ -76,7 +76,7 @@
     caller __EVENT_HASH(Paused) 0x00 dup1   // [0, 0, EVENT_PAUSED, msg.sender]
     log2                                    // []
 
-    [_PAUSED] [PAUSED_SLOT] sstore          // []
+    [PAUSED] [PAUSED_SLOT] sstore           // []
     stop
 }
 
@@ -85,9 +85,9 @@
     WHEN_PAUSED_MODIFIER()                  // []
 
     //emit Unpaused(address)
-    caller __EVENT_HASH(Unpaused) 0x00 dup1 // [0, 0, EVENT_UNPAUSED, msg.sender]
+    caller __EVENT_HASH(Unpaused) 0x00 dup1 // [0, 0, EVENTNOT_PAUSED, msg.sender]
     log2                                    // []
 
-    [_UNPAUSED] [PAUSED_SLOT] sstore        // []
+    [NOT_PAUSED] [PAUSED_SLOT] sstore       // []
     stop
 }
