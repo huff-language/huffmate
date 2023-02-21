@@ -1,0 +1,178 @@
+/// @title Constants
+/// @notice SPDX-License-Identifier: MIT
+/// @author AmadiMichael <https://github.com/AmadiMichael>
+/// @notice common constants found in solidity and helpers in huff
+
+
+// value constants
+#define constant __ONE_WEI   = 0x01
+#define constant __ONE_GWEI  = 0x3b9aca00
+#define constant __ONE_ETHER = 0xde0b6b3a7640000
+
+
+// time constants
+#define constant __ONE_SECONDS = 0x01
+#define constant __ONE_MINUTES = 0x3c
+#define constant __ONE_HOURS   = 0xe10
+#define constant __ONE_DAYS    = 0x15180
+#define constant __ONE_WEEKS   = 0x93a80
+
+
+// type ranges constants
+#define constant __UINT256_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT248_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT240_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT232_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT224_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT216_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT208_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT200_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT192_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT184_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT176_MAX = 0xffffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT168_MAX = 0xffffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT160_MAX = 0xffffffffffffffffffffffffffffffffffffffff
+#define constant __UINT152_MAX = 0xffffffffffffffffffffffffffffffffffffff
+#define constant __UINT144_MAX = 0xffffffffffffffffffffffffffffffffffff
+#define constant __UINT136_MAX = 0xffffffffffffffffffffffffffffffffff
+#define constant __UINT128_MAX = 0xffffffffffffffffffffffffffffffff
+#define constant __UINT120_MAX = 0xffffffffffffffffffffffffffffff
+#define constant __UINT112_MAX = 0xffffffffffffffffffffffffffff
+#define constant __UINT104_MAX = 0xffffffffffffffffffffffffff
+#define constant __UINT96_MAX  = 0xffffffffffffffffffffffff
+#define constant __UINT88_MAX  = 0xffffffffffffffffffffff
+#define constant __UINT80_MAX  = 0xffffffffffffffffffff
+#define constant __UINT72_MAX  = 0xffffffffffffffffff
+#define constant __UINT64_MAX  = 0xffffffffffffffff
+#define constant __UINT56_MAX  = 0xffffffffffffff
+#define constant __UINT48_MAX  = 0xffffffffffff
+#define constant __UINT40_MAX  = 0xffffffffff
+#define constant __UINT32_MAX  = 0xffffffff
+#define constant __UINT24_MAX  = 0xffffff
+#define constant __UINT16_MAX  = 0xffff
+#define constant __UINT8_MAX   = 0xff
+
+
+#define constant __INT256_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT248_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT240_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT232_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT224_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT216_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT208_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT200_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT192_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT184_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT176_MAX = 0x7fffffffffffffffffffffffffffffffffffffffffff
+#define constant __INT168_MAX = 0x7fffffffffffffffffffffffffffffffffffffffff
+#define constant __INT160_MAX = 0x7fffffffffffffffffffffffffffffffffffffff
+#define constant __INT152_MAX = 0x7fffffffffffffffffffffffffffffffffffff
+#define constant __INT144_MAX = 0x7fffffffffffffffffffffffffffffffffff
+#define constant __INT136_MAX = 0x7fffffffffffffffffffffffffffffffff
+#define constant __INT128_MAX = 0x7fffffffffffffffffffffffffffffff
+#define constant __INT120_MAX = 0x7fffffffffffffffffffffffffffff
+#define constant __INT112_MAX = 0x7fffffffffffffffffffffffffff
+#define constant __INT104_MAX = 0x7fffffffffffffffffffffffff
+#define constant __INT96_MAX  = 0x7fffffffffffffffffffffff
+#define constant __INT88_MAX  = 0x7fffffffffffffffffffff
+#define constant __INT80_MAX  = 0x7fffffffffffffffffff
+#define constant __INT72_MAX  = 0x7fffffffffffffffff
+#define constant __INT64_MAX  = 0x7fffffffffffffff
+#define constant __INT56_MAX  = 0x7fffffffffffff
+#define constant __INT48_MAX  = 0x7fffffffffff
+#define constant __INT40_MAX  = 0x7fffffffff
+#define constant __INT32_MAX  = 0x7fffffff
+#define constant __INT24_MAX  = 0x7fffff
+#define constant __INT16_MAX  = 0x7fff
+#define constant __INT8_MAX   = 0x7f
+
+#define constant __INT256_MIN = 0x8000000000000000000000000000000000000000000000000000000000000000
+#define constant __INT248_MIN = 0xff80000000000000000000000000000000000000000000000000000000000000
+#define constant __INT240_MIN = 0xffff800000000000000000000000000000000000000000000000000000000000
+#define constant __INT232_MIN = 0xffffff8000000000000000000000000000000000000000000000000000000000
+#define constant __INT224_MIN = 0xffffffff80000000000000000000000000000000000000000000000000000000
+#define constant __INT216_MIN = 0xffffffffff800000000000000000000000000000000000000000000000000000
+#define constant __INT208_MIN = 0xffffffffffff8000000000000000000000000000000000000000000000000000
+#define constant __INT200_MIN = 0xffffffffffffff80000000000000000000000000000000000000000000000000
+#define constant __INT192_MIN = 0xffffffffffffffff800000000000000000000000000000000000000000000000
+#define constant __INT184_MIN = 0xffffffffffffffffff8000000000000000000000000000000000000000000000
+#define constant __INT176_MIN = 0xffffffffffffffffffff80000000000000000000000000000000000000000000
+#define constant __INT168_MIN = 0xffffffffffffffffffffff800000000000000000000000000000000000000000
+#define constant __INT160_MIN = 0xffffffffffffffffffffffff8000000000000000000000000000000000000000
+#define constant __INT152_MIN = 0xffffffffffffffffffffffffff80000000000000000000000000000000000000
+#define constant __INT144_MIN = 0xffffffffffffffffffffffffffff800000000000000000000000000000000000
+#define constant __INT136_MIN = 0xffffffffffffffffffffffffffffff8000000000000000000000000000000000
+#define constant __INT128_MIN = 0xffffffffffffffffffffffffffffffff80000000000000000000000000000000
+#define constant __INT120_MIN = 0xffffffffffffffffffffffffffffffffff800000000000000000000000000000
+#define constant __INT112_MIN = 0xffffffffffffffffffffffffffffffffffff8000000000000000000000000000
+#define constant __INT104_MIN = 0xffffffffffffffffffffffffffffffffffffff80000000000000000000000000
+#define constant __INT96_MIN  = 0xffffffffffffffffffffffffffffffffffffffff800000000000000000000000
+#define constant __INT88_MIN  = 0xffffffffffffffffffffffffffffffffffffffffff8000000000000000000000
+#define constant __INT80_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffff80000000000000000000
+#define constant __INT72_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffffff800000000000000000
+#define constant __INT64_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffffffff8000000000000000
+#define constant __INT56_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffffffffff80000000000000
+#define constant __INT48_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffffffffffff800000000000
+#define constant __INT40_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffff8000000000
+#define constant __INT32_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff80000000
+#define constant __INT24_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff800000
+#define constant __INT16_MIN  = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8000
+#define constant __INT8_MIN   = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80
+
+
+
+// value helpers
+// if you don't mind an extra 8 gas then these helper functions can be "helpful"
+
+
+#define macro __WEI() = takes(1) returns(1) {
+    // expects at least one item on the stack (amount(x) of wei)
+                                // [x, ...]
+    [__ONE_WEI] mul               // [x_wei, ...]
+}
+
+#define macro __GWEI() = takes(1) returns(1) {
+    // expects at least one item on the stack (amount(x) of gwei)
+                                // [x, ...]
+    [__ONE_GWEI] mul              // [x_gwei, ...]
+}
+
+#define macro __ETHER() = takes(1) returns(1) {
+    // expects at least one item on the stack (amount(x) of ether)
+                                // [x, ...]
+    [__ONE_ETHER] mul             // [x_ether, ...]
+}
+
+
+
+
+// time helpers
+#define macro __SECONDS() = takes(1) returns(1) {
+    // expects at least one item on the stack (amount(x) of seconds)
+                                // [x, ...]
+    [__ONE_SECONDS] mul           // [x_seconds, ...]
+}
+
+#define macro __MINUTES() = takes(1) returns(1) {
+    // expects at least one item on the stack (amount(x) of minutes)
+                                // [x, ...]
+    [__ONE_MINUTES] mul           // [x_minutes, ...]
+}
+
+#define macro __HOURS() = takes(1) returns(1) {
+    // expects at least one item on the stack (amount(x) of hours)
+                                // [x, ...]
+    [__ONE_HOURS] mul             // [x_hours, ...]
+}
+
+#define macro __DAYS() = takes(1) returns(1) {
+    // expects at least one item on the stack (amount(x) of days)
+                                // [x, ...]
+    [__ONE_DAYS] mul              // [x_days, ...]
+}
+
+#define macro __WEEKS() = takes(1) returns(1) {
+    // expects at least one item on the stack (amount(x) of weeks)
+                                // [x, ...]
+    [__ONE_WEEKS] mul             // [x_weeks, ...]
+}
