@@ -76,6 +76,7 @@ utils
 ├─ LibBit — "A library ported from solady for bit twiddling operations"
 ├─ MerkleProofLib — "Gas optimized merkle proof verification library"
 ├─ Multicallable — "Enables a single call to call multiple methods within a contract"
+├─ Pausable — "An implementation of the Pausable standard"
 ├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
 ├─ Refunded — "Efficient gas refunds distributed through a modifier"
 ├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values"
