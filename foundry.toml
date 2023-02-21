@@ -10,6 +10,7 @@ fs_permissions = [
 
     { access = "read", path = "./test/data-structures/mocks/ArrayWrappers.huff" },
     { access = "read", path = "./test/data-structures/mocks/HashmapWrappers.huff" },
+    { access = "read", path = "./test/data-structures/mocks/BytesWrappers.huff" },
 
     { access = "read", path = "./test/math/mocks/FixedPointMathWrappers.huff" },
     { access = "read", path = "./test/math/mocks/SafeMathWrappers.huff" },
@@ -32,18 +33,21 @@ fs_permissions = [
     { access = "read", path = "./test/utils/mocks/BitPackLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/CallWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ErrorWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/EthersWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/JumpTableUtilWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/LibBitWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/MerkleDistributorWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/MerkleProofLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/MulticallableWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/Create3Wrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/PausableWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ReentrancyGuardWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/RefundedWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/SafeTransferLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ShufflingWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/SSTORE2Wrappers.huff" },
-    { access = "read", path = "./test/utils/mocks/TSOwnableWrappers.huff" }
+    { access = "read", path = "./test/utils/mocks/TSOwnableWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/ECDSAWrappers.huff" },
 ]
 remappings = [
     "forge-std/=lib/forge-std/src/",

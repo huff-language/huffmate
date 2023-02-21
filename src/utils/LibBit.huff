@@ -10,12 +10,12 @@
 #define constant B = 0xffffffffffffffff
 #define constant C = 0xffffffff
 
-#define constant MSB_DEBRUIJN = 0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
-#define constant LSB_DEBRUIJN = 0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09
+#define constant FLS_DEBRUIJN = 0x0009010a0d15021d0b0e10121619031e080c141c0f111807131b17061a05041f
+#define constant FFS_DEBRUIJN = 0x00011c021d0e18031e16140f191104081f1b0d17151310071a0c12060b050a09
 
 /// @dev Returns the index of the most significant bit of `x`.
 ///      If `x` is zero, returns 256.
-#define macro MSB() = takes (1) returns (1) {
+#define macro FLS() = takes (1) returns (1) {
     // Input stack:   [x]
 
     dup1 iszero    // [x == 0, x]
@@ -57,7 +57,7 @@
     __RIGHTPAD(0x07c4acdd) // [0x07c4acdd (right padded), x, r]
     mul                    // [x * 0x07c4acdd, r]
     0xFB shr               // [(x * 0x07c4acdd) >> 0xFB, r]
-    [MSB_DEBRUIJN] swap1   // [(x * 0x07c4acdd) >> 0xFB, debruijn_lookup, r]
+    [FLS_DEBRUIJN] swap1   // [(x * 0x07c4acdd) >> 0xFB, debruijn_lookup, r]
     byte                   // [b, r]
     or                     // [b | r]
 
@@ -66,7 +66,7 @@
 
 /// @dev Returns the index of the least significant bit of `x`.
 /// If `x` is zero, returns 256.
-#define macro LSB() = takes (1) returns (1) {
+#define macro FFS() = takes (1) returns (1) {
     // Input stack:   [x]
 
     dup1 iszero    // [x == 0, x]
@@ -100,7 +100,7 @@
     __RIGHTPAD(0x077cb531) // [0x077cb531..., x >> r, r]
     mul                    // [(x >> r) * 0x077cb531, r]
     0xFB shr               // [(x * 0x077cb531) >> 0xFB, r]
-    [LSB_DEBRUIJN] swap1   // [(x * 0x077cb531) >> 0xFB, debruijn_lookup, r]
+    [FFS_DEBRUIJN] swap1   // [(x * 0x077cb531) >> 0xFB, debruijn_lookup, r]
     byte                   // [b, r]
     or                     // [b | r]
 
@@ -143,9 +143,27 @@
     // Return stack:  [c]
 }
 
-#define test MSB() = {
+/// @dev Returns 1, if the input is a power of 2.
+#define macro IS_POW_OF_2() = takes (1) returns (1) {
+    // Input stack:   [x]
+
+    0x01          // [1,x]  
+    dup2          // [x,1,x] 
+    sub           // [x-1,x] 
+    dup2          // [x,x-1,x]
+    and           // [x & x-1,x]  
+    swap1         // [x, x&x-1]
+    iszero        // [x==0, x&x-1]
+    add           // [(x==0) + (x&x-1)]   
+    iszero        // [(x==0) + (x&x-1) == 0]   
+
+    // Return stack:  [c]
+}
+
+
+#define test FLS() = {
     0xFF 0x03 shl
-    MSB()
+    FLS()
 
     0x0a eq succeed jumpi
     0x00 dup1 revert
@@ -153,9 +171,9 @@
     succeed:
 }
 
-#define test LSB() = {
+#define test FFS() = {
     0xFF 0x03 shl
-    LSB()
+    FFS()
 
     0x03 eq succeed jumpi
     0x00 dup1 revert
@@ -169,6 +187,23 @@
     POP_COUNT()
 
     0x02 eq succeed jumpi
+    0x00 dup1 revert
+
+    succeed:
+}
+
+#define test IS_POW_OF_2() = {
+    0x05 dup1
+    IS_POW_OF_2()
+
+    0x00 eq next jumpi
+    0x00 dup1 revert
+
+    next: 
+    0x08 dup1
+    IS_POW_OF_2()
+
+    0x01 eq succeed jumpi
     0x00 dup1 revert
 
     succeed:

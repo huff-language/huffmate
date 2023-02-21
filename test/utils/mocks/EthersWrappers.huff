@@ -1,0 +1,22 @@
+
+// Receives ether
+#define function isPayable() payable returns (uint256)
+#define function nonPayable() nonpayable returns (uint256)
+
+// Match the function selector
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xe0 shr
+
+    dup1 __FUNC_SIG(isPayable) eq payable_jump jumpi
+    dup1 __FUNC_SIG(nonPayable) eq non_payable_jump jumpi
+
+    // Revert if no function selectors match
+    reverts:
+        0x00 dup1 revert
+
+    non_payable_jump:
+        callvalue iszero iszero reverts jumpi
+    payable_jump:
+        balance 0x00 mstore
+        0x20 0x00 return
+}

@@ -1,0 +1,39 @@
+#define function isPaused() view returns (bool)
+#define function pause() nonpayable returns ()
+#define function unpause() nonpayable returns ()
+
+
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    PAUSABLE_CONSTRUCTOR()
+}
+
+
+#define macro IS_PAUSED_WRAPPER() = takes (0) returns (0) {
+    PAUSABLE_IS_PAUSED()
+}
+
+#define macro PAUSE_WRAPPER() = takes (0) returns (0) {
+    PAUSABLE_PAUSE()
+}
+
+#define macro UNPAUSE_WRAPPER() = takes (0) returns (0) {
+    PAUSABLE_UNPAUSE()
+}
+
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xe0 shr    // [sig]
+
+    dup1 __FUNC_SIG(pause)      eq pause jumpi
+    dup1 __FUNC_SIG(unpause)    eq unpause jumpi
+    dup1 __FUNC_SIG(isPaused)   eq is_paused jumpi
+
+    0x00 dup1 revert
+
+    pause:
+        PAUSE_WRAPPER()
+    unpause:
+        UNPAUSE_WRAPPER()
+    is_paused:
+        IS_PAUSED_WRAPPER()
+}

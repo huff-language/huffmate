@@ -1,6 +1,6 @@
 <img align="right" width="150" height="150" top="100" src="./assets/huff.jpg">
 
-# huffmate • [![ci](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml/badge.svg)](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml) [![version](https://img.shields.io/badge/version-v1-ff69b4)](https://github.com/pentagonxyz/huffmate/releases/tag/v1) [![license](https://img.shields.io/badge/License-MIT-orange.svg?label=license)](https://opensource.org/licenses/MIT) ![Discord](https://img.shields.io/discord/980519274600882306?color=blue)
+# huffmate • [![ci](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml/badge.svg)](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml) [![version](https://img.shields.io/badge/version-v1.1-ff69b4)](https://github.com/pentagonxyz/huffmate/releases/tag/v1.1) [![license](https://img.shields.io/badge/License-MIT-orange.svg?label=license)](https://opensource.org/licenses/MIT) ![Discord](https://img.shields.io/discord/980519274600882306?color=blue)
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
@@ -37,6 +37,7 @@ auth
 data-structures
 ├─ Arrays — "Memory translation handlers for arrays"
 ├─ Hashmap — "Simple mapping utilities for 32 byte words"
+├─ Bytes — "Helpers for working with Bytes"
 proxies
 ├─ Clones — "Clones library for deploying minimal proxy contracts"
 ├─ Proxy — "Minimal ERC1967-compliant + upgradeable proxy contract"
@@ -61,20 +62,28 @@ tokens
 ├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
 ├─ ERC4626 — "Minimal ERC4626 tokenized Vault implementation"
 utils
-├─ Calls — "Minimal wrappers for constructing calls to other contracts"
+├─ Address — "Simple Utils for working with addresses"
 ├─ BitPackLib — "Efficient bit packing library"
-├─ CustomErrors — "Wrappers for reverting with common error messages"
+├─ Calls — "Minimal wrappers for constructing calls to other contracts"
+├─ CommonErrors — "Wrappers for reverting with common error messages"
+├─ CREATE3 — "Deploy to deterministic addresses without the initcode factor"
+├─ ECDSA — "An optimised ECDSA wrapper"
 ├─ ERC1155Receiver — "A minimal interface for receiving ERC1155 tokens"
+├─ ERC20Transfer — "Efficient ERC20 transfer wrappers"
 ├─ Errors — "Custom error utilities"
+├─ Ethers — "Utilities for working with ether at a low level"
 ├─ JumpTableUtil — "Utility macros for retrieving jumpdest pcs from jump tables"
 ├─ LibBit — "A library ported from solady for bit twiddling operations"
 ├─ MerkleProofLib — "Gas optimized merkle proof verification library"
 ├─ Multicallable — "Enables a single call to call multiple methods within a contract"
-├─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
+├─ Pausable — "An implementation of the Pausable standard"
 ├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
+├─ Refunded — "Efficient gas refunds distributed through a modifier"
 ├─ SafeTransferLib — "Safe ETH and ERC20 transfer library that gracefully handles missing return values"
 ├─ Shuffling — "Refactored algorithms for shuffling and other bitwise algorithms"
 └─ SSTORE2 — "Faster & cheaper contract key-value storage for Ethereum Contracts"
+└─ Ternary — "A collection of ternary operations with abstracted conditional logic"
+└─ TSOwnable — "An Ownable Implementation using Two-Step Transfer Pattern"
 ```
 
 ### Acknowledgements
@@ -88,7 +97,7 @@ These contracts were inspired by or directly modified from many sources, primari
 - [huff-rs](https://github.com/huff-language/huff-rs)
 - [huff-clones](https://github.com/clabby/huff-clones)
 - [huff-vrgda](https://github.com/cheethas/huff-vrgda)
-- [huff-tests](https://github.com/abigger87/huff-tests)
+- [huff-tests](https://github.com/huff-language/huff-tests-action)
 - [erc721h](https://github.com/philogy/erc721h)
 - [Gnosis](https://github.com/gnosis/gp-v2-contracts)
 - [Uniswap](https://github.com/Uniswap/uniswap-lib)

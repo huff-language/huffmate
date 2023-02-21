@@ -1,18 +1,19 @@
-#define function msb(uint256) pure returns (uint256)
-#define function lsb(uint256) pure returns (uint256)
+#define function fls(uint256) pure returns (uint256)
+#define function ffs(uint256) pure returns (uint256)
 #define function popCount(uint256) pure returns (uint256)
+#define function isPowOf2(uint256) pure returns (uint256)
 
-#define macro MSB_WRAPPER() = {
+#define macro FLS_WRAPPER() = {
     0x04 calldataload
-    MSB()
+    FLS()
 
     0x00 mstore
     0x20 0x00 return
 }
 
-#define macro LSB_WRAPPER() = {
+#define macro FFS_WRAPPER() = {
     0x04 calldataload
-    LSB()
+    FFS()
 
     0x00 mstore
     0x20 0x00 return
@@ -26,18 +27,29 @@
     0x20 0x00 return
 }
 
+#define macro IS_POW_OF_2_WRAPPER() = {
+    0x04 calldataload
+    IS_POW_OF_2()
+
+    0x00 mstore
+    0x20 0x00 return
+}
+
 #define macro MAIN() = {
     pc calldataload 0xE0 shr
-    dup1 __FUNC_SIG(msb)      eq msb       jumpi
-    dup1 __FUNC_SIG(lsb)      eq lsb       jumpi
+    dup1 __FUNC_SIG(fls)      eq fls       jumpi
+    dup1 __FUNC_SIG(ffs)      eq ffs       jumpi
     dup1 __FUNC_SIG(popCount) eq pop_count jumpi
+    dup1 __FUNC_SIG(isPowOf2) eq is_pow_of_2 jumpi
 
     0x00 dup1 revert
 
-    msb:
-        MSB_WRAPPER()
-    lsb:
-        LSB_WRAPPER()
+    fls:
+        FLS_WRAPPER()
+    ffs:
+        FFS_WRAPPER()
     pop_count:
         POP_COUNT_WRAPPER()
+    is_pow_of_2:
+        IS_POW_OF_2_WRAPPER()
 }

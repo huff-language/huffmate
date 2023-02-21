@@ -1,0 +1,70 @@
+#define function recoverCd(bytes32, bytes calldata) view returns (address)
+#define function recoverShortSig(bytes32, bytes32, bytes32) view returns (address)
+#define function recoverVRSSig(bytes32, bytes32, bytes32, bytes32) view returns (address)
+#define function toEthSignedMessageHash(bytes32) view returns (bytes32)
+#define function toEthSignedMessageHashDyn(bytes) view returns (bytes32)
+
+#define macro RECOVER_CD_WRAPPER() = {
+    RECOVER_CD_SIG(0x04, 0x64) // [result]
+    0x00 mstore            // []
+    0x20 0x00 return
+}
+
+#define macro RECOVER_SHORT_SIG_WRAPPER() = {
+    0x04 calldataload        // [hash]
+    0x24 calldataload        // [r, hash]
+    0x44 calldataload        // [vs, r, hash]
+    RECOVER_SHORT_SIG()      // [result]
+    0x00 mstore              // []
+    0x20 0x00 return 
+}
+
+#define macro RECOVER_VRS_SIG_WRAPPER() = {
+    0x64 calldataload        // [s]
+    0x44 calldataload        // [r, s]
+    0x24 calldataload        // [v, r, s]
+    0x04 calldataload        // [hash, v, r, s]
+    RECOVER_VRS_SIG()        // [result]
+    0x00 mstore              // []
+    0x20 0x00 return
+}
+
+#define macro TO_ETH_SIGNED_MSG_HASH_WRAPPER() = {
+    0x04 calldataload        // [hash]
+    TO_ETH_SIGNED_MSG_HASH() // [result]
+    0x00 mstore              // []
+    0x20 0x00 return
+}
+
+#define macro TO_ETH_SIGNED_MSG_HASH_DYN_WRAPPER() = {
+    0x24 calldataload            // [len(s)]
+    0x20 add                     // [len(s) + 0x20]
+    0x24 0x60 calldatacopy       // []
+    TO_ETH_SIGNED_MSG_HASH_DYN(0x60) // [result]
+    0x00 mstore                  // []
+    0x20 0x00 return
+}
+
+#define macro MAIN() = {
+    pc calldataload 0xE0 shr
+    dup1 __FUNC_SIG(recoverCd)                 eq recover_cd                 jumpi
+    dup1 __FUNC_SIG(recoverShortSig)           eq recover_short_sig          jumpi
+    dup1 __FUNC_SIG(recoverVRSSig)             eq recover_vrs_sig            jumpi
+    dup1 __FUNC_SIG(toEthSignedMessageHash)    eq to_eth_signed_msg_hash     jumpi
+    dup1 __FUNC_SIG(toEthSignedMessageHashDyn) eq to_eth_signed_msg_hash_dyn jumpi
+
+    // Revert if no function selectors match
+    0x00 dup1 revert
+
+    // Fn dispatch
+    recover_cd:
+        RECOVER_CD_WRAPPER()
+    recover_short_sig:
+        RECOVER_SHORT_SIG_WRAPPER()
+    recover_vrs_sig:
+        RECOVER_VRS_SIG_WRAPPER()
+    to_eth_signed_msg_hash:
+        TO_ETH_SIGNED_MSG_HASH_WRAPPER()
+    to_eth_signed_msg_hash_dyn:
+        TO_ETH_SIGNED_MSG_HASH_DYN_WRAPPER()
+}

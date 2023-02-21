@@ -12,7 +12,7 @@
 #define macro LOAD_FROM_JT(mem_ptr) = takes (2) returns (1) {
     // Input stack:       [index, table_start]
 
-    0x20 mul add       // [table_start + index * 0x20]
+    0x05 shl add       // [table_start + index * 0x20]
     0x20 swap1         // [table_start + index * 0x20, 0x20]
     <mem_ptr>          // [mem_ptr, table_start + index * 0x20, 0x20]
     codecopy           // []
@@ -44,7 +44,7 @@
 #define macro LOAD_FROM_PACKED_JT(mem_ptr) = takes (2) returns (1) {
     // Input stack:       [index, table_start]
 
-    0x02 mul add       // [table_start + index * 0x02]
+    0x01 shl add       // [table_start + index * 0x02]
     0x02 swap1         // [table_start + index * 0x02, 0x02]
     <mem_ptr>          // [mem_ptr, table_start + index * 0x02, 0x02]
     codecopy           // []

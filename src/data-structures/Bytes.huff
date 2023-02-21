@@ -1,0 +1,111 @@
+/// @title Bytes
+/// @notice SPDX-License-Identifier: MIT
+/// @author Franfran <https://github.com/iFrostizz>
+/// @notice Low-level operations on bytes
+/// @notice Adapted from BytesLib (https://github.com/GNSPS/solidity-bytes-utils/blob/master/contracts/BytesLib.sol)
+
+/// @notice Concatenate two bytes arrays
+/// @notice Takes in two pointers of the bytes to concatenate that must be sorted
+/// @return Pointer of the new appended concatenated bytes array in the memory
+/// @dev Warning! This assumes that the pointer in the memory of the second bytes chunk is after mem_ptr1 + 0x20
+#define macro CONCAT_MEMORY() = takes(2) returns(1) {
+  // input stack                      // [mem_ptr1, mem_ptr2]
+
+  // setup stack and memory for the next iterations
+  dup2 mload swap1                    // [mem_ptr1, len2, mem_ptr2]
+  msize swap1                         // [mem_ptr1, free_loc_pos, len2, mem_ptr2]
+  dup1 mload dup4                     // [len2, len1, mem_ptr1, free_loc_pos, len2, mem_ptr2]
+  dup2 add msize mstore               // [len1, mem_ptr1, free_loc_pos, len2, mem_ptr2]
+
+  swap1 0x20 add                      // [index(i), len1, free_loc_pos, len2, mem_ptr2]
+  msize                               // [index(j), index(i), len1, free_loc_pos, len2, mem_ptr2]
+  swap2 0x00                          // [is_sec_loop, len1, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+  
+  // i is the index where we get (mload) the array element and j is the index where we store (mstore) the array at j
+  loop:                               // [is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+    dup2 iszero empty_slot jumpi      // [is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+
+    dup3 mload                        // [word, is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+    dup3 0x20 gt iszero               // [is_full_slot, word, is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+    full_slot jumpi                   // [word, is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+
+    // else it's not a full slot, we're hitting an end. Then clean memory slot and update j with a partial length
+    dup3 0x20 sub                     // [pad_len, word, is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+    0x08 mul swap1 dup2               // [shift, word, shift, is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+    shr                               // [left_padded_word, shift, is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+    swap1 shl                         // [clean_word, is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+    dup5 mstore                       // [is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+    swap3 add swap2                   // [is_sec_loop, index(i), index(j + 1), free_loc_pos, len2, mem_ptr2]
+  
+    // here we check if current loop is for the 2nd array
+    swap1 pop                         // [is_sec_loop, index(j + 1), free_loc_pos, len2, mem_ptr2]
+    iszero bridge jumpi               // [index(j + 1), free_loc_pos, len2, mem_ptr2]
+    pop break jump                    // [free_loc_pos, len2, mem_ptr2]
+
+    empty_slot:                       // [is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+      swap2 pop pop                   // [is_sec_loop, index(j), free_loc_pos, len2, mem_ptr2]
+      iszero bridge jumpi             // [index(j), free_loc_pos, len2, mem_ptr2]  
+      pop break jump                  // [free_loc_pos, len2, mem_ptr2]
+  
+    bridge:                           // [index(j), free_loc_pos, len2, mem_ptr2]
+      dup4 0x20 add                   // [index(i), index(j), free_loc_pos, len2, mem_ptr2]
+      dup5                            // [len2, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+      0x01                            // [is_sec_loop, len2, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+      loop jump
+        
+    full_slot:                        // [word, is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+      dup5 mstore                     // [is_sec_loop, len_left, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+      swap1 0x20 swap1 sub            // [len_left - 0x20, is_sec_loop, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+      swap2 0x20 add                  // [index(i + 1), is_sec_loop, len_left - 0x20, index(j), free_loc_pos, len2, mem_ptr2]
+      swap3 0x20 add                  // [index(j + 1), is_sec_loop, len_left - 0x20, index(i + 1), free_loc_pos, len2, mem_ptr2]
+      swap3 swap2 swap1               // [is_sec_loop, len_left - 0x20, index(i + 1), index(j + 1), free_loc_pos, len2, mem_ptr2]
+      loop jump
+  
+  break:                              // [free_loc_pos, len2, mem_ptr2]
+    swap2 pop pop                     // [free_loc_pos]
+}
+
+/// @param Pointer in memory of the start of the bytes array 
+/// @param Start position of the slice relative to the array
+/// @param Length of the output slice
+/// @return Pointer of the new appended concatenated bytes array in the memory
+/// @dev Warning! This assumes that the length of the output slice is less or equal the length of the bytes array (bytes.len < slice.len)
+/// @dev Warning! This assumes that the start of the bytes array is not out of bounds (start < len + mem_ptr)
+#define macro SLICE_MEMORY() = takes(3) returns(1) {
+  // input stack                // [mem_ptr, start, length]
+
+  msize dup4 msize mstore       // [free_loc_pos, mem_ptr, start, length]
+  msize swap4                   // [length, free_loc_pos, mem_ptr, start, index(j)]
+  // index(i) = mem_ptr + start + 0x20
+  swap1 swap3                   // [start, length, mem_ptr, free_loc_pos, index(j)]
+  swap1 swap2                   // [mem_ptr, start, length, free_loc_pos, index(j)]
+  0x20 add add                  // [index(i), length, free_loc_pos, index(j)]
+
+  // we load our slice chunk at i and store it in a free memory location at j
+  loop:                         // [index(i), length_left, free_loc_pos, index(j)]
+    dup1 mload                  // [slice_chunk, index(i), length_left, free_loc_pos, index(j)]
+
+    // if current is not full slot, then load the last bytes and break
+    0x20 dup4 lt                // [is_not_full_slot, slice_chunk, index(i), length_left, free_loc_pos, index(j)]
+    break jumpi                 // [slice_chunk, index(i), length_left, free_loc_pos, index(j)]
+    
+    dup5 mstore                 // [index(i), length_left, free_loc_pos, index(j)]
+
+    0x20 add swap3              // [free_loc, length_left, free_loc_pos, index(i+1)]
+    0x20 add swap3              // [index(i+1), length_left, free_loc_pos, free_loc + 1]
+    swap1 0x20                  // [0x20, length_left, index(i+1), free_loc_pos, free_loc + 1]
+    swap1 sub                   // [length_left - 1, index(i+1), free_loc_pos, free_loc + 1]
+    swap1                       // [index(i+1), length_left - 1, free_loc_pos, free_loc + 1]
+
+    loop jump
+    
+  break:                        // [slice_chunk, index(i), length, free_loc_pos, index(j)]
+    // store the remaining length
+    dup3 0x20 sub               // [zero_length, slice_chunk, index(i), length, free_loc_pos, index(j)]
+    0x08 mul swap1 dup2         // [shift, slice_chunk, shift, index(i), length, free_loc_pos, index(j)]
+    shr                         // [left_pad_slice, shift, index(i), length, free_loc_pos, index(j)]
+    swap1 shl                   // [slice_chunk, index(i), length, free_loc_pos, index(j)]
+    dup5 mstore                 // [index(i), length, free_loc_pos, index(j)]
+  
+    pop pop swap1 pop           // [free_loc_pos]
+}

@@ -570,7 +570,7 @@
     dup1 __FUNC_SIG(approve)            eq approveJump          jumpi
 
     // Bubble up to the parent macro
-    no_match jumpi
+    no_match jump
 
     allowanceJump:
         ALLOWANCE()

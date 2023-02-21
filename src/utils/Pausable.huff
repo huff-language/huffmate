@@ -1,0 +1,91 @@
+/// @title Pausable
+/// @notice SPDX-License-Identifier: MIT
+/// @author zarf.eth <https://github.com/zarfsec>
+/// @notice A Pausable implementation
+
+
+// Interface
+
+/// @notice returns whether the contract is paused
+#define function isPaused() view returns (bool)
+
+/// @notice Pauses the contract 
+/// @dev Only callable when the contract is unpaused.
+#define function pause() nonpayable returns ()
+
+/// @notice Unpauses the contract 
+/// @dev Only callable when the contract is paused.
+#define function unpause() nonpayable returns ()
+
+/// @notice Emitted when contract is paused.
+#define event Paused(address)
+
+/// @notice Emitted when contract is unpaused.
+#define event Unpaused(address)
+
+
+// Storage
+
+/// @notice Paused Storage Slot
+#define constant PAUSED_SLOT = FREE_STORAGE_POINTER()
+
+/// @notice Unpaused representation
+#define constant NOT_PAUSED = 0x01
+
+/// @notice Paused representation
+#define constant PAUSED = 0x02
+
+
+/// @notice Pausable constructor
+#define macro PAUSABLE_CONSTRUCTOR() = takes (0) returns (0) {
+    [NOT_PAUSED] [PAUSED_SLOT] sstore       // []
+}
+
+/// @notice whenNotPaused modifier
+#define macro WHEN_NOT_PAUSED_MODIFIER() = takes (0) returns (0) {
+    [PAUSED_SLOT] sload                     // [isPaused]
+    [NOT_PAUSED] eq when_not_paused jumpi   // []
+    0x00 dup1 revert                        // []
+    when_not_paused:                        // []
+}
+
+/// @notice whenPaused modifier
+#define macro WHEN_PAUSED_MODIFIER() = takes (0) returns (0) {
+    [PAUSED_SLOT] sload                     // [isPaused]
+    [PAUSED] eq when_paused jumpi           // []
+    0x00 dup1 revert                        // []
+    when_paused:                            // []
+}                                           
+
+/// @notice return whether contract is paused
+#define macro PAUSABLE_IS_PAUSED() = takes (0) returns (0) {
+    0x01                                    // [1]
+    [PAUSED_SLOT] sload                     // [isPaused, 1]
+    sub                                     // [bool]
+    0x00 mstore                             // []
+    0x20 0x00 return                        // []
+}
+
+/// @notice Pause the contract
+#define macro PAUSABLE_PAUSE() = takes (0) returns (0) {
+    WHEN_NOT_PAUSED_MODIFIER()              // []
+
+    //emit Paused(address)
+    caller __EVENT_HASH(Paused) 0x00 dup1   // [0, 0, EVENT_PAUSED, msg.sender]
+    log2                                    // []
+
+    [PAUSED] [PAUSED_SLOT] sstore           // []
+    stop
+}
+
+/// @notice Unpause the contract
+#define macro PAUSABLE_UNPAUSE() = takes (0) returns (0) {
+    WHEN_PAUSED_MODIFIER()                  // []
+
+    //emit Unpaused(address)
+    caller __EVENT_HASH(Unpaused) 0x00 dup1 // [0, 0, EVENT_UNPAUSED, msg.sender]
+    log2                                    // []
+
+    [NOT_PAUSED] [PAUSED_SLOT] sstore       // []
+    stop
+}
