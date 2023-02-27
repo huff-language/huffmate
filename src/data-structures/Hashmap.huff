@@ -19,7 +19,7 @@
 
 /// @notice Given two keys (ie a slot and a key), hash them together, generating a slot for a secondary hashmap.
 #define macro GET_SLOT_FROM_KEYS(mem_ptr) = takes(2) returns (1) {
-    // Input stack: [slot, key2]
+    // Input stack: [slot, key]
     // Load the data into memory.
     <mem_ptr> 0x20 add  // [<mem_ptr> + 32, slot, key2]
     mstore              // [key2]
