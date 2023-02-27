@@ -1,0 +1,23 @@
+/*   INTERFACE   */
+#define function insertionSort(uint256[]) nonpayable returns (uint256[])
+
+
+/*   MACRO   */
+#define macro INSERTION_SORT() = takes (0) returns (0) {
+        SORT()                                  // [offset, arrSize]
+        return                                  // []
+}
+
+
+/*   MAIN   */
+#define macro MAIN() = takes(0) returns (0) {
+    returndatasize calldataload 0xe0 shr                          // [selector]
+
+    dup1 __FUNC_SIG(insertionSort) eq jumpSort jumpi
+
+    // Reverts if selector not present.
+    returndatasize returndatasize revert 
+
+    jumpSort:
+        INSERTION_SORT()
+}
