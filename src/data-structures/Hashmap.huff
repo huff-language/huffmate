@@ -26,7 +26,7 @@
     <mem_ptr>           // [<mem_ptr>, key2]
     mstore              // []
 
-    // Hash the data, generating a key.
+    // Hash the data, generating a slot.
     0x40        // [64]
     <mem_ptr>   // [<mem_ptr>, 64]
     sha3        // [key]
