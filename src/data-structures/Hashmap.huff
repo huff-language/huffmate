@@ -21,15 +21,15 @@
 #define macro GET_SLOT_FROM_KEYS(mem_ptr) = takes(2) returns (1) {
     // Input stack: [slot, key]
     // Load the data into memory.
-    <mem_ptr> 0x20 add  // [<mem_ptr> + 32, slot, key2]
-    mstore              // [key2]
-    <mem_ptr>           // [<mem_ptr>, key2]
+    <mem_ptr> 0x20 add  // [<mem_ptr> + 32, slot, key]
+    mstore              // [key]
+    <mem_ptr>           // [<mem_ptr>, key]
     mstore              // []
 
     // Hash the data, generating a slot.
     0x40        // [64]
     <mem_ptr>   // [<mem_ptr>, 64]
-    sha3        // [key]
+    sha3        // [slot]
 }
 
 /// @notice Calculate the slot from two keys
