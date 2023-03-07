@@ -694,6 +694,216 @@
     // Return stack:            // [result]
 }
 
+/// @notice Calculates the cube root of the stack input
+#define macro CBRT() = takes (1) returns (1) {
+    // Input Stack:    [x]
+     
+    dup1
+    0x100000000000000000000000000000000 
+    lt 
+    0x7 
+    shl 
+
+//
+    dup2
+    dup2
+    shr 
+    0x10000000000000000 
+    lt 
+    0x6 
+    shl 
+    dup2
+    or 
+//
+
+    dup3
+    dup2
+    shr 
+    0xffffffff 
+    lt 
+    0x5 
+shl 
+dup3
+or 
+
+//
+
+//
+
+dup4
+dup2
+shr 
+0xffff
+lt 
+0x4 
+shl 
+dup2
+or 
+ 
+
+//
+
+//
+
+dup5
+dup2
+shr 
+0xff
+lt 
+0x3 
+shl 
+dup2
+or 
+//
+
+swap4
+pop
+pop
+pop
+pop
+//
+
+//shl(add(div(r, 3), lt(0xf, shr(r, x))), 0xff)
+
+0xff 
+dup3
+dup3
+shr 
+0xf 
+lt 
+0x3 
+dup4
+div 
+add 
+shl 
+
+// div(z, byte(mod(r, 3), shl(232, 0x7f624b)))
+
+0x7f624b 
+0xe8 
+shl 
+0x3 
+dup4
+mod 
+byte 
+dup2
+div 
+
+// 
+0x3 
+dup2
+dup1
+dup1
+dup1
+mul 
+dup8
+div 
+add 
+add 
+div 
+
+
+// 
+0x3 
+dup2
+dup1
+dup1
+dup1
+mul 
+dup9
+div 
+add 
+add 
+div 
+
+//
+
+// 
+0x3 
+dup2
+dup1
+dup1
+dup1
+mul 
+dup10
+div 
+add 
+add 
+div 
+
+//
+
+// 
+0x3 
+dup2
+dup1
+dup1
+dup1
+mul 
+dup11 /////
+div 
+add 
+add 
+div
+
+//
+
+// 
+0x3 
+dup2
+dup1
+dup1
+dup1
+mul 
+dup12 /////
+div 
+add 
+add 
+div
+
+//
+
+// 
+0x3 
+dup2
+dup1
+dup1
+dup1
+mul 
+dup13 /////
+div 
+add 
+add 
+div
+
+//
+
+// 
+0x3 
+dup2
+dup1
+dup1
+dup1
+mul 
+dup14 /////
+div 
+add 
+add 
+div
+
+//
+
+dup1
+dup1
+dup1
+mul 
+dup13
+div 
+lt 
+dup2
+sub 
+}
+
 ////////////////////////////////////////////////////////////////
 //                       HELPER MACROS                        //
 ////////////////////////////////////////////////////////////////
