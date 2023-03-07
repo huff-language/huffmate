@@ -26,7 +26,7 @@
 #define event Transfer(address, address, uint256)
 
 // Metadata
-#define function decimals() nonpayable returns (uint256)
+#define function decimals() nonpayable returns (uint8)
 #define function name() nonpayable returns (string)
 #define function symbol() nonpayable returns (string)
 
