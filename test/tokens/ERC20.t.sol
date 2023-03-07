@@ -52,22 +52,18 @@ contract ERC20Test is Test {
         string memory mock_wrapper = vm.readFile("test/tokens/mocks/ERC20Wrappers.huff");
 
         // Deploy the Mintable ERC20
-        vm.startPrank(deployer);
         address mintableTokenAddress = HuffDeployer.config()
             .with_code(mintable_wrapper)
             .with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN"), abi.encode(DECIMALS)))
             .deploy("tokens/ERC20");
         token = IMintableERC20(mintableTokenAddress);
-        vm.stopPrank();
 
         // Deploy the Mock ERC20
-        vm.startPrank(deployer);
         address mockTokenAddress = HuffDeployer.config()
             .with_code(mock_wrapper)
             .with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN"), abi.encode(DECIMALS)))
             .deploy("tokens/ERC20");
         mockToken = IERC20(mockTokenAddress);
-        vm.stopPrank();
     }
 
     function testMockERC20Metadata() public {
@@ -195,14 +191,13 @@ contract ERC20Test is Test {
 
         token.mint(from, 1e18);
 
-        vm.prank(from);
+        vm.startPrank(from);
         token.approve(address(this), 1e18);
+        vm.stopPrank();
 
         assertTrue(token.transferFrom(from, address(0xBEEF), 1e18));
         assertEq(token.totalSupply(), 1e18);
-
         assertEq(token.allowance(from, address(this)), 0);
-
         assertEq(token.balanceOf(from), 0);
         assertEq(token.balanceOf(address(0xBEEF)), 1e18);
     }
@@ -214,12 +209,11 @@ contract ERC20Test is Test {
 
         vm.prank(from);
         token.approve(address(this), type(uint256).max);
+        vm.stopPrank();
 
         assertTrue(token.transferFrom(from, address(0xBEEF), 1e18));
         assertEq(token.totalSupply(), 1e18);
-
         assertEq(token.allowance(from, address(this)), type(uint256).max);
-
         assertEq(token.balanceOf(from), 0);
         assertEq(token.balanceOf(address(0xBEEF)), 1e18);
     }
@@ -234,8 +228,9 @@ contract ERC20Test is Test {
 
         token.mint(from, 1e18);
 
-        vm.prank(from);
+        vm.startPrank(from);
         token.approve(address(this), 0.9e18);
+        vm.stopPrank();
 
         token.transferFrom(from, address(0xBEEF), 1e18);
     }
@@ -245,8 +240,9 @@ contract ERC20Test is Test {
 
         token.mint(from, 0.9e18);
 
-        vm.prank(from);
+        vm.startPrank(from);
         token.approve(address(this), 1e18);
+        vm.stopPrank();
 
         token.transferFrom(from, address(0xBEEF), 1e18);
     }
@@ -303,8 +299,9 @@ contract ERC20Test is Test {
 
         token.mint(from, amount);
 
-        vm.prank(from);
+        vm.startPrank(from);
         token.approve(address(this), approval);
+        vm.stopPrank();
 
         assertTrue(token.transferFrom(from, to, amount));
         assertEq(token.totalSupply(), amount);
@@ -355,8 +352,9 @@ contract ERC20Test is Test {
 
         token.mint(from, amount);
 
-        vm.prank(from);
+        vm.startPrank(from);
         token.approve(address(this), approval);
+        vm.stopPrank();
 
         token.transferFrom(from, to, amount);
     }
@@ -372,8 +370,9 @@ contract ERC20Test is Test {
 
         token.mint(from, mintAmount);
 
-        vm.prank(from);
+        vm.startPrank(from);
         token.approve(address(this), sendAmount);
+        vm.stopPrank();
 
         token.transferFrom(from, to, sendAmount);
     }

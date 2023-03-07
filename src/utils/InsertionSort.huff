@@ -16,17 +16,15 @@
     0x01 returndatasize mstore                  // i = 1
     0x60 mload start jump                       // [len, arrSize]
 
-        
     // For loop
     start:
-        // End if i == len 
+        // End if i == len
         returndatasize mload                    // [i, len, arrSize]
         dup2 dup2                               // [i, len, i, len, arrSize]
         eq end jumpi
 
         // Assign i to j
-        0x20 mstore while jump                  // [len, arrSize]
-
+        0x20 mstore                             // [len, arrSize]
 
         // While loop
         while:
@@ -54,15 +52,14 @@
             // Increment i++
             returndatasize mload 0x01 add       // [i + 1, len, arrSize]
             returndatasize mstore start jump    // [len, arrSize]
-            
 
             // While block
             continueWhile:
-                //  arr[j - 1] = arr[j] 
+                //  arr[j - 1] = arr[j]
                 dup1 mload dup3 mload           // [arr[j], arr[j - i], mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
                 dup3 mstore                     // [arr[j - 1], mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
 
-                // arr[j] = arr[j - 1] 
+                // arr[j] = arr[j - 1]
                 dup3 mstore                     // [mem[arr[j - 1], mem[arr[j]], cndt1, j, 0, len, arrSize]
 
                 pop pop pop                     // [j, 0, len, arrSize]
@@ -71,7 +68,6 @@
                 0x01 dup2 sub                   // [j - 1 ,j, 0, len, arrSize]
                 0x20 mstore pop pop             // [len, arrSize]
                 while jump
-                
     end:
         pop pop 0x40                            // [offset, arrSize]
 }

@@ -1,0 +1,25 @@
+/// SPDX-License-Identifier: MIT
+
+/// @notice Insertion Sort Function
+#define function insertionSort(uint256[]) nonpayable returns (uint256[])
+
+/// @notice Performs insertion sort on raw calldata
+#define macro INSERTION_SORT() = takes (0) returns (0) {
+        SORT()                                  // [offset, arrSize]
+        return                                  // []
+}
+
+/// @notice The contract entrypoint
+#define macro MAIN() = takes(0) returns (0) {
+    returndatasize calldataload 0xe0 shr                       // [selector]
+
+    // notice: we don't need to duplicate the selector here
+    // since the selector is consumed and only used once
+    __FUNC_SIG(insertionSort) eq jumpSort jumpi                // []
+
+    // Reverts if selector not present.
+    returndatasize returndatasize revert
+
+    jumpSort:
+        INSERTION_SORT()
+}
