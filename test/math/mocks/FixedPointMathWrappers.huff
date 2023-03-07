@@ -107,7 +107,7 @@
     0x20 0x00 return
 }
 
-#define macro CBRT_WRAPPER() = {
+#define macro CBRT_WRAPPER() = takes (0) returns (0) {
     0x04 calldataload
     CBRT()
     0x00 mstore
