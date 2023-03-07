@@ -14,7 +14,7 @@
     calldatacopy                                // [arrSize]
 
     0x01 returndatasize mstore                  // i = 1
-    0x60 mload start jump                       // [len, arrSize]
+    0x60 mload                                  // [len, arrSize]
 
     // For loop
     start:
