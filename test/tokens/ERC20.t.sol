@@ -52,22 +52,20 @@ contract ERC20Test is Test {
         string memory mock_wrapper = vm.readFile("test/tokens/mocks/ERC20Wrappers.huff");
 
         // Deploy the Mintable ERC20
-        vm.startPrank(deployer);
         address mintableTokenAddress = HuffDeployer.config()
             .with_code(mintable_wrapper)
+            .with_deployer(deployer)
             .with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN"), abi.encode(DECIMALS)))
             .deploy("tokens/ERC20");
         token = IMintableERC20(mintableTokenAddress);
-        vm.stopPrank();
 
         // Deploy the Mock ERC20
-        vm.startPrank(deployer);
         address mockTokenAddress = HuffDeployer.config()
             .with_code(mock_wrapper)
+            .with_deployer(deployer)
             .with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN"), abi.encode(DECIMALS)))
             .deploy("tokens/ERC20");
         mockToken = IERC20(mockTokenAddress);
-        vm.stopPrank();
     }
 
     function testMockERC20Metadata() public {
