@@ -18,7 +18,6 @@ interface IFixedPointMath {
     function sqrt(uint256) external pure returns(uint256);
     function log2(uint256) external pure returns(uint256);
     function cbrt(uint256) external pure returns(uint256);
-
 }
 
 contract FixedPointMathTest is Test {
@@ -438,7 +437,7 @@ contract FixedPointMathTest is Test {
         assertTrue(root * root <= x && next * next > x);
     }
 
-     function testFuzzCbrt(uint256 x) public {
+    function testFuzzCbrt(uint256 x) public {
         uint256 result = math.cbrt(x);
         assertEq(result, cbrt(x));
     }
@@ -451,7 +450,7 @@ contract FixedPointMathTest is Test {
         }
     }
 
-    /// Solady: https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol 
+    /// Solady: https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol
     function cbrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
