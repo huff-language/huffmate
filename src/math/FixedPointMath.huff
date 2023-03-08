@@ -694,6 +694,164 @@
     // Return stack:            // [result]
 }
 
+/// @notice Calculates the cube root of the stack input
+/// Credits: https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol#L504
+#define macro CBRT() = takes (1) returns (1) {
+    // Input Stack:    [x]
+    dup1                                // [x, x]
+    0xffffffffffffffffffffffffffffffff  // [0xffffffffffffffffffffffffffffffff, x, x]
+    lt                                  // [0xffffffffffffffffffffffffffffffff< x, x]
+    0x7 shl                             // [ 0xffffffffffffffffffffffffffffffff < x << 7, x]           
+                                        // r = 0xffffffffffffffffffffffffffffffff < x << 7
+
+    dup2 dup2                           // [r,x,r,x]  
+    shr                                 // [x >> r, r, x]  
+    0xffffffffffffffff                  // [0xffffffffffffffff, x >> r, r, x]  
+    lt                                  // [0xffffffffffffffff < x >> r, r, x]
+    0x6 shl                             // [0xffffffffffffffff < x >> r << 6, r, x]
+    dup2                                // [r, 0xffffffffffffffff < x >> r << 6, r, x]
+    or                                  // [r | 0xffffffffffffffff < x >> r << 6, r, x]
+                                        //  r' = r | (0xffffffffffffffff < (x >> r)) << 6
+
+    dup3 dup2                           // [r,x,r',r,x]
+    shr                                 // [x >> r ,r',r,x]
+    0xffffffff                          // [0xffffffff, x >> r ,r',r,x]
+    lt                                  // [0xffffffff < x >> r ,r',r,x]
+    0x5 shl                             // [0xffffffff < x >> r << 5,r',r,x]
+    dup2                                // [r' | 0xffffffff < x >> r << 5,r',r,x]
+    or                                  // [r', 0xffffffff < x >> r << 5,r',r,x]
+                                        // r' = r' | 0xffffffff < x >> r << 5
+
+    dup4 dup2                           // [r', x, r',r',r,x]
+    shr                                 // [x >> r', r',r',r,x]
+    0xffff                              // [0xffff, x >> r', r',r',r,x]
+    lt                                  // [0xffff < x >> r', r',r',r,x]
+    0x4 shl                             // [0xffff < x >> r' << 4, r',r',r,x]
+    dup2                                // [r', 0xffff < x >> r' << 4, r',r',r,x]
+    or                                  // [r' | 0xffff < x >> r' << 4, r',r',r,x]       
+                                        // r' = r' | 0xffff < x >> r' << 4
+
+    dup5 dup2                           // [r', x, r', r',r',r,x]   
+    shr                                 // [x >> r', r', r',r',r,x]   
+    0xff                                // [0xff, x >> r', r', r',r',r,x]   
+    lt                                  // [0xff < x >> r', r', r',r',r,x]  
+    0x3 shl                             // [0xff < x >> r' << 3, r', r',r',r,x] 
+    dup2                                // [r', 0xff < x >> r' << 3, r', r',r',r,x] 
+    or                                  // [r'|0xff < x >> r' << 3, r', r',r',r,x] 
+                                        //  r' = r'|0xff < x >> r' << 3
+
+    // Cleanup the stack to avoid stack-too-deep
+    swap4                               // [r, r'. r', r', r', x]            
+    pop pop pop pop                     // [r', x]
+
+    0xff                                // [0xff, r', x]
+    dup3 dup3                           // [r', x, 0xff, r', x]
+    shr                                 // [x >> r', 0xff, r', x] 
+    0xf                                 // [0xf, x >> r', 0xff, r', x] 
+    lt                                  // [0xf < x >> r', 0xff, r', x] 
+    0x3                                 // [3, 0xf < x >> r', 0xff, r', x] 
+    dup4                                // [r', 3, 0xf < x >> r', 0xff, r', x] 
+    div                                 // [r' / 3, 0xf < x >> r', 0xff, r', x] 
+    add                                 // [r' / 3 + 0xf < x >> r', 0xff, r', x] 
+    shl                                 // [0xff << r' / 3 + 0xf < x >> r', r', x] 
+                                        // z = 0xff << r' / 3 + 0xf < x >> r'
+
+    0x7f624b                             // [0x7f624b, z, r', x]   
+    0xe8                                 // [0xe8, 0x7f624b, z, r', x]  
+    shl                                  // [0x7f624b << 0xe8, z, r', x]  
+    0x3                                  // [0x3, 0xe8 << 0x7f624b, z, r', x]  
+    dup4                                 // [r', 0x3, 0xe8 << 0x7f624b, z, r', x]  
+    mod byte                             // [byte(r' % 3, 0xe8 << 0x7f624b), z, r', x] 
+    dup2                                 // [z, byte(r' % 3, 0xe8 << 0x7f624b), z, r', x] 
+    div                                  // [z / byte(r' % 3, 0xe8 << 0x7f624b), z, r', x] 
+                                         // z' = z / byte(r' % 3, 0xe8 << 0x7f624b)
+
+    0x3                                  // [3, z', z, r', x]
+    dup2 dup1                            // [z', z', 3, z', z, r', x]  
+    dup1 dup1                            // [z',z', z', z', 3, z', z, r', x]
+    mul                                  // [z' * z', z', z', 3, z', z, r', x]
+    dup8                                 // [x, z' * z', z', z', 3, z', z, r', x]
+    div add                              // [x / z' * z' + z', z', 3, z', z, r', x]                                
+    add div                              // [((x / (z' * z'))+ z') + z') / 3, z', z, r', x]  
+                                         // z' = ((x / (z' * z'))+ z') + z') / 3
+ 
+    0x3                                 // [3, z', z', r', x]    
+    dup2 dup1                           // [z', z', 3, z', z', r', x] 
+    dup1 dup1                           // [z', z', z', z', 3, z', z', r', x] 
+    mul                                 // [z' * z', z', z', 3, z', z', r', x] 
+    dup9                                // [x, z' * z', z', z', 3, z', z', r', x] 
+    div add                             // [x / z' * z', z' + z', 3, z', z', r', x]
+    add div                             // [((x / (z' * z'))+ z') + z') / 3, z', z', z, r', x]  
+                                        // z' = ((x / (z' * z'))+ z') + z') / 3
+          
+
+    0x3                                 // [3, z', z', z', r', x]    
+    dup2 dup1                           // [z', z', 3, z',  z', z', r', x] 
+    dup1 dup1                           // [z', z', z', z', 3, z', z', z', r', x] 
+    mul                                 // [z' * z', z', z', 3, z', z', z', r', x] 
+    dup10                               // [x, z' * z', z', z', 3, z', z', z', r', x] 
+    div add                             // [x / z' * z', z' + z', 3, z', z', z', r', x]
+    add div                             // [((x / (z' * z'))+ z') + z') / 3, z', z', z', z, r', x]  
+                                        // z' = ((x / (z' * z'))+ z') + z') / 3
+
+
+    0x3                                 // [3, z', z', z', z',z, r', x]    
+    dup2 dup1                           // [z', z', 3, z',  z', z', z', z, r', x] 
+    dup1 dup1                           // [z', z', z', z', 3, z', z', z', z', z, r', x] 
+    mul                                 // [z' * z', z', z', 3, z', z', z', z', z, r', x] 
+    dup11                               // [x, z' * z', z', z', 3, z', z', z', z',z, r', x] 
+    div add                             // [x / z' * z', z' + z', 3, z', z', z', z', z, r', x]
+    add div                             // [((x / (z' * z'))+ z') + z') / 3, z', z', z', z', z, r', x]  
+                                        // z' = ((x / (z' * z'))+ z') + z') / 3
+                                        
+    0x3                                 // [3, z', z', z', z', z',z, r', x]    
+    dup2 dup1                           // [z', z', 3, z',  z', z', z', z', z, r', x] 
+    dup1 dup1                           // [z', z', z', z', 3, z', z', z', z', z', z, r', x] 
+    mul                                 // [z' * z', z', z', 3, z', z', z', z', z', z, r', x] 
+    dup12                               // [x, z' * z', z', z', 3, z', z', z', z', z',z, r', x] 
+    div add                             // [x / z' * z', z' + z', 3, z', z', z', z', z', z, r', x]
+    add div                             // [((x / (z' * z'))+ z') + z') / 3, z', z', z', z', z', z, r', x]  
+                                        // z' = ((x / (z' * z'))+ z') + z') / 3
+
+    0x3                                 // [3, z', z', z', z', z', z',z, r', x]    
+    dup2 dup1                           // [z', z', 3, z',  z', z', z', z', z', z, r', x] 
+    dup1 dup1                           // [z', z', z', z', 3, z', z', z', z', z', z', z, r', x] 
+    mul                                 // [z' * z', z', z', 3, z', z', z', z', z', z', z, r', x] 
+    dup13                               // [x, z' * z', z', z', 3, z', z', z', z', z', z',z, r', x] 
+    div add                             // [x / z' * z', z' + z', 3, z', z', z', z', z', z', z, r', x]
+    add div                             // [((x / (z' * z'))+ z') + z') / 3, z', z', z', z', z', z', z, r', x]  
+                                        // z' = ((x / (z' * z'))+ z') + z') / 3
+
+    0x3                                 // [3, z', z', z', z', z', z', z',z, r', x]    
+    dup2 dup1                           // [z', z', 3, z',  z', z', z', z', z', z', z, r', x] 
+    dup1 dup1                           // [z', z', z', z', 3, z', z', z', z', z', z', z', z, r', x] 
+    mul                                 // [z' * z', z', z', 3, z', z', z', z', z', z', z', z, r', x] 
+    dup14                               // [x, z' * z', z', z', 3, z', z', z', z', z', z', z',z, r', x] 
+    div add                             // [x / z' * z', z' + z', 3, z', z', z', z', z', z', z', z, r', x]
+    add div                             // [((x / (z' * z'))+ z') + z') / 3, z', z', z', z', z', z', z', z, r', x]  
+                                        // z' = ((x / (z' * z'))+ z') + z') / 3
+
+
+    dup1 dup1                            // [z',z', z', z', z', z', z', z', z', z', z, r', x] 
+    dup1                                 // [z', z', z', z', z', z', z', z', z', z', z', z, r', x] 
+    mul                                  // [z' * z', z', z', z', z', z', z', z', z', z', z, r', x] 
+    dup13                                // [x, z' * z', z', z', z', z', z', z', z', z', z', z, r', x] 
+    div                                  // [x / (z' * z'), z', z', z', z', z', z', z', z', z', z, r', x] 
+    lt                                   // [x / (z' * z') < z', z', z', z', z', z', z', z', z', z, r', x]    
+    dup2                                 // [z', x / (z' * z') < z', z', z', z', z', z', z', z', z', z, r', x]   
+    sub                                  // [z' - x / (z' * z') < z', z', z', z', z', z', z', z', z', z, r', x]
+
+    // Clean stack
+    swap10
+    pop pop 
+    pop pop 
+    pop pop
+    pop pop
+    pop pop
+
+    // Return stack:   [result: z']
+}
+
 ////////////////////////////////////////////////////////////////
 //                       HELPER MACROS                        //
 ////////////////////////////////////////////////////////////////
