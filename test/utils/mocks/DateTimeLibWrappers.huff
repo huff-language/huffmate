@@ -1,0 +1,144 @@
+/* Functions */
+#define function weekday(uint256) nonpayable returns (uint256)
+#define function isLeapYear(uint256) nonpayable returns (bool)
+#define function daysInMonth(uint256,uint256) nonpayable returns (uint256)
+#define function dateToEpochDay(uint256,uint256,uint256) nonpayable returns (uint256)
+#define function dateToTimestamp(uint256,uint256,uint256) nonpayable returns (uint256)
+#define function dateTimeToTimestamp(uint256,uint256,uint256,uint256,uint256,uint256) nonpayable returns (uint256)
+#define function nthWeekdayInMonthOfYearTimestamp(uint256, uint256,uint256,uint256) nonpayable returns (uint256)
+#define function epochDayToDate(uint256) nonpayable returns (uint256,uint256,uint256)
+#define function timestampToDate(uint256) nonpayable returns (uint256,uint256,uint256)
+
+/* Wrapper Macros */
+#define macro WEEKDAY_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [timestamp]
+    WEEKDAY()            // [result]
+    0x00 mstore          // []
+    0x20 0x00 return     // []  
+ }
+
+#define macro IS_LEAP_YEAR_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [timestamp]
+    IS_LEAP_YEAR()       // [result]
+    0x00 mstore          // []
+    0x20 0x00 return     // []  
+ }
+
+#define macro DAYS_IN_MONTH_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [year]
+    0x24 calldataload    // [month, year]
+    DAYS_IN_MONTH()      // [result]
+    0x00 mstore          // []
+    0x20 0x00 return     // []  
+ }
+
+#define macro DATE_TO_EPOCH_DAY_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [year]
+    0x24 calldataload    // [month, year]
+    0x44 calldataload    // [day, month, year]
+    DATE_TO_EPOCH_DAY()  // [result]
+    0x00 mstore          // []
+    0x20 0x00 return     // []  
+ }
+
+ #define macro DATE_TO_TIMESTAMP_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [year]
+    0x24 calldataload    // [month, year]
+    0x44 calldataload    // [day, month, year]
+    DATE_TO_TIMESTAMP()  // [result]
+    0x00 mstore          // []
+    0x20 0x00 return     // []  
+ }
+
+  #define macro DATE_TIME_TO_TIMESTAMP_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [year]
+    0x24 calldataload    // [month, year]
+    0x44 calldataload    // [day, month, year]
+    0x64 calldataload    // [seconds, day, month, year]
+    0x84 calldataload    // [minutes, seconds, day, month, year]
+    0xa4 calldataload    // [hours, minutes, seconds, day, month, year]
+    DATE_TIME_TO_TIMESTAMP()  // [result]
+    0x00 mstore          // []
+    0x20 0x00 return     // []  
+ }
+
+ #define macro EPOCH_DAY_TO_DATE_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [epochDay]
+    EPOCH_DAY_TO_DATE()  // [year, month, day]
+    0x00 mstore          // [month, day]
+    0x20 mstore          // [day]
+    0x40 mstore          // []
+    0x60 0x00 return     // []  
+ }
+
+ #define macro TIMESTAMP_TO_DATE_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [timestamp]
+    TIMESTAMP_TO_DATE()  // [year, month, day]
+    0x00 mstore          // [month, day]
+    0x20 mstore          // [day]
+    0x40 mstore          // []
+    0x60 0x00 return     // []  
+ }
+
+
+
+ #define macro NTH_WEEKDAY_IN_MONTH_OF_YEAR_TIMESTAMP_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload    // [year]
+    0x24 calldataload    // [month, year]
+    0x44 calldataload    // [n, month, year]
+    0x64 calldataload    // [wd, n, month, year]
+    NTH_WEEKDAY_IN_MONTH_OF_YEAR_TIMESTAMP()  // [result]
+    0x00 mstore          // []
+    0x20 0x00 return     // []  
+ }
+
+/* Function Dispatcher */
+#define macro MAIN() = takes (0) returns (0) {
+    // Identify which function is being called.
+    0x00 calldataload 
+    
+    // Extract the function singature
+    0xe0 shr
+
+    // Jump table
+    dup1 __FUNC_SIG(weekday)    eq  weekday      jumpi
+    dup1 __FUNC_SIG(isLeapYear) eq  isLeapYear   jumpi
+    dup1 __FUNC_SIG(daysInMonth) eq daysInMonth   jumpi
+    dup1 __FUNC_SIG(dateToEpochDay) eq dateToEpochDay   jumpi
+    dup1 __FUNC_SIG(epochDayToDate) eq epochDayToDate   jumpi
+    dup1 __FUNC_SIG(timestampToDate) eq timestampToDate   jumpi
+    dup1 __FUNC_SIG(dateToTimestamp) eq dateToTimestamp   jumpi
+    dup1 __FUNC_SIG(dateTimeToTimestamp) eq dateTimeToTimestamp   jumpi
+    dup1 __FUNC_SIG(nthWeekdayInMonthOfYearTimestamp) eq nthWeekdayInMonthOfYearTimestamp jumpi
+
+
+    weekday:
+        WEEKDAY_WRAPPER()
+
+    isLeapYear:
+        IS_LEAP_YEAR_WRAPPER()
+
+    daysInMonth:
+        DAYS_IN_MONTH_WRAPPER()
+
+    dateToEpochDay:
+        DATE_TO_EPOCH_DAY_WRAPPER()
+    
+    epochDayToDate:
+        EPOCH_DAY_TO_DATE_WRAPPER()
+    
+    timestampToDate:
+        TIMESTAMP_TO_DATE_WRAPPER()
+
+    dateToTimestamp:
+        DATE_TO_TIMESTAMP_WRAPPER()
+    
+    dateTimeToTimestamp:
+        DATE_TIME_TO_TIMESTAMP_WRAPPER()
+
+    nthWeekdayInMonthOfYearTimestamp:
+        NTH_WEEKDAY_IN_MONTH_OF_YEAR_TIMESTAMP_WRAPPER()
+
+}
+
+
