@@ -45,10 +45,12 @@ fs_permissions = [
     { access = "read", path = "./test/utils/mocks/RefundedWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/SafeTransferLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ShufflingWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/InsertionSortWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/SSTORE2Wrappers.huff" },
     { access = "read", path = "./test/utils/mocks/TSOwnableWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ECDSAWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ConstantsWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/DateTimeLibWrappers.huff" }
 ]
 remappings = [
     "forge-std/=lib/forge-std/src/",

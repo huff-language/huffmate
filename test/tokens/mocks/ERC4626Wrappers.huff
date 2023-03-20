@@ -50,7 +50,7 @@
     address 0x24 mstore
 
     // Get the asset variable
-    [ASSET_SLOT] sload             // [asset]
+    _GET_IMMUTABLE(ASSET_OFFSET, 0x80) // [asset]
 
     // Construct the call
     0x20                            // [retSize, asset]
