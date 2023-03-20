@@ -1,3 +1,4 @@
+/// SPDX-License-Identifier: MIT
 
 #define macro CONSTRUCTOR() = takes (0) returns (0) {
     TSOWNABLE_CONSTRUCTOR()
