@@ -42,70 +42,63 @@
 }
 
 #define macro IS_LEAP_YEAR() = takes (0) returns (0) {
-    // Condition 1, C1 = year % 4 == 0
-    // Condition 2, C2 = year % 100 != 0
-    // Condition 3, C3 = year % 400 == 0
+   // Condition 1, C1 = year % 4 == 0
+   // Condition 2, C2 = year % 100 != 0
+   // Condition 3, C3 = year % 400 == 0
 
-    // Formula: C1 && (C2||C3)
+   // Formula: C1 && (C2||C3)
 
-    // Input stack:  [year]
+   // Input stack:  [year]
 
-    // Calculate C2
-    0x64       // [100, year]
-    dup2       // [year, 100, year]
-    mod        // [year % 100, year]
-    iszero     // [year % 100 == 0, year]
-    not        // [C2, year]
+   // Calculate C2
+   0x64        // [100, year]
+   dup2        // [year, 100, year]
+   mod         // [year % 100, year]
+   iszero      // [year % 100 == 0, year]
+   not         // [C2, year]
 
-    // Calculate C1
-    0x04        // [4, C2, year]
-    dup3        // [year, 4, C2, year]
-    mod         // [year % 4, C2, year]
-    iszero      // [C1, C2, year]
+   // Calculate C1
+   0x04        // [4, C2, year]
+   dup3        // [year, 4, C2, year]
+   mod         // [year % 4, C2, year]
+   iszero      // [C1, C2, year]
 
-    // Calculate C3
-    swap2       // [year, C2, C1]
-    0x190       // [400, year, C2, C1]
-    swap1       // [year, 400, C2, C1]
-    mod         // [year % 400, C2, C1]
-    iszero      // [C3, C2, C1]
-    or          // [(C2||C3), C1]
-    and         // [(C2||C3) && C1]
+   // Calculate C3
+   swap2       // [year, C2, C1]
+   0x190       // [400, year, C2, C1]
+   swap1       // [year, 400, C2, C1]
+   mod         // [year % 400, C2, C1]
+   iszero      // [C3, C2, C1]
+   or          // [(C2||C3), C1]
+   and         // [(C2||C3) && C1]
 
-    // Return stack: [result]
+   // Return stack: [result]
 }
 
 
 #define macro DAYS_IN_MONTH() = takes (0) returns (0) {
+   // Input Stack : [month, year]
 
-    // Input Stack : [month, year]
+   // Push days in month map: [31,28,31,30,31,30,31,31,30,31,30,31]
+   0x1F1C1F1E1F1E1F1F1E1F1E1F // [daysInMonthMap, month, year]
 
-    // Push days in month map: [31,28,31,30,31,30,31,31,30,31,30,31]
-    0x1F1C1F1E1F1E1F1F1E1F1E1F // [daysInMonthMap,month, year]
-    
-    dup2                       // [month,daysInMonthMap, month, year]
-    0x13                       // [19,month, daysInMonthMap, month, year]
-    add                        // [monthOffset, daysInMonthMap, month, year]
-    byte                       // [daysInMonth, month, year]
-    dup3                       // [year, daysInMonth, month, year]
-    IS_LEAP_YEAR()             // [isleap(year), daysInMonth, month, year]
-    dup3                       // [month, isleap(year), daysInMonth, month, year]
-    0x02                       // [2, month, isleap(year), daysInMonth, month, year]
-    eq                         // [2==month, isleap(year), daysInMonth, month, year]
- 
-    and                        // [2==month && isleap(year), daysInMonth, month, year]
-    add                        // [2==month && isleap(year) + daysInMonth, month, year]
-   
-    // Clear stack
-    swap2
-    pop
-    pop
+   dup2                       // [month, daysInMonthMap, month, year]
+   0x13                       // [19, month, daysInMonthMap, month, year]
+   add                        // [monthOffset, daysInMonthMap, month, year]
+   byte                       // [daysInMonth, month, year]
+   swap2                      // [year, month, daysInMonth]
+   IS_LEAP_YEAR()             // [isleap(year), month, daysInMonth]
+   swap1                      // [month, isleap(year), daysInMonth]
+   0x02                       // [2, month, isleap(year), daysInMonth]
+   eq                         // [2 == month, isleap(year), daysInMonth]
+   and                        // [2==month && isleap(year), daysInMonth]
+   add                        // [2==month && isleap(year) + daysInMonth]
 
-    // Return stack: [result]
- }
+   // Return stack: [result]
+}
 
 
- #define macro DATE_TO_EPOCH_DAY() = takes (0) returns (0) {      
+ #define macro DATE_TO_EPOCH_DAY() = takes (0) returns (0) {
  
     // Input stack : [d, m, y]
     swap2                  // [y,m,d]
