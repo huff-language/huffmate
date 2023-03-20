@@ -1,0 +1,371 @@
+/// @title DateTimeLib
+/// @notice SPDX-License-Identifier: MIT
+/// @author PraneshASP <https://github.com/PraneshASP>
+/// @notice Library for date time operations.
+/// @notice Adapted from Solady (https://github.com/Vectorized/solady/blob/main/src/utils/DateTimeLib.so)
+
+/// Conventions:
+/// --------------------------------------------------------------------+
+/// Unit      | Range                | Notes                            |
+/// --------------------------------------------------------------------|
+/// timestamp | 0..0x1e18549868c76ff | Unix timestamp.                  |
+/// epochDay  | 0..0x16d3e098039     | Days since 1970-01-01.           |
+/// year      | 1970..0xffffffff     | Gregorian calendar year.         |
+/// month     | 1..12                | Gregorian calendar month.        |
+/// day       | 1..31                | Gregorian calendar day of month. |
+/// weekday   | 1..7                 | The day of the week (1-indexed). |
+/// --------------------------------------------------------------------+
+/// All timestamps of days are rounded down to 00:00:00 UTC.
+
+////////////////////////////////////////////////////////////////
+//                         Logic                              //
+////////////////////////////////////////////////////////////////
+
+/// @dev Returns day of the week (Monday is indicated as 1 and so on)
+#define macro WEEKDAY() = takes (0) returns (0) {
+    // Formula: ((timestamp / 86400 + 3) % 7) + 1;
+
+    // Input Stack: [timestamp(t)]
+
+    0x15180       // [86400, t]
+    swap1         // [t,86400]
+    div           // [t/86400]
+    0x03          // [3, t/86400]
+    add           // [3 + t/86400]
+    0x07          // [7, (3+t/86400)]
+    swap1         // [(t/86400 + 3), 7]
+    mod           // [(t/86400 + 3) % 7]
+    0x01          // [1, (t/86400 + 3)%7]
+    add           // [1 + (t/86400 + 3)%7]
+
+    // Return stack: [result]
+}
+
+#define macro IS_LEAP_YEAR() = takes (0) returns (0) {
+   // Condition 1, C1 = year % 4 == 0
+   // Condition 2, C2 = year % 100 != 0
+   // Condition 3, C3 = year % 400 == 0
+
+   // Formula: C1 && (C2||C3)
+
+   // Input stack:  [year]
+
+   // Calculate C2
+   0x64        // [100, year]
+   dup2        // [year, 100, year]
+   mod         // [year % 100, year]
+   iszero      // [year % 100 == 0, year]
+   not         // [C2, year]
+
+   // Calculate C1
+   0x04        // [4, C2, year]
+   dup3        // [year, 4, C2, year]
+   mod         // [year % 4, C2, year]
+   iszero      // [C1, C2, year]
+
+   // Calculate C3
+   swap2       // [year, C2, C1]
+   0x190       // [400, year, C2, C1]
+   swap1       // [year, 400, C2, C1]
+   mod         // [year % 400, C2, C1]
+   iszero      // [C3, C2, C1]
+   or          // [(C2||C3), C1]
+   and         // [(C2||C3) && C1]
+
+   // Return stack: [result]
+}
+
+
+#define macro DAYS_IN_MONTH() = takes (0) returns (0) {
+   // Input Stack : [month, year]
+
+   // Push days in month map: [31,28,31,30,31,30,31,31,30,31,30,31]
+   0x1F1C1F1E1F1E1F1F1E1F1E1F // [daysInMonthMap, month, year]
+
+   dup2                       // [month, daysInMonthMap, month, year]
+   0x13                       // [19, month, daysInMonthMap, month, year]
+   add                        // [monthOffset, daysInMonthMap, month, year]
+   byte                       // [daysInMonth, month, year]
+   swap2                      // [year, month, daysInMonth]
+   IS_LEAP_YEAR()             // [isleap(year), month, daysInMonth]
+   swap1                      // [month, isleap(year), daysInMonth]
+   0x02                       // [2, month, isleap(year), daysInMonth]
+   eq                         // [2 == month, isleap(year), daysInMonth]
+   and                        // [2==month && isleap(year), daysInMonth]
+   add                        // [2==month && isleap(year) + daysInMonth]
+
+   // Return stack: [result]
+}
+
+
+#define macro DATE_TO_EPOCH_DAY() = takes (0) returns (0) {
+   // Input stack : [d, m, y]
+   swap2                  // [y,m,d]
+   0x3                    // [3,y,m,d]
+   dup3                   // [m,3,y,m,d]
+   lt                     // [m < 3, y,m,d]
+   swap1                  // [y, m<3, m,d]
+   sub                    // [y-m<3,m,d]
+                        // y = y - (m<3)
+   /// doy construction
+   dup3                // [d, y,m,d]
+   0x301               // [769,d, y, m, d]
+   0xc                 // [12, 769,d, y, m, d]
+   0x9                 // [9,12, 769,d, y, m, d]
+   dup6                // [m, 9,12, 769,d, y, m, d]
+   add                 // [m + 9,12, 769, d, y, m, d]
+   mod                 // [m + 9 % 12, 769, d, y, m, d]
+   0xf4ff              // [62719, m + 9 % 12, 769,d, y, m, d]
+   mul                 // [62719 * m + 9 % 12, 769, d, y, m, d]
+   add                 // [62719 * m + 9 % 12 + 769,d, y, m, d]
+   0xb                 // [11, 62719 * m + 9 % 12 + 769, d, y, m, d]
+   shr                 // [62719 * m + 9 % 12 + 769 >> 11, d, y, m, d]
+   add                 // [62719 * m + 9 % 12 + 769 >> 11 + d, y, m, d]
+                     // [doy, y,m,d]
+
+   /// yoe construction
+   0x190               // [400,doy,y,m,d]
+   dup3                // [y,400, doy,y,m,d]
+   mod                 // [y%400, doy, y, m,d]
+                     // [yoe, doy, y, m, d]
+   /// doe construction
+   0x64                // [100, yoe, doy, y, m, d]
+   dup2                // [yoe, 100, yoe, doy, y, m, d]
+   div                 // [yoe / 100, yoe, doy, y, m, d]
+   dup3                // [doy, yoe / 100, yoe, doy, y, m, d]
+   dup3                // [yoe, doy, yoe / 100, yoe, doy, y, m, d]
+   0x2                 // [2, yoe, doy, yoe / 100, yoe, doy, y, m, d]
+   shr                 // [yoe >> 2, doy, yoe / 100, yoe, doy, y, m, d]
+   0x16d               // [365, yoe >> 2, doy, yoe / 100, yoe, doy, y, m, d]
+   dup5                // [yoe, 365, yoe >> 2, doy, yoe / 100, yoe, doy, y, m, d]
+   mul                 // [yoe * 365, yoe >> 2, doy, yoe / 100, yoe, doy, y, m, d]
+   add                 // [yoe * 365 + yoe >> 2, doy, yoe / 100, yoe, doy, y, m, d]
+   add                 // [yoe * 365 + yoe >> 2 + doy, yoe / 100, yoe, doy, y, m, d]
+   sub                 // [yoe * 365 + yoe >> 2 + doy - yoe / 100, yoe, doy, y, m, d]
+                     // [doe, yoe, doy, y, m, d]
+
+   0xafa6d             // [719469, doe, yoe, doy, y, m, d]
+   swap1               // [doe, 719469, yoe, doy, y, m, d]
+   0x23ab1             // [146097, doe, 719469, yoe, doy, y, m, d]
+   0x190               // [400, 146097, doe, 719469, yoe, doy, y, m, d]
+   dup7                // [y, 400, 146097, doe, 719469, yoe, doy, y, m, d]
+   div                 // [y / 400, 146097, doe, 719469, yoe, doy, y, m, d]
+   mul                 // [y / 400 * 146097, doe, 719469, yoe, doy, y, m, d]
+   add                 // [y / 400 * 146097 + doe, 719469, yoe, doy, y, m, d]
+   sub                 // [y / 400 * 146097 + doe - 719469, yoe, doy, y, m, d]
+
+   // Clear stack
+   swap5
+   pop pop pop pop pop
+
+   // Return stack:  // [result]
+}
+
+#define macro DATE_TO_TIMESTAMP() = takes (0) returns (0)  {
+   // Input stack = [d, m, y]
+   DATE_TO_EPOCH_DAY() // [epochDay]
+   0x15180             // [86400, epochDay]
+   mul                 // [86400 * epochDay]
+   // Return stack:    // [timestamp]
+}
+
+
+#define macro NTH_WEEKDAY_IN_MONTH_OF_YEAR_TIMESTAMP() = takes (0) returns (0)  {
+   // Input stack: [wd, n, m, y]
+   dup4                // [y, wd, n, m, y]
+   dup4                // [m, y, wd, n, m, y]
+   0x1                 // [1, m, y, wd, n, m, y]
+   DATE_TO_EPOCH_DAY() // [d, wd, n, m, y]
+
+   dup5                // [y, d, wd, n, m, y]
+   dup5                // [m, y, d, wd, n, m, y]
+   DAYS_IN_MONTH()     // [md, d, wd, n, m, y]
+
+   0x1                 // [1, md, d, wd, n, m, y]
+   0x7                 // [7, 1, md, d, wd, n, m, y]
+   0x3                 // [3, 7, 1, md, d, wd, n, m, y]
+   dup5                // [d, 3, 7, 1, md, d, wd, n, m, y]
+   add                 // [d + 3, 7, 1, md, d, wd, n, m, y]
+   mod                 // [d + 3 % 7, 1, md, d, wd, n, m, y]
+   add                 // [d + 3 % 7 + 1, md, d, wd, n, m, y]
+   dup4                // [wd, d + 3 % 7 + 1, md, d, wd, n, m, y]
+   sub                 // [wd - d + 3 % 7 + 1, md, d, wd, n, m, y]
+                     // [diff, md, d, wd, n, m, y]
+
+   0x7                 // [7, diff, md, d, wd, n, m, y]
+   0x6                 // [6, 7, diff, md, d, wd, n, m, y]
+   dup3                // [diff, 6, 7, diff, md, d, wd, n, m, y]
+   gt                  // [diff > 6, 7, diff, md, d, wd, n, m, y]
+   mul                 // [diff > 6 * 7, diff, md, d, wd, n, m, y]
+   add                 // [diff > 6 * 7 + diff, md, d, wd, n, m, y]
+   0x7                 // [7,diff > 6 * 7 + diff, md, d, wd, n, m, y]
+   0x1                 // [1, 7, diff > 6 * 7 + diff, md, d, wd, n, m, y]
+   dup7                // [n, 1, 7,diff > 6 * 7 + diff, md, d, wd, n, m, y]
+   sub                 // [n - 1, 7,diff > 6 * 7 + diff, md, d, wd, n, m, y]
+   mul                 // [n - 1 * 7,diff > 6 * 7 + diff, md, d, wd, n, m, y]
+   add                 // [n - 1 * 7 + diff > 6 * 7 + diff, md, d, wd, n, m, y]
+                     // [date, md, d, wd, n, m, y]
+
+   swap4               // [n, md, d, wd, date, m, y]
+   iszero              // [n==0, md, d,wd, date, m, y]
+   iszero              // [((n==0)==0), md, d, wd, date, m, y]
+   swap1               // [md,((n==0)==0),d,wd, date,m,y]
+   dup5                // [date, md,((n==0)==0),d,wd, date,m,y]
+   lt                  // [date < md,((n==0)==0),d,wd,date,m,y]
+   and                 // [date < md && ((n==0)==0),d,wd,date,m,y]
+   swap1               // [d, date < md && ((n==0)==0),wd, date,m,y]
+   dup4                // [date, d, date < md && ((n==0)==0),wd, date,m,y]
+   add                 // [date + d, date < md && ((n==0)==0),wd,date,m,y]
+   0x15180             // [86400, date + d, date < md && ((n==0)==0),wd,date,m,y]
+   mul                 // [86400 * date + d, date < md && ((n==0)==0),wd, date,m,y]
+   mul                 // [86400 * date + d * date < md && ((n==0)==0),wd,date,m,y]
+
+   // clear stack
+   swap4
+   pop pop
+   pop pop
+
+   // Return stack:    // [result]
+}
+
+
+
+#define macro DATE_TIME_TO_TIMESTAMP() = takes(0) returns(0) {
+    // Input stack :  [day, month ,year ,hour,min,sec]
+
+    DATE_TO_EPOCH_DAY() // [epochDay, hour, min, sec]
+    0x15180            //  [86400,epochDay, hour, min, sec]
+    mul                //  [86400*epochDay, hour, min, sec]
+    swap1              //  [hour, 86400*epochDay, min, sec]
+    0xe10              //  [3600,hour, 86400*epochDay, min, sec]
+    mul                //  [3600*hour, 86400*epochDay, min, sec]
+    swap2              //  [min, 86400*epochDay, 3600*hour, sec]
+    0x3c               //  [60,min, 86400*epochDay, 3600*hour, sec]
+    mul                //  [60 * min, 86400*epochDay, 3600*hour, sec]
+    add                //  [60 * min + 86400*epochDay, 3600*hour, sec]
+    add                //  [60 * min + 86400*epochDay + 3600*hour, sec]
+    add                //  [60 * min + 86400*epochDay + 3600*hour + sec]
+
+    // Return stack:   [result]
+}
+
+#define macro GET_DAY() = takes(0) returns(0) {
+   // Input stack: [mp, doy, yoe, doe, epochDay]
+
+   0x1                // [1, mp, doy, yoe, doe, epochDay]
+   0x301              // [769, 1, mp, doy, yoe, doe, epochDay]
+   0xf4ff             // [62719, 769, 1, mp, doy, yoe, doe, epochDay]
+   dup4               // [mp, 62719, 769, 1, mp, doy, yoe, doe, epochDay]
+   mul                // [mp * 62719, 769, 1, mp, doy, yoe, doe, epochDay]
+   add                // [mp * 62719 + 769, 1, mp, doy, yoe, doe, epochDay]
+   0xb                // [11, mp * 62719 + 769, 1, mp, doy, yoe, doe, epochDay]
+   shr                // [11 >> mp * 62719 + 769, 1, mp, doy, yoe, doe, epochDay]
+   dup4               // [doy, 11 >> mp * 62719 + 769, 1, mp, doy, yoe, doe, epochDay]
+   sub                // [doy - 11 >> mp * 62719 + 769, 1, mp, doy, yoe, doe, epochDay]
+   add                // [doy - 11 >> mp * 62719 + 769 + 1, mp, doy, yoe, doe, epochDay]
+
+   // Return stack :  // [day, mp, doy, yoe, doe, epochDay]
+}
+
+#define macro GET_MONTH() = takes(0) returns(0) {
+   // Input stack: [day, mp, doy, yoe, doe, epochDay]
+
+   0xc                 // [11,day, mp, doy, yoe, doe, epochDay]
+   0x9                 // [9,11,day, mp, doy, yoe, doe, epochDay]
+   dup4                // [mp,9,11,day, mp, doy, yoe, doe, epochDay]
+   gt                  // [mp > 9,11,day, mp, doy, yoe, doe, epochDay]
+   mul                 // [mp > 9 * 11,day, mp, doy, yoe, doe, epochDay]
+   0x3                 // [3, mp > 9 * 11,day, mp, doy, yoe, doe, epochDay]
+   dup4                // [mp, 3, mp > 9 * 11,day, mp, doy, yoe, doe, epochDay]
+   add                 // [mp + 3, mp > 9 * 11,day, mp, doy, yoe, doe, epochDay]
+   sub                 // [mp + 3 - mp > 9 * 11,day, mp, doy, yoe, doe, epochDay]
+
+   // Return stack :  // [month, day, mp, doy, yoe, doe, epochDay]
+}
+
+#define macro GET_YEAR() = takes(0) returns(0) {
+   // Input stack: [month, day, mp, doy, yoe, doe, epochDay]
+
+   0x3                // [3, month, day, mp, doy, yoe, doe, epochDay]
+   dup2               // [month, 3, month, day, mp, doy, yoe, doe, epochDay]
+   lt                 // [month < 3, month, day, mp, doy, yoe, doe, epochDay]
+   0x190              // [400, month < 3, month, day, mp, doy, yoe, doe, epochDay]
+   0x23ab1            // [146097,400, month < 3, month, day, mp, doy, yoe, doe, epochDay]
+   dup10               // [epochDay, 146097,400, month < 3, month, day, mp, doy, yoe, doe, epochDay]
+   div                // [epochDay / 146097, 400, month < 3, month, day, mp, doy, yoe, doe, epochDay]
+   mul                // [epochDay / 146097 * 400, month < 3, month, day, mp, doy, yoe, doe, epochDay]
+   dup7               // [yoe, epochDay / 146097 * 400, month < 3, month, day, mp, doy, yoe, doe, epochDay]
+   add                // [yoe+ epochDay / 146097 * 400, month < 3, month, day, mp, doy, yoe, doe, epochDay]
+   add                // [yoe+ epochDay / 146097 * 400 + month < 3, month, day, mp, doy, yoe, doe, epochDay]
+
+   // Return stack :  // [year, month, day, mp, doy, yoe, doe, epochDay]
+}
+
+#define macro EPOCH_DAY_TO_DATE() = takes(0) returns(0) {
+   // Input stack : // [epochDay]
+
+   0xafa6c         // [719468, epochDay]
+   add             // [epochDay]
+   dup1            // [epochDay, epochDay]
+   0x23ab1         // [146097, epochDay,epochDay]
+   swap1           // [epochDay, 146097,epochDay]
+   mod             // [epochDay % 146097,epochDay]
+                  // [doe,epochDay]
+
+   0x16d           // [365, doe, epochDay]
+   0x23ab0         // [146096, 365, doe, epochDay]
+   dup3            // [doe, 146096, 365, doe, epochDay]
+   eq              // [doe == 146096, 365, doe, epochDay]
+   0x5b4           // [1460, doe == 146096, 365, doe, epochDay]
+   dup4            // [doe, 1460, doe == 146096, 365, doe, epochDay]
+   div             // [doe / 1460, doe == 146096, 365, doe, epochDay]
+   0x8eac          // [36524, doe / 1460, doe == 146096, 365, doe, epochDay]
+   dup5            // [doe, 36524, doe / 1460, doe == 146096, 365, doe, epochDay]
+   div             // [doe/ 36524, doe / 1460, doe == 146096, 365, doe, epochDay]
+   dup5            // [doe, doe/ 36524, doe / 1460, doe == 146096, 365, doe, epochDay]
+   add             // [doe + doe/ 36524, doe / 1460, doe == 146096, 365, doe, epochDay]
+   sub             // [doe + doe/ 36524 - doe / 1460, doe == 146096, 365, doe, epochDay]
+   sub             // [doe + doe/ 36524 - doe / 1460 - doe == 146096, 365, doe, epochDay]
+   div             // [doe + doe/ 36524 - doe / 1460 - doe == 146096 / 365, doe, epochDay]
+                  // [yoe, doe, epochDay]
+
+   0x64            // [100, yoe, doe, epochDay]
+   dup2            // [yoe, 100, yoe, doe, epochDay]
+   div             // [yoe / 100, yoe, doe, epochDay]
+   dup2            // [yoe,yoe / 100, yoe, doe, epochDay]
+   0x2             // [2, yoe,yoe / 100, yoe, doe, epochDay]
+   shr             // [yoe >> 2,yoe / 100, yoe, doe, epochDay]
+   dup3            // [yoe, yoe >> 2,yoe / 100, yoe, doe, epochDay]
+   0x16d           // [365, yoe, yoe >> 2,yoe / 100, yoe, doe, epochDay]
+   mul             // [365 * yoe, yoe >> 2,yoe / 100, yoe, doe, epochDay]
+   add             // [365 * yoe + yoe >> 2,yoe / 100, yoe, doe, epochDay]
+   sub             // [365 * yoe + yoe >> 2 - yoe / 100, yoe, doe, epochDay]
+   dup3            // [doe,365 * yoe + yoe >> 2 - yoe / 100, yoe, doe, epochDay]
+   sub             // [doe - 365 * yoe + yoe >> 2 - yoe / 100, yoe, doe, epochDay]
+                  // [doy, yoe, doe, epochDay]
+   0x99            // [153, doy, yoe, doe, epochDay]
+   0x2             // [2, 153, doy, yoe, doe, epochDay]
+   dup3            // [doy,2, 153, doy, yoe, doe, epochDay]
+   0x5             // [5, doy,2, 153, doy, yoe, doe, epochDay]
+   mul             // [5 * doy,2, 153, doy, yoe, doe, epochDay]
+   add             // [5 * doy + 2, 153, doy, yoe, doe, epochDay]
+   div             // [5 * doy + 2 / 153, doy, yoe, doe, epochDay]
+                  // [mp, doy, yoe, doe, epochDay]
+
+   GET_DAY()       // [day, mp, doy, yoe, doe, epochDay]
+   GET_MONTH()     // [month, day, mp, doy, yoe, doe, epochDay]
+   GET_YEAR()      // [year, month, day, mp, doy, yoe, doe, epochDay]
+
+}
+
+#define macro TIMESTAMP_TO_DATE() = takes(0) returns(0) {
+   // Imput stack:  [timestamp]
+
+   0x15180           // [86400, timestamp]
+   swap1             // [timestamp, 86400]
+   div               // [timestamp / 86400]
+
+   EPOCH_DAY_TO_DATE() // [year, month, day]
+
+   // Return stack:    [year, month, day]
+}
