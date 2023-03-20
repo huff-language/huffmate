@@ -30,25 +30,22 @@
 #define function name() nonpayable returns (string)
 #define function symbol() nonpayable returns (string)
 
-// META_NAME = "Token"
-#define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000
-#define constant META_NAME_LENGTH = 0x05
-
-// META_SYMBOL = "TKN"
-#define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
-#define constant META_SYMBOL_LENGTH = 0x03
-
-
 // ERC20 Storage
 #define constant TOTAL_SUPPLY_SLOT = FREE_STORAGE_POINTER()
 #define constant BALANCE_SLOT = FREE_STORAGE_POINTER()
 #define constant APPROVAL_SLOT = FREE_STORAGE_POINTER()
-#define constant DECIMALS_SLOT = FREE_STORAGE_POINTER()
 
 // EIP-2612 STORAGE
 #define constant INITIAL_CHAIN_ID = FREE_STORAGE_POINTER()
 #define constant INITIAL_DOMAIN_SEPARATOR = FREE_STORAGE_POINTER()
 #define constant NONCE_SLOT = FREE_STORAGE_POINTER()
+
+// Immutables offsets
+#define constant DECIMALS_OFFSET =      0x0000000000000000000000000000000000000000000000000000000000000020
+#define constant NAME_OFFSET =          0x00000000000000000000000000000000000000000000000000000000000000a0
+#define constant NAME_LENGTH_OFFSET =   0x00000000000000000000000000000000000000000000000000000000000000c0
+#define constant SYMBOL_OFFSET =        0x0000000000000000000000000000000000000000000000000000000000000040
+#define constant SYMBOL_LENGTH_OFFSET = 0x0000000000000000000000000000000000000000000000000000000000000060
 
 // PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
 #define constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9
@@ -62,19 +59,38 @@
 /// @notice Constructor
 /// @notice Sets the initial domain separator and chain ID
 #define macro ERC20_CONSTRUCTOR() = takes (0) returns (0) {
-    // Copy the decimals into memory from the bytecode
-    0x20                                    // [size] - byte size to copy
-    0x20 codesize sub                       // [offset, size] - offset in the code to copy from
-    0x00                                    // [mem, offset, size] - offset in memory to copy to
-    codecopy                                // []
+    // Constructor arguments:
+    // ?, name_size, name, ?, symbol_size, symbol, decimals
 
-    // Copy the decimals from memory into the DECIMALS_SLOT storage location
-    0x00 mload                              // [decimals]
-    [DECIMALS_SLOT] sstore                  // []
+    // This constructor will return the runtime bytecode with all the 
+    // constructor arguments concatenated at the end.
 
     chainid [INITIAL_CHAIN_ID] sstore       // []
     COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
+    
+    // Copy the runtime bytecode with constructor argument concatenated.
+    0x67                                    // [offset] - constructor code size
+    dup1                                    // [offset, offset]
+    codesize                                // [total_size, offset, offset]
+    sub                                     // [runtime_size, offset]
+    dup1                                    // [runtime_size, runtime_size, offset]
+    swap2                                   // [offset, runtime_size, runtime_size]
+    returndatasize                          // [return_offset, offset, runtime_size, runtime_size]
+    codecopy                                // [runtime_size]
+
+    // Return the runtime bytecode.
+    returndatasize                          // [return_offset, runtime_size]
+    return                                  // []
+}
+
+/// @notice Retrives an "immutable" from the runtime bytecode.
+#define macro _GET_IMMUTABLE(offset_end, free_memory) = takes (0) returns (1) {
+    0x20                        // [size]
+    <offset_end> codesize sub   // [offset_code, size]
+    <free_memory>               // [offset_memory, offset_code, size]
+    codecopy                    // []
+    <free_memory> mload         // [value]
 }
 
 /// @notice Approve
@@ -274,18 +290,21 @@
 #define macro COMPUTE_DOMAIN_SEPARATOR() = takes (0) returns (1) {
     // WARNING: 0x00 - 0x3f (64 bytes): scratch space for hashing methods
     // AS SUCH, WE STORE VARIABLES IN MEMORY STARTING AT 0x40
-    [PERMIT_TYPEHASH] 0x40 mstore   // []
-    [META_NAME] 0x60 mstore         // []
-    0x20 0x60 sha3 0x60 mstore      // []
+
+    _GET_IMMUTABLE(NAME_OFFSET, 0xd0)   // [name]
+
+    [PERMIT_TYPEHASH] 0x40 mstore       // [name]
+    0x60 mstore                         // []
+    0x20 0x60 sha3 0x60 mstore          // []
 
     // 0x31 is hex for ascii for 1
-    0x31 0x80 mstore                // []
-    0x02 0x80 sha3 0x80 mstore      // [hash of "1"]
+    0x31 0x80 mstore                    // []
+    0x02 0x80 sha3 0x80 mstore          // [hash of "1"]
 
-    chainid 0xa0 mstore             // [chainid]
-    address 0xc0 mstore             // [address(this)]
+    chainid 0xa0 mstore                 // [chainid]
+    address 0xc0 mstore                 // [address(this)]
 
-    0xA0 0x40 sha3                  // [hash]
+    0xA0 0x40 sha3                      // [hash]
 }
 
 /// @notice Permit
@@ -449,30 +468,34 @@
 /// @notice Name
 /// @notice Returns the token name string
 #define macro NAME() = takes (0) returns (0) {
-    NON_PAYABLE()                       // []
-    0x20 0x00 mstore                    // []
-    [META_NAME_LENGTH] 0x20 mstore      // []
-    [META_NAME] 0x40 mstore             // []
-    0x60 0x00 return                    // []
+    NON_PAYABLE()                               // []
+    _GET_IMMUTABLE(NAME_OFFSET, 0x00)           // [name_value]
+    _GET_IMMUTABLE(NAME_LENGTH_OFFSET, 0x00)    // [name_length, name_value]
+    0x20 0x00 mstore                            // [name_length, name_value]
+    0x20 mstore                                 // [name_value]
+    0x40 mstore                                 // []
+    0x60 0x00 return                            // []
 }
 
 /// @notice Symbol
 /// @notice Returns the symbol of the token
 #define macro SYMBOL() = takes (0) returns (0) {
-    NON_PAYABLE()                       // []
-    0x20 0x00 mstore                    // []
-    [META_SYMBOL_LENGTH] 0x20 mstore    // []
-    [META_SYMBOL] 0x40 mstore           // []
-    0x60 0x00 return                    // []
+    NON_PAYABLE()                               // []
+    _GET_IMMUTABLE(SYMBOL_OFFSET, 0x00)         // [symbol_value]
+    _GET_IMMUTABLE(SYMBOL_LENGTH_OFFSET, 0x00)  // [symbol_length, symbol_value]
+    0x20 0x00 mstore                            // [symbol_length, symbol_value]
+    0x20 mstore                                 // [symbol_value]
+    0x40 mstore                                 // []
+    0x60 0x00 return                            // []
 }
 
 /// @notice Decimals
 /// @notice Returns the token decimal representation
 #define macro DECIMALS() = takes (0) returns (0) {
-    NON_PAYABLE()                       // []
-    [DECIMALS_SLOT] sload               // [decimals]
-    0x00 mstore                         // []
-    0x20 0x00 return                    // []
+    NON_PAYABLE()                           // []
+    _GET_IMMUTABLE(DECIMALS_OFFSET, 0x00)   // [decimals]
+    0x00 mstore                             // []
+    0x20 0x00 return                        // []
 }
 
 /// @notice Balance Of
