@@ -21,19 +21,19 @@
 //                         Logic                              //
 ////////////////////////////////////////////////////////////////
 
-/// @dev Returns day of the week (Monday is indicated as 1 and so on) 
+/// @dev Returns day of the week (Monday is indicated as 1 and so on)
 #define macro WEEKDAY() = takes (0) returns (0) {
     // Formula: ((timestamp / 86400 + 3) % 7) + 1;
-    
+
     // Input Stack: [timestamp(t)]
-    
+
     0x15180       // [86400, t]
     swap1         // [t,86400]
     div           // [t/86400]
-    0x03          // [3, t/86400] 
+    0x03          // [3, t/86400]
     add           // [3 + t/86400]
     0x07          // [7, (3+t/86400)]
-    swap1         // [(t/86400 + 3), 7]  
+    swap1         // [(t/86400 + 3), 7]
     mod           // [(t/86400 + 3) % 7]
     0x01          // [1, (t/86400 + 3)%7]
     add           // [1 + (t/86400 + 3)%7]
@@ -41,43 +41,42 @@
     // Return stack: [result]
 }
 
- #define macro IS_LEAP_YEAR() = takes (0) returns (0) {                         
+#define macro IS_LEAP_YEAR() = takes (0) returns (0) {
     // Condition 1, C1 = year % 4 == 0
-    // Condition 2, C2 = year % 100 != 0 
-    // Condition 3, C3 =  year % 400 == 0
+    // Condition 2, C2 = year % 100 != 0
+    // Condition 3, C3 = year % 400 == 0
 
     // Formula: C1 && (C2||C3)
-    
+
     // Input stack:  [year]
 
-    0x04        // [4, year]
-    dup2        // [year,4,year]
-    mod         // [year % 4, year]
-    iszero      // [C1,year] 
-     
-    
-    0x64       // [100, C1, year]
-    dup3       // [year, 100, C1, year]        
-    mod        // [year % 100, C1, year]
-    iszero     // [year%100==0, C1, year]   
-    not        // [c2,c1, year]
-             
-    0x190       // [400, C2, C1, year]
-    dup4        // [year,400,C2, C1, year]
-    mod         // [year%400, C2,C1, year]
-    iszero      // [C3,C2,C1,year]
-    or          // [(C2||C3),C1, year]
-    and         // [(C2||C3) && C1, year]
-    
-    // Clear stack
-    swap1
-    pop
+    // Calculate C2
+    0x64       // [100, year]
+    dup2       // [year, 100, year]
+    mod        // [year % 100, year]
+    iszero     // [year % 100 == 0, year]
+    not        // [C2, year]
+
+    // Calculate C1
+    0x04        // [4, C2, year]
+    dup3        // [year, 4, C2, year]
+    mod         // [year % 4, C2, year]
+    iszero      // [C1, C2, year]
+
+    // Calculate C3
+    swap2       // [year, C2, C1]
+    0x190       // [400, year, C2, C1]
+    swap1       // [year, 400, C2, C1]
+    mod         // [year % 400, C2, C1]
+    iszero      // [C3, C2, C1]
+    or          // [(C2||C3), C1]
+    and         // [(C2||C3) && C1]
 
     // Return stack: [result]
 }
 
 
- #define macro DAYS_IN_MONTH() = takes (0) returns (0) {      
+#define macro DAYS_IN_MONTH() = takes (0) returns (0) {
 
     // Input Stack : [month, year]
 
