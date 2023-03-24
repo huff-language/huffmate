@@ -233,7 +233,7 @@
 
     // Validate that the assets are non-zero
     dup1 CONVERT_TO_ASSETS_INNER()      // [assets, shares, receiver, owner]
-    dup1 iszero iszero non_zero jumpi   // [assets, shares, receiver, owner]
+    dup1 non_zero jumpi                 // [assets, shares, receiver, owner]
     ZERO_ASSETS(0x00)
     non_zero:
 
@@ -305,7 +305,7 @@
     // Validate that the assets shares are not zero
     dup1                            // [assets, assets, receiver]
     PREVIEW_DEPOSIT_INNER()         // [shares, assets, receiver]
-    dup1 iszero iszero cont jumpi   // [shares, assets, receiver]
+    dup1 cont jumpi                 // [shares, assets, receiver]
     ZERO_SHARES(0x00)
     cont:
 
@@ -489,7 +489,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, shares]
 
     // Return shares if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, shares]
+    dup1 calculate jumpi                    // [supply, shares]
     pop cont jump                           // []
 
     // Otherwise mul div up
@@ -537,7 +537,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, assets]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, assets]
+    dup1 calculate jumpi                    // [supply, assets]
     pop cont jump                           // []
 
     // Otherwise mul div down
@@ -571,7 +571,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, shares]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, shares]
+    dup1 calculate jumpi                    // [supply, shares]
     pop cont jump                           // []
 
     // Otherwise mul div down
@@ -606,7 +606,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, assets]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, assets]
+    dup1 calculate jumpi                    // [supply, assets]
     pop dont_fail jump                      // []
 
     // Otherwise mul div up
