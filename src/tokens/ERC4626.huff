@@ -63,8 +63,7 @@
     staticcall              // [success]
 
     // If the call failed, revert
-    iszero iszero           // [success]
-    cont jumpi              // []
+    cont jumpi              // [asset]
     0x00 dup1 revert        // []
     cont:
 
@@ -77,7 +76,7 @@
     [INITIAL_DOMAIN_SEPARATOR] sstore       // [decimals]
 
     // Copy the runtime bytecode with constructor argument concatenated.
-    0xa2                                    // [offset, decimals] - constructor code size
+    __codesize(CONSTRUCTOR)                 // [offset, decimals]
     dup1                                    // [offset, offset, decimals]
     codesize                                // [total_size, offset, offset, decimals]
     sub                                     // [runtime_size, offset, decimals]
@@ -165,7 +164,7 @@
     call                            // [success, asset, assets, shares, receiver]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, assets, shares, receiver]
+    success jumpi                   // [asset, assets, shares, receiver]
     0x00 dup1 revert                // []
     success:
 
@@ -278,7 +277,7 @@
     call                            // [success, asset, assets, shares, receiver, owner]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, assets, shares, receiver, owner]
+    success jumpi                   // [asset, assets, shares, receiver, owner]
     0x00 dup1 revert                // []
     success:
 
@@ -338,7 +337,7 @@
     call                            // [success, asset, shares, assets, receiver]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, shares, assets, receiver]
+    success jumpi                   // [asset, shares, assets, receiver]
     0x00 dup1 revert                // []
     success:
 
@@ -446,7 +445,7 @@
     call                            // [success, asset, shares, assets, receiver, owner]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, shares, assets, receiver, owner]
+    success jumpi                   // [asset, shares, assets, receiver, owner]
     0x00 dup1 revert                // []
     success:
 
