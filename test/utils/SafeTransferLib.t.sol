@@ -53,6 +53,8 @@ contract SafeTransferLibTest is Test {
     error TransferFailed();
     error ApproveFailed();
 
+    address constant CONSOLE = 0x000000000000000000636F6e736F6c652e6c6f67;
+
     function setUp() public {
         string memory wrapper_code = vm.readFile("test/utils/mocks/SafeTransferLibWrappers.huff");
         SafeTransferLib = ISafeTransferLib(HuffDeployer.config().with_code(wrapper_code).deploy("utils/SafeTransferLib"));
@@ -224,7 +226,8 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        vm.assume(uint256(uint160(nonContract)) > 18 && nonContract.code.length == 0);
+        vm.assume(nonContract != HEVM_ADDRESS && nonContract != CONSOLE);
 
         SafeTransferLib.safeTransfer(nonContract, to, amount);
     }
@@ -281,7 +284,8 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        vm.assume(uint256(uint160(nonContract)) > 18 && nonContract.code.length == 0);
+        vm.assume(nonContract != HEVM_ADDRESS && nonContract != CONSOLE);
 
         SafeTransferLib.safeTransferFrom(nonContract, from, to, amount);
     }
@@ -329,7 +333,8 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        if (uint256(uint160(nonContract)) <= 18 || nonContract.code.length > 0) return;
+        vm.assume(uint256(uint160(nonContract)) > 18 && nonContract.code.length == 0);
+        vm.assume(nonContract != HEVM_ADDRESS && nonContract != CONSOLE);
 
         SafeTransferLib.safeApprove(nonContract, to, amount);
     }
