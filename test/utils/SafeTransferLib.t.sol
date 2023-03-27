@@ -345,7 +345,8 @@ contract SafeTransferLibTest is Test {
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
         // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
-        if (recipient.code.length > 0 || uint256(uint160(recipient)) <= 18 || recipient == msg.sender) return;
+        vm.assume(uint256(uint160(recipient)) > 18 && recipient.code.length == 0 && recipient != msg.sender);
+        vm.assume(recipient != HEVM_ADDRESS && recipient != CONSOLE);
 
         amount = bound(amount, 0, address(SafeTransferLib).balance);
 
