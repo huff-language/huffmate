@@ -224,7 +224,7 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        vm.assume(uint256(uint160(nonContract)) > 18 && nonContract.code.length == 0);
+        vm.assume(nonContract > address(9) && nonContract.code.length == 0);
         vm.assume(nonContract != VM_ADDRESS && nonContract != CONSOLE);
 
         SafeTransferLib.safeTransfer(nonContract, to, amount);
@@ -282,7 +282,7 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        vm.assume(uint256(uint160(nonContract)) > 18 && nonContract.code.length == 0);
+        vm.assume(nonContract > address(9) && nonContract.code.length == 0);
         vm.assume(nonContract != VM_ADDRESS && nonContract != CONSOLE);
 
         SafeTransferLib.safeTransferFrom(nonContract, from, to, amount);
@@ -331,7 +331,7 @@ contract SafeTransferLibTest is Test {
         uint256 amount,
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
-        vm.assume(uint256(uint160(nonContract)) > 18 && nonContract.code.length == 0);
+        vm.assume(nonContract > address(9) && nonContract.code.length == 0);
         vm.assume(nonContract != VM_ADDRESS && nonContract != CONSOLE);
 
         SafeTransferLib.safeApprove(nonContract, to, amount);
@@ -343,7 +343,7 @@ contract SafeTransferLibTest is Test {
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
         // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
-        vm.assume(uint256(uint160(recipient)) > 18 && recipient.code.length == 0 && recipient != msg.sender);
+        vm.assume(recipient > address(9) && recipient.code.length == 0 && recipient != msg.sender);
         vm.assume(recipient != VM_ADDRESS && recipient != CONSOLE);
 
         amount = bound(amount, 0, address(SafeTransferLib).balance);
