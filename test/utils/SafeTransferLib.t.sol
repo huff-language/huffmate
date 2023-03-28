@@ -53,8 +53,6 @@ contract SafeTransferLibTest is Test {
     error TransferFailed();
     error ApproveFailed();
 
-    address constant CONSOLE = 0x000000000000000000636F6e736F6c652e6c6f67;
-
     function setUp() public {
         string memory wrapper_code = vm.readFile("test/utils/mocks/SafeTransferLibWrappers.huff");
         SafeTransferLib = ISafeTransferLib(HuffDeployer.config().with_code(wrapper_code).deploy("utils/SafeTransferLib"));
