@@ -63,7 +63,7 @@
     staticcall              // [success]
 
     // If the call failed, revert
-    cont jumpi              // [asset]
+    cont jumpi              // []
     0x00 dup1 revert        // []
     cont:
 
