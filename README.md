@@ -1,6 +1,6 @@
 <img align="right" width="150" height="150" top="100" src="./assets/huff.jpg">
 
-# huffmate • [![ci](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml/badge.svg)](https://github.com/pentagonxyz/huffmate/actions/workflows/test.yml) [![version](https://img.shields.io/badge/version-v1.1-ff69b4)](https://github.com/pentagonxyz/huffmate/releases/tag/v1.1) [![license](https://img.shields.io/badge/License-MIT-orange.svg?label=license)](https://opensource.org/licenses/MIT) ![Discord](https://img.shields.io/discord/980519274600882306?color=blue)
+# huffmate • [![ci](https://github.com/huff-language/huffmate/actions/workflows/test.yml/badge.svg)](https://github.com/huff-language/huffmate/actions/workflows/test.yml) [![version](https://img.shields.io/badge/version-v1.1-ff69b4)](https://github.com/huff-language/huffmate/releases/tag/v1.1) [![license](https://img.shields.io/badge/License-MIT-orange.svg?label=license)](https://opensource.org/licenses/MIT) ![Discord](https://img.shields.io/discord/980519274600882306?color=blue)
 
 A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/huff-language) contracts.
 
@@ -16,7 +16,7 @@ A set of **modern**, **opinionated**, and **secure** [Huff](https://github.com/h
 **Recommended** To install with [**Foundry**](https://github.com/foundry-rs/foundry):
 
 ```sh
-forge install pentagonxyz/huffmate
+forge install huff-language/huffmate
 ```
 
 To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffle**](https://github.com/trufflesuite/truffle):
