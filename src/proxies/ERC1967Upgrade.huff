@@ -58,7 +58,7 @@
     // Input Stack: [address]
 
     // Check that the address is a contract
-    dup1 extcodesize iszero iszero              // [isContract(address), address]
+    dup1 extcodesize                            // [isContract(address), address]
     __Is_Contract_JUMP jumpi                    // [address]
         NON_CONTRACT(0x00)
 
@@ -105,7 +105,7 @@
     swap4                                       // [address, argOffset, argSize, retOffset, retSize]
     gas                                         // [gas, address, argOffset, argSize, retOffset, retSize]
     delegatecall                                // [success]
-    iszero iszero __DelegateCall_Success jumpi  // []
+    __DelegateCall_Success jumpi                // []
     0x00 dup1 revert
 
     __IgnoreCall_And_Clean_Stack:
@@ -188,13 +188,13 @@
     // Input Stack: [address]
 
     // Check that the address != address(0)
-    dup1 iszero iszero                          // [address != address(0), address]
+    dup1                                             // [address != address(0), address]
     __Is_Not_Zero_addr_JUMP jumpi                    // [address]
         ZERO_ADDRESS(0x00)
 
     // Set the admin slot
     __Is_Not_Zero_addr_JUMP:
-    [_ADMIN_SLOT] sstore               // []
+    [_ADMIN_SLOT] sstore                            // []
 }
 
 /// @notice Change the admin
@@ -223,7 +223,7 @@
     // Input Stack: [address]
 
     // Check that the address is a contract
-    dup1 extcodesize iszero iszero              // [isContract(address), address]
+    dup1 extcodesize                            // [isContract(address), address]
     __Is_Contract_JUMP jumpi                    // [address]
         NON_CONTRACT(0x00)
 
@@ -239,13 +239,13 @@
     dup5                                        // [address, argOffset, argSize, retOffset, retSize, address]
     gas                                         // [gas, address, argOffset, argSize, retOffset, retSize, address]
     staticcall                                  // [success, address]
-    iszero iszero __StaticCall_Success jumpi    // [address]
+    __StaticCall_Success jumpi                  // [address]
         0x00 dup1 revert
     __StaticCall_Success:
 
     // Load the implementation address from the staticcal
     0x00 mload                                  // [implementation, address]
-    extcodesize iszero iszero                   // [isContract(address), address]
+    extcodesize                                 // [isContract(address), address]
     __Is_Contract_JUMP jumpi                    // [address]
         NON_CONTRACT(0x00)
 
@@ -279,7 +279,7 @@
     dup5                                        // [newBeacon, argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
     gas                                         // [gas, newBeacon, argOffset, argSize, retOffset, retSize, newBeacon, data, dataSize]
     staticcall                                  // [success, newBeacon, data, dataSize]
-    iszero iszero __ImplCall_Success jumpi      // [newBeacon, data, dataSize]
+    __ImplCall_Success jumpi                    // [newBeacon, data, dataSize]
     0x00 dup1 revert
     __ImplCall_Success:
 
@@ -299,7 +299,7 @@
     dup7                                        // [newBeacon, argOffset, argSize, retOffset, retSize, data, newBeacon, implementation]
     gas                                         // [gas, address, argOffset, argSize, retOffset, retSize, data, newBeacon, implementation]
     delegatecall                                // [success, data, newBeacon, implementation]
-    iszero iszero __DelegateCall_Success jumpi  // [data, newBeacon, implementation]
+    __DelegateCall_Success jumpi                // [data, newBeacon, implementation]
     0x00 dup1 revert
 
     __IgnoreCall_And_Clean_Stack:
