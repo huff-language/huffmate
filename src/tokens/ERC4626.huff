@@ -63,7 +63,6 @@
     staticcall              // [success]
 
     // If the call failed, revert
-    iszero iszero           // [success]
     cont jumpi              // []
     0x00 dup1 revert        // []
     cont:
@@ -77,7 +76,7 @@
     [INITIAL_DOMAIN_SEPARATOR] sstore       // [decimals]
 
     // Copy the runtime bytecode with constructor argument concatenated.
-    0xa2                                    // [offset, decimals] - constructor code size
+    __codesize(CONSTRUCTOR)                 // [offset, decimals]
     dup1                                    // [offset, offset, decimals]
     codesize                                // [total_size, offset, offset, decimals]
     sub                                     // [runtime_size, offset, decimals]
@@ -165,7 +164,7 @@
     call                            // [success, asset, assets, shares, receiver]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, assets, shares, receiver]
+    success jumpi                   // [asset, assets, shares, receiver]
     0x00 dup1 revert                // []
     success:
 
@@ -234,7 +233,7 @@
 
     // Validate that the assets are non-zero
     dup1 CONVERT_TO_ASSETS_INNER()      // [assets, shares, receiver, owner]
-    dup1 iszero iszero non_zero jumpi   // [assets, shares, receiver, owner]
+    dup1 non_zero jumpi                 // [assets, shares, receiver, owner]
     ZERO_ASSETS(0x00)
     non_zero:
 
@@ -278,7 +277,7 @@
     call                            // [success, asset, assets, shares, receiver, owner]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, assets, shares, receiver, owner]
+    success jumpi                   // [asset, assets, shares, receiver, owner]
     0x00 dup1 revert                // []
     success:
 
@@ -306,7 +305,7 @@
     // Validate that the assets shares are not zero
     dup1                            // [assets, assets, receiver]
     PREVIEW_DEPOSIT_INNER()         // [shares, assets, receiver]
-    dup1 iszero iszero cont jumpi   // [shares, assets, receiver]
+    dup1 cont jumpi                 // [shares, assets, receiver]
     ZERO_SHARES(0x00)
     cont:
 
@@ -338,7 +337,7 @@
     call                            // [success, asset, shares, assets, receiver]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, shares, assets, receiver]
+    success jumpi                   // [asset, shares, assets, receiver]
     0x00 dup1 revert                // []
     success:
 
@@ -446,7 +445,7 @@
     call                            // [success, asset, shares, assets, receiver, owner]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, shares, assets, receiver, owner]
+    success jumpi                   // [asset, shares, assets, receiver, owner]
     0x00 dup1 revert                // []
     success:
 
@@ -490,7 +489,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, shares]
 
     // Return shares if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, shares]
+    dup1 calculate jumpi                    // [supply, shares]
     pop cont jump                           // []
 
     // Otherwise mul div up
@@ -538,7 +537,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, assets]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, assets]
+    dup1 calculate jumpi                    // [supply, assets]
     pop cont jump                           // []
 
     // Otherwise mul div down
@@ -572,7 +571,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, shares]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, shares]
+    dup1 calculate jumpi                    // [supply, shares]
     pop cont jump                           // []
 
     // Otherwise mul div down
@@ -607,7 +606,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, assets]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, assets]
+    dup1 calculate jumpi                    // [supply, assets]
     pop dont_fail jump                      // []
 
     // Otherwise mul div up
