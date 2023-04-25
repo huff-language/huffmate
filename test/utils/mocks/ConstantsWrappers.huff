@@ -1,0 +1,1610 @@
+
+// interface
+#define function oneWei() pure returns(uint256)
+#define function oneGwei() pure returns(uint256)
+#define function oneEther() pure returns(uint256)
+#define function oneSeconds() pure returns(uint256)
+#define function oneMinutes() pure returns(uint256)
+#define function oneHours() pure returns(uint256)
+#define function oneDays() pure returns(uint256)
+#define function oneWeeks() pure returns(uint256)
+
+#define function uint256Max() pure returns(uint256)
+#define function uint248Max() pure returns(uint256)
+#define function uint240Max() pure returns(uint256)
+#define function uint232Max() pure returns(uint256)
+#define function uint224Max() pure returns(uint256)
+#define function uint216Max() pure returns(uint256)
+#define function uint208Max() pure returns(uint256)
+#define function uint200Max() pure returns(uint256)
+#define function uint192Max() pure returns(uint256)
+#define function uint184Max() pure returns(uint256)
+#define function uint176Max() pure returns(uint256)
+#define function uint168Max() pure returns(uint256)
+#define function uint160Max() pure returns(uint256)
+#define function uint152Max() pure returns(uint256)
+#define function uint144Max() pure returns(uint256)
+#define function uint136Max() pure returns(uint256)
+#define function uint128Max() pure returns(uint256)
+#define function uint120Max() pure returns(uint256)
+#define function uint112Max() pure returns(uint256)
+#define function uint104Max() pure returns(uint256)
+#define function uint96Max() pure returns(uint256)
+#define function uint88Max() pure returns(uint256)
+#define function uint80Max() pure returns(uint256)
+#define function uint72Max() pure returns(uint256)
+#define function uint64Max() pure returns(uint256)
+#define function uint56Max() pure returns(uint256)
+#define function uint48Max() pure returns(uint256)
+#define function uint40Max() pure returns(uint256)
+#define function uint32Max() pure returns(uint256)
+#define function uint24Max() pure returns(uint256)
+#define function uint16Max() pure returns(uint256)
+#define function uint8Max() pure returns(uint256)
+
+#define function int256Max() pure returns(int256)
+#define function int248Max() pure returns(int256)
+#define function int240Max() pure returns(int256)
+#define function int232Max() pure returns(int256)
+#define function int224Max() pure returns(int256)
+#define function int216Max() pure returns(int256)
+#define function int208Max() pure returns(int256)
+#define function int200Max() pure returns(int256)
+#define function int192Max() pure returns(int256)
+#define function int184Max() pure returns(int256)
+#define function int176Max() pure returns(int256)
+#define function int168Max() pure returns(int256)
+#define function int160Max() pure returns(int256)
+#define function int152Max() pure returns(int256)
+#define function int144Max() pure returns(int256)
+#define function int136Max() pure returns(int256)
+#define function int128Max() pure returns(int256)
+#define function int120Max() pure returns(int256)
+#define function int112Max() pure returns(int256)
+#define function int104Max() pure returns(int256)
+#define function int96Max() pure returns(int256)
+#define function int88Max() pure returns(int256)
+#define function int80Max() pure returns(int256)
+#define function int72Max() pure returns(int256)
+#define function int64Max() pure returns(int256)
+#define function int56Max() pure returns(int256)
+#define function int48Max() pure returns(int256)
+#define function int40Max() pure returns(int256)
+#define function int32Max() pure returns(int256)
+#define function int24Max() pure returns(int256)
+#define function int16Max() pure returns(int256)
+#define function int8Max() pure returns(int256)
+
+#define function int256Min() pure returns(int256)
+#define function int248Min() pure returns(int256)
+#define function int240Min() pure returns(int256)
+#define function int232Min() pure returns(int256)
+#define function int224Min() pure returns(int256)
+#define function int216Min() pure returns(int256)
+#define function int208Min() pure returns(int256)
+#define function int200Min() pure returns(int256)
+#define function int192Min() pure returns(int256)
+#define function int184Min() pure returns(int256)
+#define function int176Min() pure returns(int256)
+#define function int168Min() pure returns(int256)
+#define function int160Min() pure returns(int256)
+#define function int152Min() pure returns(int256)
+#define function int144Min() pure returns(int256)
+#define function int136Min() pure returns(int256)
+#define function int128Min() pure returns(int256)
+#define function int120Min() pure returns(int256)
+#define function int112Min() pure returns(int256)
+#define function int104Min() pure returns(int256)
+#define function int96Min() pure returns(int256)
+#define function int88Min() pure returns(int256)
+#define function int80Min() pure returns(int256)
+#define function int72Min() pure returns(int256)
+#define function int64Min() pure returns(int256)
+#define function int56Min() pure returns(int256)
+#define function int48Min() pure returns(int256)
+#define function int40Min() pure returns(int256)
+#define function int32Min() pure returns(int256)
+#define function int24Min() pure returns(int256)
+#define function int16Min() pure returns(int256)
+#define function int8Min() pure returns(int256)
+
+#define function multiWei(uint256) pure returns(uint256)
+#define function multiGwei(uint256) pure returns(uint256)
+#define function multiEther(uint256) pure returns(uint256)
+#define function multiSeconds(uint256) pure returns(uint256)
+#define function multiMinutes(uint256) pure returns(uint256)
+#define function multiHours(uint256) pure returns(uint256)
+#define function multiDays(uint256) pure returns(uint256)
+#define function multiWeeks(uint256) pure returns(uint256)
+
+
+#define macro ONE_WEI() = takes(0) returns(0) {
+    [__ONE_WEI] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro ONE_GWEI() = takes(0) returns(0) {
+    [__ONE_GWEI] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro ONE_ETHER() = takes(0) returns(0) {
+    [__ONE_ETHER] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro ONE_SECONDS() = takes(0) returns(0) {
+    [__ONE_SECONDS] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro ONE_MINUTES() = takes(0) returns(0) {
+    [__ONE_MINUTES] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro ONE_HOURS() = takes(0) returns(0) {
+    [__ONE_HOURS] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro ONE_DAYS() = takes(0) returns(0) {
+    [__ONE_DAYS] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro ONE_WEEKS() = takes(0) returns(0) {
+    [__ONE_WEEKS] 0x00 mstore
+    0x20 0x00 return
+}
+
+
+
+#define macro UINT256_MAX() = takes(0) returns(0) {
+    [__UINT256_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT248_MAX() = takes(0) returns(0) {
+    [__UINT248_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT240_MAX() = takes(0) returns(0) {
+    [__UINT240_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT232_MAX() = takes(0) returns(0) {
+    [__UINT232_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT224_MAX() = takes(0) returns(0) {
+    [__UINT224_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT216_MAX() = takes(0) returns(0) {
+    [__UINT216_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT208_MAX() = takes(0) returns(0) {
+    [__UINT208_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT200_MAX() = takes(0) returns(0) {
+    [__UINT200_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT192_MAX() = takes(0) returns(0) {
+    [__UINT192_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT184_MAX() = takes(0) returns(0) {
+    [__UINT184_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT176_MAX() = takes(0) returns(0) {
+    [__UINT176_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT168_MAX() = takes(0) returns(0) {
+    [__UINT168_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT160_MAX() = takes(0) returns(0) {
+    [__UINT160_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT152_MAX() = takes(0) returns(0) {
+    [__UINT152_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT144_MAX() = takes(0) returns(0) {
+    [__UINT144_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT136_MAX() = takes(0) returns(0) {
+    [__UINT136_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT128_MAX() = takes(0) returns(0) {
+    [__UINT128_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT120_MAX() = takes(0) returns(0) {
+    [__UINT120_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT112_MAX() = takes(0) returns(0) {
+    [__UINT112_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT104_MAX() = takes(0) returns(0) {
+    [__UINT104_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT96_MAX() = takes(0) returns(0) {
+    [__UINT96_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT88_MAX() = takes(0) returns(0) {
+    [__UINT88_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT80_MAX() = takes(0) returns(0) {
+    [__UINT80_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT72_MAX() = takes(0) returns(0) {
+    [__UINT72_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT64_MAX() = takes(0) returns(0) {
+    [__UINT64_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT56_MAX() = takes(0) returns(0) {
+    [__UINT56_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT48_MAX() = takes(0) returns(0) {
+    [__UINT48_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT40_MAX() = takes(0) returns(0) {
+    [__UINT40_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT32_MAX() = takes(0) returns(0) {
+    [__UINT32_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT24_MAX() = takes(0) returns(0) {
+    [__UINT24_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT16_MAX() = takes(0) returns(0) {
+    [__UINT16_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro UINT8_MAX() = takes(0) returns(0) {
+    [__UINT8_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+
+
+
+
+
+#define macro INT256_MAX() = takes(0) returns(0) {
+    [__INT256_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT248_MAX() = takes(0) returns(0) {
+    [__INT248_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT240_MAX() = takes(0) returns(0) {
+    [__INT240_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT232_MAX() = takes(0) returns(0) {
+    [__INT232_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT224_MAX() = takes(0) returns(0) {
+    [__INT224_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT216_MAX() = takes(0) returns(0) {
+    [__INT216_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT208_MAX() = takes(0) returns(0) {
+    [__INT208_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT200_MAX() = takes(0) returns(0) {
+    [__INT200_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT192_MAX() = takes(0) returns(0) {
+    [__INT192_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT184_MAX() = takes(0) returns(0) {
+    [__INT184_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT176_MAX() = takes(0) returns(0) {
+    [__INT176_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT168_MAX() = takes(0) returns(0) {
+    [__INT168_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT160_MAX() = takes(0) returns(0) {
+    [__INT160_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT152_MAX() = takes(0) returns(0) {
+    [__INT152_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT144_MAX() = takes(0) returns(0) {
+    [__INT144_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT136_MAX() = takes(0) returns(0) {
+    [__INT136_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT128_MAX() = takes(0) returns(0) {
+    [__INT128_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT120_MAX() = takes(0) returns(0) {
+    [__INT120_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT112_MAX() = takes(0) returns(0) {
+    [__INT112_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT104_MAX() = takes(0) returns(0) {
+    [__INT104_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT96_MAX() = takes(0) returns(0) {
+    [__INT96_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT88_MAX() = takes(0) returns(0) {
+    [__INT88_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT80_MAX() = takes(0) returns(0) {
+    [__INT80_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT72_MAX() = takes(0) returns(0) {
+    [__INT72_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT64_MAX() = takes(0) returns(0) {
+    [__INT64_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT56_MAX() = takes(0) returns(0) {
+    [__INT56_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT48_MAX() = takes(0) returns(0) {
+    [__INT48_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT40_MAX() = takes(0) returns(0) {
+    [__INT40_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT32_MAX() = takes(0) returns(0) {
+    [__INT32_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT24_MAX() = takes(0) returns(0) {
+    [__INT24_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT16_MAX() = takes(0) returns(0) {
+    [__INT16_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT8_MAX() = takes(0) returns(0) {
+    [__INT8_MAX] 0x00 mstore
+    0x20 0x00 return
+}
+
+
+
+
+
+
+#define macro INT256_MIN() = takes(0) returns(0) {
+    [__INT256_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT248_MIN() = takes(0) returns(0) {
+    [__INT248_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT240_MIN() = takes(0) returns(0) {
+    [__INT240_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT232_MIN() = takes(0) returns(0) {
+    [__INT232_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT224_MIN() = takes(0) returns(0) {
+    [__INT224_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT216_MIN() = takes(0) returns(0) {
+    [__INT216_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT208_MIN() = takes(0) returns(0) {
+    [__INT208_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT200_MIN() = takes(0) returns(0) {
+    [__INT200_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT192_MIN() = takes(0) returns(0) {
+    [__INT192_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT184_MIN() = takes(0) returns(0) {
+    [__INT184_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT176_MIN() = takes(0) returns(0) {
+    [__INT176_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT168_MIN() = takes(0) returns(0) {
+    [__INT168_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT160_MIN() = takes(0) returns(0) {
+    [__INT160_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT152_MIN() = takes(0) returns(0) {
+    [__INT152_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT144_MIN() = takes(0) returns(0) {
+    [__INT144_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT136_MIN() = takes(0) returns(0) {
+    [__INT136_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT128_MIN() = takes(0) returns(0) {
+    [__INT128_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT120_MIN() = takes(0) returns(0) {
+    [__INT120_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT112_MIN() = takes(0) returns(0) {
+    [__INT112_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT104_MIN() = takes(0) returns(0) {
+    [__INT104_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT96_MIN() = takes(0) returns(0) {
+    [__INT96_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT88_MIN() = takes(0) returns(0) {
+    [__INT88_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT80_MIN() = takes(0) returns(0) {
+    [__INT80_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT72_MIN() = takes(0) returns(0) {
+    [__INT72_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT64_MIN() = takes(0) returns(0) {
+    [__INT64_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT56_MIN() = takes(0) returns(0) {
+    [__INT56_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT48_MIN() = takes(0) returns(0) {
+    [__INT48_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT40_MIN() = takes(0) returns(0) {
+    [__INT40_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT32_MIN() = takes(0) returns(0) {
+    [__INT32_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT24_MIN() = takes(0) returns(0) {
+    [__INT24_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT16_MIN() = takes(0) returns(0) {
+    [__INT16_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro INT8_MIN() = takes(0) returns(0) {
+    [__INT8_MIN] 0x00 mstore
+    0x20 0x00 return
+}
+
+
+
+
+#define macro MULTI_WEI() = takes(0) returns(0) {
+    0x04 calldataload __WEI() 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MULTI_GWEI() = takes(0) returns(0) {
+    0x04 calldataload __GWEI() 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MULTI_ETHER() = takes(0) returns(0) {
+    0x04 calldataload __ETHER() 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MULTI_SECONDS() = takes(0) returns(0) {
+    0x04 calldataload __SECONDS() 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MULTI_MINUTES() = takes(0) returns(0) {
+    0x04 calldataload __MINUTES() 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MULTI_HOURS() = takes(0) returns(0) {
+    0x04 calldataload __HOURS() 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MULTI_DAYS() = takes(0) returns(0) {
+    0x04 calldataload __DAYS() 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro MULTI_WEEKS() = takes(0) returns(0) {
+    0x04 calldataload __WEEKS() 0x00 mstore
+    0x20 0x00 return
+}
+
+
+
+
+
+
+
+
+
+// Function Dispatching
+#define macro MAIN() = takes (1) returns (1) {
+    // Identify which function is being called.
+    // [func sig]
+    0x00 calldataload 0xE0 shr
+
+
+    // function int104Max() pure returns (int256)
+    dup1 __FUNC_SIG(int104Max)  eq int104MaxJump jumpi
+
+
+    // function int104Min() pure returns (int256)
+    dup1 __FUNC_SIG(int104Min)  eq int104MinJump jumpi
+
+
+    // function int112Max() pure returns (int256)
+    dup1 __FUNC_SIG(int112Max)  eq int112MaxJump jumpi
+
+
+    // function int112Min() pure returns (int256)
+    dup1 __FUNC_SIG(int112Min)  eq int112MinJump jumpi
+
+
+    // function int120Max() pure returns (int256)
+    dup1 __FUNC_SIG(int120Max)  eq int120MaxJump jumpi
+
+
+    // function int120Min() pure returns (int256)
+    dup1 __FUNC_SIG(int120Min)  eq int120MinJump jumpi
+
+
+    // function int128Max() pure returns (int256)
+    dup1 __FUNC_SIG(int128Max)  eq int128MaxJump jumpi
+
+
+    // function int128Min() pure returns (int256)
+    dup1 __FUNC_SIG(int128Min)  eq int128MinJump jumpi
+
+
+    // function int136Max() pure returns (int256)
+    dup1 __FUNC_SIG(int136Max)  eq int136MaxJump jumpi
+
+
+    // function int136Min() pure returns (int256)
+    dup1 __FUNC_SIG(int136Min)  eq int136MinJump jumpi
+
+
+    // function int144Max() pure returns (int256)
+    dup1 __FUNC_SIG(int144Max)  eq int144MaxJump jumpi
+
+
+    // function int144Min() pure returns (int256)
+    dup1 __FUNC_SIG(int144Min)  eq int144MinJump jumpi
+
+
+    // function int152Max() pure returns (int256)
+    dup1 __FUNC_SIG(int152Max)  eq int152MaxJump jumpi
+
+
+    // function int152Min() pure returns (int256)
+    dup1 __FUNC_SIG(int152Min)  eq int152MinJump jumpi
+
+
+    // function int160Max() pure returns (int256)
+    dup1 __FUNC_SIG(int160Max)  eq int160MaxJump jumpi
+
+
+    // function int160Min() pure returns (int256)
+    dup1 __FUNC_SIG(int160Min)  eq int160MinJump jumpi
+
+
+    // function int168Max() pure returns (int256)
+    dup1 __FUNC_SIG(int168Max)  eq int168MaxJump jumpi
+
+
+    // function int168Min() pure returns (int256)
+    dup1 __FUNC_SIG(int168Min)  eq int168MinJump jumpi
+
+
+    // function int16Max() pure returns (int256)
+    dup1 __FUNC_SIG(int16Max)  eq int16MaxJump jumpi
+
+
+    // function int16Min() pure returns (int256)
+    dup1 __FUNC_SIG(int16Min)  eq int16MinJump jumpi
+
+
+    // function int176Max() pure returns (int256)
+    dup1 __FUNC_SIG(int176Max)  eq int176MaxJump jumpi
+
+
+    // function int176Min() pure returns (int256)
+    dup1 __FUNC_SIG(int176Min)  eq int176MinJump jumpi
+
+
+    // function int184Max() pure returns (int256)
+    dup1 __FUNC_SIG(int184Max)  eq int184MaxJump jumpi
+
+
+    // function int184Min() pure returns (int256)
+    dup1 __FUNC_SIG(int184Min)  eq int184MinJump jumpi
+
+
+    // function int192Max() pure returns (int256)
+    dup1 __FUNC_SIG(int192Max)  eq int192MaxJump jumpi
+
+
+    // function int192Min() pure returns (int256)
+    dup1 __FUNC_SIG(int192Min)  eq int192MinJump jumpi
+
+
+    // function int200Max() pure returns (int256)
+    dup1 __FUNC_SIG(int200Max)  eq int200MaxJump jumpi
+
+
+    // function int200Min() pure returns (int256)
+    dup1 __FUNC_SIG(int200Min)  eq int200MinJump jumpi
+
+
+    // function int208Max() pure returns (int256)
+    dup1 __FUNC_SIG(int208Max)  eq int208MaxJump jumpi
+
+
+    // function int208Min() pure returns (int256)
+    dup1 __FUNC_SIG(int208Min)  eq int208MinJump jumpi
+
+
+    // function int216Max() pure returns (int256)
+    dup1 __FUNC_SIG(int216Max)  eq int216MaxJump jumpi
+
+
+    // function int216Min() pure returns (int256)
+    dup1 __FUNC_SIG(int216Min)  eq int216MinJump jumpi
+
+
+    // function int224Max() pure returns (int256)
+    dup1 __FUNC_SIG(int224Max)  eq int224MaxJump jumpi
+
+
+    // function int224Min() pure returns (int256)
+    dup1 __FUNC_SIG(int224Min)  eq int224MinJump jumpi
+
+
+    // function int232Max() pure returns (int256)
+    dup1 __FUNC_SIG(int232Max)  eq int232MaxJump jumpi
+
+
+    // function int232Min() pure returns (int256)
+    dup1 __FUNC_SIG(int232Min)  eq int232MinJump jumpi
+
+
+    // function int240Max() pure returns (int256)
+    dup1 __FUNC_SIG(int240Max)  eq int240MaxJump jumpi
+
+
+    // function int240Min() pure returns (int256)
+    dup1 __FUNC_SIG(int240Min)  eq int240MinJump jumpi
+
+
+    // function int248Max() pure returns (int256)
+    dup1 __FUNC_SIG(int248Max)  eq int248MaxJump jumpi
+
+
+    // function int248Min() pure returns (int256)
+    dup1 __FUNC_SIG(int248Min)  eq int248MinJump jumpi
+
+
+    // function int24Max() pure returns (int256)
+    dup1 __FUNC_SIG(int24Max)  eq int24MaxJump jumpi
+
+
+    // function int24Min() pure returns (int256)
+    dup1 __FUNC_SIG(int24Min)  eq int24MinJump jumpi
+
+
+    // function int256Max() pure returns (int256)
+    dup1 __FUNC_SIG(int256Max)  eq int256MaxJump jumpi
+
+
+    // function int256Min() pure returns (int256)
+    dup1 __FUNC_SIG(int256Min)  eq int256MinJump jumpi
+
+
+    // function int32Max() pure returns (int256)
+    dup1 __FUNC_SIG(int32Max)  eq int32MaxJump jumpi
+
+
+    // function int32Min() pure returns (int256)
+    dup1 __FUNC_SIG(int32Min)  eq int32MinJump jumpi
+
+
+    // function int40Max() pure returns (int256)
+    dup1 __FUNC_SIG(int40Max)  eq int40MaxJump jumpi
+
+
+    // function int40Min() pure returns (int256)
+    dup1 __FUNC_SIG(int40Min)  eq int40MinJump jumpi
+
+
+    // function int48Max() pure returns (int256)
+    dup1 __FUNC_SIG(int48Max)  eq int48MaxJump jumpi
+
+
+    // function int48Min() pure returns (int256)
+    dup1 __FUNC_SIG(int48Min)  eq int48MinJump jumpi
+
+
+    // function int56Max() pure returns (int256)
+    dup1 __FUNC_SIG(int56Max)  eq int56MaxJump jumpi
+
+
+    // function int56Min() pure returns (int256)
+    dup1 __FUNC_SIG(int56Min)  eq int56MinJump jumpi
+
+
+    // function int64Max() pure returns (int256)
+    dup1 __FUNC_SIG(int64Max)  eq int64MaxJump jumpi
+
+
+    // function int64Min() pure returns (int256)
+    dup1 __FUNC_SIG(int64Min)  eq int64MinJump jumpi
+
+
+    // function int72Max() pure returns (int256)
+    dup1 __FUNC_SIG(int72Max)  eq int72MaxJump jumpi
+
+
+    // function int72Min() pure returns (int256)
+    dup1 __FUNC_SIG(int72Min)  eq int72MinJump jumpi
+
+
+    // function int80Max() pure returns (int256)
+    dup1 __FUNC_SIG(int80Max)  eq int80MaxJump jumpi
+
+
+    // function int80Min() pure returns (int256)
+    dup1 __FUNC_SIG(int80Min)  eq int80MinJump jumpi
+
+
+    // function int88Max() pure returns (int256)
+    dup1 __FUNC_SIG(int88Max)  eq int88MaxJump jumpi
+
+
+    // function int88Min() pure returns (int256)
+    dup1 __FUNC_SIG(int88Min)  eq int88MinJump jumpi
+
+
+    // function int8Max() pure returns (int256)
+    dup1 __FUNC_SIG(int8Max)  eq int8MaxJump jumpi
+
+
+    // function int8Min() pure returns (int256)
+    dup1 __FUNC_SIG(int8Min)  eq int8MinJump jumpi
+
+
+    // function int96Max() pure returns (int256)
+    dup1 __FUNC_SIG(int96Max)  eq int96MaxJump jumpi
+
+
+    // function int96Min() pure returns (int256)
+    dup1 __FUNC_SIG(int96Min)  eq int96MinJump jumpi
+
+
+    // function multiDays(uint256) pure returns (uint256)
+    dup1 __FUNC_SIG(multiDays)  eq multiDaysJump jumpi
+
+
+    // function multiEther(uint256) pure returns (uint256)
+    dup1 __FUNC_SIG(multiEther)  eq multiEtherJump jumpi
+
+
+    // function multiGwei(uint256) pure returns (uint256)
+    dup1 __FUNC_SIG(multiGwei)  eq multiGweiJump jumpi
+
+
+    // function multiHours(uint256) pure returns (uint256)
+    dup1 __FUNC_SIG(multiHours)  eq multiHoursJump jumpi
+
+
+    // function multiMinutes(uint256) pure returns (uint256)
+    dup1 __FUNC_SIG(multiMinutes)  eq multiMinutesJump jumpi
+
+
+    // function multiSeconds(uint256) pure returns (uint256)
+    dup1 __FUNC_SIG(multiSeconds)  eq multiSecondsJump jumpi
+
+
+    // function multiWeeks(uint256) pure returns (uint256)
+    dup1 __FUNC_SIG(multiWeeks)  eq multiWeeksJump jumpi
+
+
+    // function multiWei(uint256) pure returns (uint256)
+    dup1 __FUNC_SIG(multiWei)  eq multiWeiJump jumpi
+
+
+    // function oneDays() pure returns (uint256)
+    dup1 __FUNC_SIG(oneDays)  eq oneDaysJump jumpi
+
+
+    // function oneEther() pure returns (uint256)
+    dup1 __FUNC_SIG(oneEther)  eq oneEtherJump jumpi
+
+
+    // function oneGwei() pure returns (uint256)
+    dup1 __FUNC_SIG(oneGwei)  eq oneGweiJump jumpi
+
+
+    // function oneHours() pure returns (uint256)
+    dup1 __FUNC_SIG(oneHours)  eq oneHoursJump jumpi
+
+
+    // function oneMinutes() pure returns (uint256)
+    dup1 __FUNC_SIG(oneMinutes)  eq oneMinutesJump jumpi
+
+
+    // function oneSeconds() pure returns (uint256)
+    dup1 __FUNC_SIG(oneSeconds)  eq oneSecondsJump jumpi
+
+
+    // function oneWeeks() pure returns (uint256)
+    dup1 __FUNC_SIG(oneWeeks)  eq oneWeeksJump jumpi
+
+
+    // function oneWei() pure returns (uint256)
+    dup1 __FUNC_SIG(oneWei)  eq oneWeiJump jumpi
+
+
+    // function uint104Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint104Max)  eq uint104MaxJump jumpi
+
+
+    // function uint112Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint112Max)  eq uint112MaxJump jumpi
+
+
+    // function uint120Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint120Max)  eq uint120MaxJump jumpi
+
+
+    // function uint128Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint128Max)  eq uint128MaxJump jumpi
+
+
+    // function uint136Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint136Max)  eq uint136MaxJump jumpi
+
+
+    // function uint144Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint144Max)  eq uint144MaxJump jumpi
+
+
+    // function uint152Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint152Max)  eq uint152MaxJump jumpi
+
+
+    // function uint160Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint160Max)  eq uint160MaxJump jumpi
+
+
+    // function uint168Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint168Max)  eq uint168MaxJump jumpi
+
+
+    // function uint16Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint16Max)  eq uint16MaxJump jumpi
+
+
+    // function uint176Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint176Max)  eq uint176MaxJump jumpi
+
+
+    // function uint184Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint184Max)  eq uint184MaxJump jumpi
+
+
+    // function uint192Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint192Max)  eq uint192MaxJump jumpi
+
+
+    // function uint200Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint200Max)  eq uint200MaxJump jumpi
+
+
+    // function uint208Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint208Max)  eq uint208MaxJump jumpi
+
+
+    // function uint216Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint216Max)  eq uint216MaxJump jumpi
+
+
+    // function uint224Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint224Max)  eq uint224MaxJump jumpi
+
+
+    // function uint232Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint232Max)  eq uint232MaxJump jumpi
+
+
+    // function uint240Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint240Max)  eq uint240MaxJump jumpi
+
+
+    // function uint248Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint248Max)  eq uint248MaxJump jumpi
+
+
+    // function uint24Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint24Max)  eq uint24MaxJump jumpi
+
+
+    // function uint256Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint256Max)  eq uint256MaxJump jumpi
+
+
+    // function uint32Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint32Max)  eq uint32MaxJump jumpi
+
+
+    // function uint40Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint40Max)  eq uint40MaxJump jumpi
+
+
+    // function uint48Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint48Max)  eq uint48MaxJump jumpi
+
+
+    // function uint56Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint56Max)  eq uint56MaxJump jumpi
+
+
+    // function uint64Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint64Max)  eq uint64MaxJump jumpi
+
+
+    // function uint72Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint72Max)  eq uint72MaxJump jumpi
+
+
+    // function uint80Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint80Max)  eq uint80MaxJump jumpi
+
+
+    // function uint88Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint88Max)  eq uint88MaxJump jumpi
+
+
+    // function uint8Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint8Max)  eq uint8MaxJump jumpi
+
+
+    // function uint96Max() pure returns (uint256)
+    dup1 __FUNC_SIG(uint96Max)  eq uint96MaxJump jumpi
+
+    not_found:
+      // Revert if no match is found.
+      0x00 dup1 revert
+    
+
+    // function uint168Max() pure returns (uint256) 
+    uint168MaxJump:
+      UINT168_MAX()
+
+    // function int184Max() pure returns (int256) 
+    int184MaxJump:
+      INT184_MAX()
+
+    // function int40Max() pure returns (int256) 
+    int40MaxJump:
+      INT40_MAX()
+
+    // function oneWeeks() pure returns (uint256) 
+    oneWeeksJump:
+      ONE_WEEKS()
+
+    // function uint160Max() pure returns (uint256) 
+    uint160MaxJump:
+      UINT160_MAX()
+
+    // function int176Min() pure returns (int256) 
+    int176MinJump:
+      INT176_MIN()
+
+    // function int88Max() pure returns (int256) 
+    int88MaxJump:
+      INT88_MAX()
+
+    // function int168Min() pure returns (int256) 
+    int168MinJump:
+      INT168_MIN()
+
+    // function int208Min() pure returns (int256) 
+    int208MinJump:
+      INT208_MIN()
+
+    // function uint104Max() pure returns (uint256) 
+    uint104MaxJump:
+      UINT104_MAX()
+
+    // function int24Min() pure returns (int256) 
+    int24MinJump:
+      INT24_MIN()
+
+    // function int112Min() pure returns (int256) 
+    int112MinJump:
+      INT112_MIN()
+
+    // function int96Max() pure returns (int256) 
+    int96MaxJump:
+      INT96_MAX()
+
+    // function int96Min() pure returns (int256) 
+    int96MinJump:
+      INT96_MIN()
+
+    // function uint128Max() pure returns (uint256) 
+    uint128MaxJump:
+      UINT128_MAX()
+
+    // function uint200Max() pure returns (uint256) 
+    uint200MaxJump:
+      UINT200_MAX()
+
+    // function oneHours() pure returns (uint256) 
+    oneHoursJump:
+      ONE_HOURS()
+
+    // function int144Min() pure returns (int256) 
+    int144MinJump:
+      INT144_MIN()
+
+    // function uint24Max() pure returns (uint256) 
+    uint24MaxJump:
+      UINT24_MAX()
+
+    // function uint120Max() pure returns (uint256) 
+    uint120MaxJump:
+      UINT120_MAX()
+
+    // function int256Max() pure returns (int256) 
+    int256MaxJump:
+      INT256_MAX()
+
+    // function int136Max() pure returns (int256) 
+    int136MaxJump:
+      INT136_MAX()
+
+    // function int216Max() pure returns (int256) 
+    int216MaxJump:
+      INT216_MAX()
+
+    // function int144Max() pure returns (int256) 
+    int144MaxJump:
+      INT144_MAX()
+
+    // function int72Min() pure returns (int256) 
+    int72MinJump:
+      INT72_MIN()
+
+    // function oneWei() pure returns (uint256) 
+    oneWeiJump:
+      ONE_WEI()
+
+    // function multiDays(uint256) pure returns (uint256) 
+    multiDaysJump:
+      MULTI_DAYS()
+
+    // function int64Min() pure returns (int256) 
+    int64MinJump:
+      INT64_MIN()
+
+    // function uint248Max() pure returns (uint256) 
+    uint248MaxJump:
+      UINT248_MAX()
+
+    // function int24Max() pure returns (int256) 
+    int24MaxJump:
+      INT24_MAX()
+
+    // function uint176Max() pure returns (uint256) 
+    uint176MaxJump:
+      UINT176_MAX()
+
+    // function int32Max() pure returns (int256) 
+    int32MaxJump:
+      INT32_MAX()
+
+    // function int232Max() pure returns (int256) 
+    int232MaxJump:
+      INT232_MAX()
+
+    // function int48Min() pure returns (int256) 
+    int48MinJump:
+      INT48_MIN()
+
+    // function multiSeconds(uint256) pure returns (uint256) 
+    multiSecondsJump:
+      MULTI_SECONDS()
+
+    // function int224Min() pure returns (int256) 
+    int224MinJump:
+      INT224_MIN()
+
+    // function int216Min() pure returns (int256) 
+    int216MinJump:
+      INT216_MIN()
+
+    // function int88Min() pure returns (int256) 
+    int88MinJump:
+      INT88_MIN()
+
+    // function uint136Max() pure returns (uint256) 
+    uint136MaxJump:
+      UINT136_MAX()
+
+    // function int248Min() pure returns (int256) 
+    int248MinJump:
+      INT248_MIN()
+
+    // function int176Max() pure returns (int256) 
+    int176MaxJump:
+      INT176_MAX()
+
+    // function uint8Max() pure returns (uint256) 
+    uint8MaxJump:
+      UINT8_MAX()
+
+    // function int56Max() pure returns (int256) 
+    int56MaxJump:
+      INT56_MAX()
+
+    // function int80Min() pure returns (int256) 
+    int80MinJump:
+      INT80_MIN()
+
+    // function int200Min() pure returns (int256) 
+    int200MinJump:
+      INT200_MIN()
+
+    // function uint48Max() pure returns (uint256) 
+    uint48MaxJump:
+      UINT48_MAX()
+
+    // function int192Max() pure returns (int256) 
+    int192MaxJump:
+      INT192_MAX()
+
+    // function int208Max() pure returns (int256) 
+    int208MaxJump:
+      INT208_MAX()
+
+    // function int40Min() pure returns (int256) 
+    int40MinJump:
+      INT40_MIN()
+
+    // function int192Min() pure returns (int256) 
+    int192MinJump:
+      INT192_MIN()
+
+    // function int64Max() pure returns (int256) 
+    int64MaxJump:
+      INT64_MAX()
+
+    // function multiHours(uint256) pure returns (uint256) 
+    multiHoursJump:
+      MULTI_HOURS()
+
+    // function int16Max() pure returns (int256) 
+    int16MaxJump:
+      INT16_MAX()
+
+    // function multiEther(uint256) pure returns (uint256) 
+    multiEtherJump:
+      MULTI_ETHER()
+
+    // function uint64Max() pure returns (uint256) 
+    uint64MaxJump:
+      UINT64_MAX()
+
+    // function uint216Max() pure returns (uint256) 
+    uint216MaxJump:
+      UINT216_MAX()
+
+    // function int248Max() pure returns (int256) 
+    int248MaxJump:
+      INT248_MAX()
+
+    // function int184Min() pure returns (int256) 
+    int184MinJump:
+      INT184_MIN()
+
+    // function oneGwei() pure returns (uint256) 
+    oneGweiJump:
+      ONE_GWEI()
+
+    // function int136Min() pure returns (int256) 
+    int136MinJump:
+      INT136_MIN()
+
+    // function int104Min() pure returns (int256) 
+    int104MinJump:
+      INT104_MIN()
+
+    // function uint40Max() pure returns (uint256) 
+    uint40MaxJump:
+      UINT40_MAX()
+
+    // function uint96Max() pure returns (uint256) 
+    uint96MaxJump:
+      UINT96_MAX()
+
+    // function multiMinutes(uint256) pure returns (uint256) 
+    multiMinutesJump:
+      MULTI_MINUTES()
+
+    // function uint72Max() pure returns (uint256) 
+    uint72MaxJump:
+      UINT72_MAX()
+
+    // function int56Min() pure returns (int256) 
+    int56MinJump:
+      INT56_MIN()
+
+    // function multiGwei(uint256) pure returns (uint256) 
+    multiGweiJump:
+      MULTI_GWEI()
+
+    // function int232Min() pure returns (int256) 
+    int232MinJump:
+      INT232_MIN()
+
+    // function uint224Max() pure returns (uint256) 
+    uint224MaxJump:
+      UINT224_MAX()
+
+    // function uint80Max() pure returns (uint256) 
+    uint80MaxJump:
+      UINT80_MAX()
+
+    // function int16Min() pure returns (int256) 
+    int16MinJump:
+      INT16_MIN()
+
+    // function int120Max() pure returns (int256) 
+    int120MaxJump:
+      INT120_MAX()
+
+    // function uint152Max() pure returns (uint256) 
+    uint152MaxJump:
+      UINT152_MAX()
+
+    // function multiWei(uint256) pure returns (uint256) 
+    multiWeiJump:
+      MULTI_WEI()
+
+    // function int200Max() pure returns (int256) 
+    int200MaxJump:
+      INT200_MAX()
+
+    // function uint144Max() pure returns (uint256) 
+    uint144MaxJump:
+      UINT144_MAX()
+
+    // function uint32Max() pure returns (uint256) 
+    uint32MaxJump:
+      UINT32_MAX()
+
+    // function uint184Max() pure returns (uint256) 
+    uint184MaxJump:
+      UINT184_MAX()
+
+    // function int128Min() pure returns (int256) 
+    int128MinJump:
+      INT128_MIN()
+
+    // function uint16Max() pure returns (uint256) 
+    uint16MaxJump:
+      UINT16_MAX()
+
+    // function int160Max() pure returns (int256) 
+    int160MaxJump:
+      INT160_MAX()
+
+    // function uint208Max() pure returns (uint256) 
+    uint208MaxJump:
+      UINT208_MAX()
+
+    // function int168Max() pure returns (int256) 
+    int168MaxJump:
+      INT168_MAX()
+
+    // function oneDays() pure returns (uint256) 
+    oneDaysJump:
+      ONE_DAYS()
+
+    // function oneMinutes() pure returns (uint256) 
+    oneMinutesJump:
+      ONE_MINUTES()
+
+    // function int120Min() pure returns (int256) 
+    int120MinJump:
+      INT120_MIN()
+
+    // function oneSeconds() pure returns (uint256) 
+    oneSecondsJump:
+      ONE_SECONDS()
+
+    // function int8Max() pure returns (int256) 
+    int8MaxJump:
+      INT8_MAX()
+
+    // function uint112Max() pure returns (uint256) 
+    uint112MaxJump:
+      UINT112_MAX()
+
+    // function int8Min() pure returns (int256) 
+    int8MinJump:
+      INT8_MIN()
+
+    // function oneEther() pure returns (uint256) 
+    oneEtherJump:
+      ONE_ETHER()
+
+    // function int72Max() pure returns (int256) 
+    int72MaxJump:
+      INT72_MAX()
+
+    // function int240Max() pure returns (int256) 
+    int240MaxJump:
+      INT240_MAX()
+
+    // function multiWeeks(uint256) pure returns (uint256) 
+    multiWeeksJump:
+      MULTI_WEEKS()
+
+    // function int32Min() pure returns (int256) 
+    int32MinJump:
+      INT32_MIN()
+
+    // function int80Max() pure returns (int256) 
+    int80MaxJump:
+      INT80_MAX()
+
+    // function int160Min() pure returns (int256) 
+    int160MinJump:
+      INT160_MIN()
+
+    // function uint256Max() pure returns (uint256) 
+    uint256MaxJump:
+      UINT256_MAX()
+
+    // function uint240Max() pure returns (uint256) 
+    uint240MaxJump:
+      UINT240_MAX()
+
+    // function uint192Max() pure returns (uint256) 
+    uint192MaxJump:
+      UINT192_MAX()
+
+    // function int112Max() pure returns (int256) 
+    int112MaxJump:
+      INT112_MAX()
+
+    // function uint56Max() pure returns (uint256) 
+    uint56MaxJump:
+      UINT56_MAX()
+
+    // function int256Min() pure returns (int256) 
+    int256MinJump:
+      INT256_MIN()
+
+    // function int48Max() pure returns (int256) 
+    int48MaxJump:
+      INT48_MAX()
+
+    // function int224Max() pure returns (int256) 
+    int224MaxJump:
+      INT224_MAX()
+
+    // function int128Max() pure returns (int256) 
+    int128MaxJump:
+      INT128_MAX()
+
+    // function int152Max() pure returns (int256) 
+    int152MaxJump:
+      INT152_MAX()
+
+    // function int240Min() pure returns (int256) 
+    int240MinJump:
+      INT240_MIN()
+
+    // function uint232Max() pure returns (uint256) 
+    uint232MaxJump:
+      UINT232_MAX()
+
+    // function int104Max() pure returns (int256) 
+    int104MaxJump:
+      INT104_MAX()
+
+    // function uint88Max() pure returns (uint256) 
+    uint88MaxJump:
+      UINT88_MAX()
+
+    // function int152Min() pure returns (int256) 
+    int152MinJump:
+      INT152_MIN()
+}
