@@ -8,6 +8,10 @@
 #define function safeMint(address to, uint256 tokenId, bytes memory data) payable returns ()
 #define function safeMint(address to, uint256 tokenId) payable returns ()
 
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    ERC721_CONSTRUCTOR()
+}
+
 #define macro MINT() = takes (0) returns (0) {
     0x24 calldataload       // [tokenId]
     0x04 calldataload       // [to, tokenId]

@@ -1,3 +1,6 @@
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    ERC1155_CONSTRUCTOR()
+}
 
 #define macro MAIN() = {
     0x00 calldataload 0xE0 shr      // [function selector on stack]

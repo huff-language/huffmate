@@ -42,35 +42,61 @@
 #define constant BALANCE_LOCATION = FREE_STORAGE_POINTER()
 #define constant SINGLE_APPROVAL_LOCATION = FREE_STORAGE_POINTER()
 
-// Metadata
-// META_NAME = "Token"
-#define constant META_NAME = 0x546f6b656e000000000000000000000000000000000000000000000000000000
-#define constant META_NAME_LENGTH = 0x05
+// Immutables offsets
+#define constant NAME_OFFSET =          0x0000000000000000000000000000000000000000000000000000000000000080
+#define constant NAME_LENGTH_OFFSET =   0x00000000000000000000000000000000000000000000000000000000000000a0
+#define constant SYMBOL_OFFSET =        0x0000000000000000000000000000000000000000000000000000000000000020
+#define constant SYMBOL_LENGTH_OFFSET = 0x0000000000000000000000000000000000000000000000000000000000000040
 
-// META_SYMBOL = "TKN"
-#define constant META_SYMBOL = 0x544B4E0000000000000000000000000000000000000000000000000000000000
-#define constant META_SYMBOL_LENGTH = 0x03
+/// >>>>>>>>>>>>>>>>>>>>>  CONSTRUCTOR  <<<<<<<<<<<<<<<<<<<<<< ///
+
+/// @notice Constructor
+#define macro ERC721_CONSTRUCTOR() = takes (0) returns (0) {
+    // Constructor arguments:
+    // ?, name_size, name, ?, symbol_size, symbol
+
+    // This constructor will return the runtime bytecode with all the 
+    // constructor arguments concatenated at the end.
+    
+    // Copy the runtime bytecode with constructor argument concatenated.
+    0xb                                     // [offset] - constructor code size
+    dup1                                    // [offset, offset]
+    codesize                                // [total_size, offset, offset]
+    sub                                     // [runtime_size, offset]
+    dup1                                    // [runtime_size, runtime_size, offset]
+    swap2                                   // [offset, runtime_size, runtime_size]
+    returndatasize                          // [return_offset, offset, runtime_size, runtime_size]
+    codecopy                                // [runtime_size]
+
+    // Return the runtime bytecode.
+    returndatasize                          // [return_offset, runtime_size]
+    return                                  // []
+}
 
 /// >>>>>>>>>>>>>>>>>>>>>  VIEW FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
 
 /// @notice Name
 /// @notice Returns the token name string
 #define macro NAME() = takes (0) returns (0) {
-    NON_PAYABLE()                       // []
-    0x20 0x00 mstore                    // []
-    [META_NAME_LENGTH] 0x20 mstore      // []
-    [META_NAME] 0x40 mstore             // []
-    0x60 0x00 return                    // []
+    NON_PAYABLE()                               // []
+    _GET_IMMUTABLE(NAME_OFFSET, 0x00)           // [name_value]
+    _GET_IMMUTABLE(NAME_LENGTH_OFFSET, 0x00)    // [name_length, name_value]
+    0x20 0x00 mstore                            // [name_length, name_value]
+    0x20 mstore                                 // [name_value]
+    0x40 mstore                                 // []
+    0x60 0x00 return                            // []
 }
 
 /// @notice Symbol
 /// @notice Returns the symbol of the token
 #define macro SYMBOL() = takes (0) returns (0) {
-    NON_PAYABLE()                       // []
-    0x20 0x00 mstore                    // []
-    [META_SYMBOL_LENGTH] 0x20 mstore    // []
-    [META_SYMBOL] 0x40 mstore           // []
-    0x60 0x00 return                    // []
+    NON_PAYABLE()                               // []
+    _GET_IMMUTABLE(SYMBOL_OFFSET, 0x00)         // [symbol_value]
+    _GET_IMMUTABLE(SYMBOL_LENGTH_OFFSET, 0x00)  // [symbol_length, symbol_value]
+    0x20 0x00 mstore                            // [symbol_length, symbol_value]
+    0x20 mstore                                 // [symbol_value]
+    0x40 mstore                                 // []
+    0x60 0x00 return                            // []
 }
 
 /// @notice Balance Of
@@ -231,6 +257,15 @@
         NOT_MINTED(0x00)
 
     cont:
+}
+
+/// @notice Retrives an "immutable" from the runtime bytecode.
+#define macro _GET_IMMUTABLE(offset_end, free_memory) = takes (0) returns (1) {
+    0x20                        // [size]
+    <offset_end> codesize sub   // [offset_code, size]
+    <free_memory>               // [offset_memory, offset_code, size]
+    codecopy                    // []
+    <free_memory> mload         // [value]
 }
 
 /// >>>>>>>>>>>>>>>>>>>>>  EXTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///

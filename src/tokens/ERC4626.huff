@@ -34,11 +34,8 @@
 #define function maxWithdraw(address owner) view returns (uint256)
 #define function maxRedeem(address owner) view returns (uint256)
 
-
-// TODO: Grab dynamic constructor args
-
-// Storage
-#define constant ASSET_SLOT = FREE_STORAGE_POINTER()
+// Immutables offsets
+#define constant ASSET_OFFSET = 0x0000000000000000000000000000000000000000000000000000000000000100
 
 #define constant TYPE_UINT_256_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
@@ -46,60 +43,71 @@
 #define macro ERC4626_CONSTRUCTOR() = takes (0) returns (0) {
     // Copy the asset address into memory and then the stack from the bytecode
     0x20                    // [size] - byte size to copy
-    0x20 codesize sub       // [offset, size] - offset in the code to copy from
+    0x20 [ASSET_OFFSET] sub // [asset_offset_now, size]
+    codesize sub            // [offset, size] - offset in the code to copy from
     0x00                    // [mem, offset, size] - offset in memory to copy to
-    codecopy                // []
-    0x00 mload              // [asset]
+    codecopy                // [] - stores asset at 0x00
 
     // Store the decimals function selector in memory to call
-    __FUNC_SIG(decimals)    // [sig_right_padded, asset]
-    0xE0 shl                // [sig_left_padded, asset]
-    0x20 mstore             // [asset]
+    __FUNC_SIG(decimals)    // [sig_right_padded]
+    0xE0 shl                // [sig_left_padded]
+    0x20 mstore             // []
 
     // Call the asset to get its decimals
-    0x20                    // [retSize, asset]
-    0x00                    // [retOffset, retSize, asset]
-    0x04                    // [argSize, retOffset, retSize, asset]
-    0x20                    // [argOffset, argSize, retOffset, retSize, asset]
-    dup5                    // [to, argOffset, argSize, retOffset, retSize, asset]
-    gas                     // [gas, to, argOffset, argSize, retOffset, retSize, asset]
-    staticcall              // [success, asset]
+    0x20                    // [retSize]
+    0x00                    // [retOffset, retSize]
+    0x04                    // [argSize, retOffset, retSize]
+    0x20                    // [argOffset, argSize, retOffset, retSize]
+    0x00 mload              // [to, argOffset, argSize, retOffset, retSize]
+    gas                     // [gas, to, argOffset, argSize, retOffset, retSize]
+    staticcall              // [success]
 
     // If the call failed, revert
-    iszero iszero           // [success, asset]
-    cont jumpi              // [asset]
+    cont jumpi              // []
     0x00 dup1 revert        // []
     cont:
 
-    // Store the decimals
-    0x00 mload              // [decimals, asset]
-    [DECIMALS_SLOT] sstore  // [asset]
-
-    // Store the asset
-    [ASSET_SLOT] sstore     // []
+    // Load the decimals
+    0x00 mload              // [decimals]
 
     // Configure the initial domain separator
-    chainid [INITIAL_CHAIN_ID] sstore       // []
-    COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN SEPARATOR]
-    [INITIAL_DOMAIN_SEPARATOR] sstore       // []
+    chainid [INITIAL_CHAIN_ID] sstore       // [decimals]
+    COMPUTE_DOMAIN_SEPARATOR()              // [DOMAIN_SEPARATOR, decimals]
+    [INITIAL_DOMAIN_SEPARATOR] sstore       // [decimals]
 
-    // TODO: here is where we should set the name + symbol storage variables
+    // Copy the runtime bytecode with constructor argument concatenated.
+    __codesize(CONSTRUCTOR)                 // [offset, decimals]
+    dup1                                    // [offset, offset, decimals]
+    codesize                                // [total_size, offset, offset, decimals]
+    sub                                     // [runtime_size, offset, decimals]
+    dup1                                    // [runtime_size, runtime_size, offset, decimals]
+    swap2                                   // [offset, runtime_size, runtime_size, decimals]
+    returndatasize                          // [return_offset, offset, runtime_size, runtime_size, decimals]
+    codecopy                                // [runtime_size, decimals]
 
-    // Allow execution to continue for parent construction
+    // Add the decimals at the of the bytecode.
+    swap1                                   // [decimals, runtime_size]
+    dup2                                    // [runtime_size, decimals, runtime_size]
+    returndatasize add mstore               // [runtime_size]
+
+    // Return the runtime bytecode.
+    0x20 add                                // [new_runtime_size]
+    returndatasize                          // [return_offset, new_runtime_size]
+    return                                  // []
 }
 
 /// @notice Returns the ERC4626 decimals
 #define macro ERC4626_DECIMALS() = takes (0) returns (0) {
-    [DECIMALS_SLOT] sload
-    0x00 mstore
-    0x20 0x00 return
+    _GET_IMMUTABLE(DECIMALS_OFFSET, 0x00)   // [decimals]
+    0x00 mstore                             // []
+    0x20 0x00 return                        // []
 }
 
 /// @notice Returns the ERC4626 asset
 #define macro ERC4626_ASSET() = takes (0) returns (0) {
-    [ASSET_SLOT] sload
-    0x00 mstore
-    0x20 0x00 return
+    _GET_IMMUTABLE(ASSET_OFFSET, 0x00)      // [asset]
+    0x00 mstore                             // []
+    0x20 0x00 return                        // []
 }
 
 // ------------------------------------------------------
@@ -143,7 +151,7 @@
     dup1 0x44 mstore                // [assets, shares, receiver]
 
     // Load the asset as the call destination
-    [ASSET_SLOT] sload              // [asset, assets, shares, receiver]
+    _GET_IMMUTABLE(ASSET_OFFSET, 0x80) // [asset, assets, shares, receiver]
 
     // Construct the call
     0x00                            // [retSize, asset, assets, shares, receiver]
@@ -156,7 +164,7 @@
     call                            // [success, asset, assets, shares, receiver]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, assets, shares, receiver]
+    success jumpi                   // [asset, assets, shares, receiver]
     0x00 dup1 revert                // []
     success:
 
@@ -225,7 +233,7 @@
 
     // Validate that the assets are non-zero
     dup1 CONVERT_TO_ASSETS_INNER()      // [assets, shares, receiver, owner]
-    dup1 iszero iszero non_zero jumpi   // [assets, shares, receiver, owner]
+    dup1 non_zero jumpi                 // [assets, shares, receiver, owner]
     ZERO_ASSETS(0x00)
     non_zero:
 
@@ -255,7 +263,8 @@
     dup1 0x24 mstore                // [assets, shares, receiver, owner]
 
     // Load the asset as the call destination
-    [ASSET_SLOT] sload              // [asset, assets, shares, receiver, owner]
+    _GET_IMMUTABLE(ASSET_OFFSET, 0x80) // [asset, assets, shares, receiver, owner]
+    // [ADDRESS]
 
     // Construct the call
     0x00                            // [retSize, asset, assets, shares, receiver, owner]
@@ -268,7 +277,7 @@
     call                            // [success, asset, assets, shares, receiver, owner]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, assets, shares, receiver, owner]
+    success jumpi                   // [asset, assets, shares, receiver, owner]
     0x00 dup1 revert                // []
     success:
 
@@ -296,7 +305,7 @@
     // Validate that the assets shares are not zero
     dup1                            // [assets, assets, receiver]
     PREVIEW_DEPOSIT_INNER()         // [shares, assets, receiver]
-    dup1 iszero iszero cont jumpi   // [shares, assets, receiver]
+    dup1 cont jumpi                 // [shares, assets, receiver]
     ZERO_SHARES(0x00)
     cont:
 
@@ -315,7 +324,7 @@
     dup2 0x44 mstore                // [shares, assets, receiver]
 
     // Load the asset
-    [ASSET_SLOT] sload              // [asset, shares, assets, receiver]
+    _GET_IMMUTABLE(ASSET_OFFSET, 0x80) // [asset, shares, assets, receiver]
 
     // Construct the call
     0x00                            // [retSize, asset, shares, assets, receiver]
@@ -328,7 +337,7 @@
     call                            // [success, asset, shares, assets, receiver]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, shares, assets, receiver]
+    success jumpi                   // [asset, shares, assets, receiver]
     0x00 dup1 revert                // []
     success:
 
@@ -423,7 +432,7 @@
     dup2 0x24 mstore                // [shares, assets, receiver, owner]
 
     // Load asset from storage
-    [ASSET_SLOT] sload              // [asset, shares, assets, receiver, owner]
+    _GET_IMMUTABLE(ASSET_OFFSET, 0x80) // [asset, shares, assets, receiver, owner]
 
     // Construct the call
     0x00                            // [retSize, asset, shares, assets, receiver, owner]
@@ -436,7 +445,7 @@
     call                            // [success, asset, shares, assets, receiver, owner]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset, shares, assets, receiver, owner]
+    success jumpi                   // [asset, shares, assets, receiver, owner]
     0x00 dup1 revert                // []
     success:
 
@@ -480,7 +489,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, shares]
 
     // Return shares if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, shares]
+    dup1 calculate jumpi                    // [supply, shares]
     pop cont jump                           // []
 
     // Otherwise mul div up
@@ -528,7 +537,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, assets]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, assets]
+    dup1 calculate jumpi                    // [supply, assets]
     pop cont jump                           // []
 
     // Otherwise mul div down
@@ -562,7 +571,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, shares]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, shares]
+    dup1 calculate jumpi                    // [supply, shares]
     pop cont jump                           // []
 
     // Otherwise mul div down
@@ -597,7 +606,7 @@
     [TOTAL_SUPPLY_SLOT] sload               // [supply, assets]
 
     // Return assets if supply is zero
-    dup1 iszero iszero calculate jumpi      // [supply, assets]
+    dup1 calculate jumpi                    // [supply, assets]
     pop dont_fail jump                      // []
 
     // Otherwise mul div up

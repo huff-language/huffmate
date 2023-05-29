@@ -1,0 +1,254 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.15;
+
+import "forge-std/Test.sol";
+import "foundry-huff/HuffDeployer.sol";
+
+
+interface IConstantsWrappers {
+	function int104Max() external pure returns (int256);
+	function int104Min() external pure returns (int256);
+	function int112Max() external pure returns (int256);
+	function int112Min() external pure returns (int256);
+	function int120Max() external pure returns (int256);
+	function int120Min() external pure returns (int256);
+	function int128Max() external pure returns (int256);
+	function int128Min() external pure returns (int256);
+	function int136Max() external pure returns (int256);
+	function int136Min() external pure returns (int256);
+	function int144Max() external pure returns (int256);
+	function int144Min() external pure returns (int256);
+	function int152Max() external pure returns (int256);
+	function int152Min() external pure returns (int256);
+	function int160Max() external pure returns (int256);
+	function int160Min() external pure returns (int256);
+	function int168Max() external pure returns (int256);
+	function int168Min() external pure returns (int256);
+	function int16Max() external pure returns (int256);
+	function int16Min() external pure returns (int256);
+	function int176Max() external pure returns (int256);
+	function int176Min() external pure returns (int256);
+	function int184Max() external pure returns (int256);
+	function int184Min() external pure returns (int256);
+	function int192Max() external pure returns (int256);
+	function int192Min() external pure returns (int256);
+	function int200Max() external pure returns (int256);
+	function int200Min() external pure returns (int256);
+	function int208Max() external pure returns (int256);
+	function int208Min() external pure returns (int256);
+	function int216Max() external pure returns (int256);
+	function int216Min() external pure returns (int256);
+	function int224Max() external pure returns (int256);
+	function int224Min() external pure returns (int256);
+	function int232Max() external pure returns (int256);
+	function int232Min() external pure returns (int256);
+	function int240Max() external pure returns (int256);
+	function int240Min() external pure returns (int256);
+	function int248Max() external pure returns (int256);
+	function int248Min() external pure returns (int256);
+	function int24Max() external pure returns (int256);
+	function int24Min() external pure returns (int256);
+	function int256Max() external pure returns (int256);
+	function int256Min() external pure returns (int256);
+	function int32Max() external pure returns (int256);
+	function int32Min() external pure returns (int256);
+	function int40Max() external pure returns (int256);
+	function int40Min() external pure returns (int256);
+	function int48Max() external pure returns (int256);
+	function int48Min() external pure returns (int256);
+	function int56Max() external pure returns (int256);
+	function int56Min() external pure returns (int256);
+	function int64Max() external pure returns (int256);
+	function int64Min() external pure returns (int256);
+	function int72Max() external pure returns (int256);
+	function int72Min() external pure returns (int256);
+	function int80Max() external pure returns (int256);
+	function int80Min() external pure returns (int256);
+	function int88Max() external pure returns (int256);
+	function int88Min() external pure returns (int256);
+	function int8Max() external pure returns (int256);
+	function int8Min() external pure returns (int256);
+	function int96Max() external pure returns (int256);
+	function int96Min() external pure returns (int256);
+	function multiDays(uint256) external pure returns (uint256);
+	function multiEther(uint256) external pure returns (uint256);
+	function multiGwei(uint256) external pure returns (uint256);
+	function multiHours(uint256) external pure returns (uint256);
+	function multiMinutes(uint256) external pure returns (uint256);
+	function multiSeconds(uint256) external pure returns (uint256);
+	function multiWeeks(uint256) external pure returns (uint256);
+	function multiWei(uint256) external pure returns (uint256);
+	function oneDays() external pure returns (uint256);
+	function oneEther() external pure returns (uint256);
+	function oneGwei() external pure returns (uint256);
+	function oneHours() external pure returns (uint256);
+	function oneMinutes() external pure returns (uint256);
+	function oneSeconds() external pure returns (uint256);
+	function oneWeeks() external pure returns (uint256);
+	function oneWei() external pure returns (uint256);
+	function uint104Max() external pure returns (uint256);
+	function uint112Max() external pure returns (uint256);
+	function uint120Max() external pure returns (uint256);
+	function uint128Max() external pure returns (uint256);
+	function uint136Max() external pure returns (uint256);
+	function uint144Max() external pure returns (uint256);
+	function uint152Max() external pure returns (uint256);
+	function uint160Max() external pure returns (uint256);
+	function uint168Max() external pure returns (uint256);
+	function uint16Max() external pure returns (uint256);
+	function uint176Max() external pure returns (uint256);
+	function uint184Max() external pure returns (uint256);
+	function uint192Max() external pure returns (uint256);
+	function uint200Max() external pure returns (uint256);
+	function uint208Max() external pure returns (uint256);
+	function uint216Max() external pure returns (uint256);
+	function uint224Max() external pure returns (uint256);
+	function uint232Max() external pure returns (uint256);
+	function uint240Max() external pure returns (uint256);
+	function uint248Max() external pure returns (uint256);
+	function uint24Max() external pure returns (uint256);
+	function uint256Max() external pure returns (uint256);
+	function uint32Max() external pure returns (uint256);
+	function uint40Max() external pure returns (uint256);
+	function uint48Max() external pure returns (uint256);
+	function uint56Max() external pure returns (uint256);
+	function uint64Max() external pure returns (uint256);
+	function uint72Max() external pure returns (uint256);
+	function uint80Max() external pure returns (uint256);
+	function uint88Max() external pure returns (uint256);
+	function uint8Max() external pure returns (uint256);
+	function uint96Max() external pure returns (uint256);
+}
+
+contract ConstantsTest is Test {
+    IConstantsWrappers constants;
+
+    function setUp() public {
+        string memory wrapper_code = vm.readFile("test/utils/mocks/ConstantsWrappers.huff");
+        constants = IConstantsWrappers(HuffDeployer.deploy_with_code("utils/Constants", wrapper_code));
+    }
+
+    function testConstants() external {
+        // constant values
+        assertEq(constants.oneWei(), 1 wei);
+        assertEq(constants.oneGwei(), 1 gwei);
+        assertEq(constants.oneEther(), 1 ether);
+        assertEq(constants.oneSeconds(), 1 seconds);
+        assertEq(constants.oneMinutes(), 1 minutes);
+        assertEq(constants.oneHours(), 1 hours);
+        assertEq(constants.oneDays(), 1 days);
+        assertEq(constants.oneWeeks(), 1 weeks);
+
+        // unsigned maxs
+        assertEq(constants.uint256Max(), type(uint256).max);
+        assertEq(constants.uint248Max(), type(uint248).max);
+        assertEq(constants.uint240Max(), type(uint240).max);
+        assertEq(constants.uint232Max(), type(uint232).max);
+        assertEq(constants.uint224Max(), type(uint224).max);
+        assertEq(constants.uint216Max(), type(uint216).max);
+        assertEq(constants.uint208Max(), type(uint208).max);
+        assertEq(constants.uint200Max(), type(uint200).max);
+        assertEq(constants.uint192Max(), type(uint192).max);
+        assertEq(constants.uint184Max(), type(uint184).max);
+        assertEq(constants.uint176Max(), type(uint176).max);
+        assertEq(constants.uint168Max(), type(uint168).max);
+        assertEq(constants.uint160Max(), type(uint160).max);
+        assertEq(constants.uint152Max(), type(uint152).max);
+        assertEq(constants.uint144Max(), type(uint144).max);
+        assertEq(constants.uint136Max(), type(uint136).max);
+        assertEq(constants.uint128Max(), type(uint128).max);
+        assertEq(constants.uint120Max(), type(uint120).max);
+        assertEq(constants.uint112Max(), type(uint112).max);
+        assertEq(constants.uint104Max(), type(uint104).max);
+        assertEq(constants.uint96Max(), type(uint96).max);
+        assertEq(constants.uint88Max(), type(uint88).max);
+        assertEq(constants.uint80Max(), type(uint80).max);
+        assertEq(constants.uint72Max(), type(uint72).max);
+        assertEq(constants.uint64Max(), type(uint64).max);
+        assertEq(constants.uint56Max(), type(uint56).max);
+        assertEq(constants.uint48Max(), type(uint48).max);
+        assertEq(constants.uint40Max(), type(uint40).max);
+        assertEq(constants.uint32Max(), type(uint32).max);
+        assertEq(constants.uint24Max(), type(uint24).max);
+        assertEq(constants.uint16Max(), type(uint16).max);
+        assertEq(constants.uint8Max(), type(uint8).max);
+
+        // signed maxs
+        assertEq(constants.int256Max(), type(int256).max);
+        assertEq(constants.int248Max(), type(int248).max);
+        assertEq(constants.int240Max(), type(int240).max);
+        assertEq(constants.int232Max(), type(int232).max);
+        assertEq(constants.int224Max(), type(int224).max);
+        assertEq(constants.int216Max(), type(int216).max);
+        assertEq(constants.int208Max(), type(int208).max);
+        assertEq(constants.int200Max(), type(int200).max);
+        assertEq(constants.int192Max(), type(int192).max);
+        assertEq(constants.int184Max(), type(int184).max);
+        assertEq(constants.int176Max(), type(int176).max);
+        assertEq(constants.int168Max(), type(int168).max);
+        assertEq(constants.int160Max(), type(int160).max);
+        assertEq(constants.int152Max(), type(int152).max);
+        assertEq(constants.int144Max(), type(int144).max);
+        assertEq(constants.int136Max(), type(int136).max);
+        assertEq(constants.int128Max(), type(int128).max);
+        assertEq(constants.int120Max(), type(int120).max);
+        assertEq(constants.int112Max(), type(int112).max);
+        assertEq(constants.int104Max(), type(int104).max);
+        assertEq(constants.int96Max(), type(int96).max);
+        assertEq(constants.int88Max(), type(int88).max);
+        assertEq(constants.int80Max(), type(int80).max);
+        assertEq(constants.int72Max(), type(int72).max);
+        assertEq(constants.int64Max(), type(int64).max);
+        assertEq(constants.int56Max(), type(int56).max);
+        assertEq(constants.int48Max(), type(int48).max);
+        assertEq(constants.int40Max(), type(int40).max);
+        assertEq(constants.int32Max(), type(int32).max);
+        assertEq(constants.int24Max(), type(int24).max);
+        assertEq(constants.int16Max(), type(int16).max);
+        assertEq(constants.int8Max(), type(int8).max);
+
+        // signed mins
+        assertEq(constants.int256Min(), type(int256).min);
+        assertEq(constants.int248Min(), type(int248).min);
+        assertEq(constants.int240Min(), type(int240).min);
+        assertEq(constants.int232Min(), type(int232).min);
+        assertEq(constants.int224Min(), type(int224).min);
+        assertEq(constants.int216Min(), type(int216).min);
+        assertEq(constants.int208Min(), type(int208).min);
+        assertEq(constants.int200Min(), type(int200).min);
+        assertEq(constants.int192Min(), type(int192).min);
+        assertEq(constants.int184Min(), type(int184).min);
+        assertEq(constants.int176Min(), type(int176).min);
+        assertEq(constants.int168Min(), type(int168).min);
+        assertEq(constants.int160Min(), type(int160).min);
+        assertEq(constants.int152Min(), type(int152).min);
+        assertEq(constants.int144Min(), type(int144).min);
+        assertEq(constants.int136Min(), type(int136).min);
+        assertEq(constants.int128Min(), type(int128).min);
+        assertEq(constants.int120Min(), type(int120).min);
+        assertEq(constants.int112Min(), type(int112).min);
+        assertEq(constants.int104Min(), type(int104).min);
+        assertEq(constants.int96Min(), type(int96).min);
+        assertEq(constants.int88Min(), type(int88).min);
+        assertEq(constants.int80Min(), type(int80).min);
+        assertEq(constants.int72Min(), type(int72).min);
+        assertEq(constants.int64Min(), type(int64).min);
+        assertEq(constants.int56Min(), type(int56).min);
+        assertEq(constants.int48Min(), type(int48).min);
+        assertEq(constants.int40Min(), type(int40).min);
+        assertEq(constants.int32Min(), type(int32).min);
+        assertEq(constants.int24Min(), type(int24).min);
+        assertEq(constants.int16Min(), type(int16).min);
+        assertEq(constants.int8Min(), type(int8).min);
+
+        // dynamic values
+        assertEq(constants.multiWei(100), 100 wei);
+        assertEq(constants.multiGwei(100), 100 gwei);
+        assertEq(constants.multiEther(100), 100 ether);
+        assertEq(constants.multiSeconds(100), 100 seconds);
+        assertEq(constants.multiMinutes(100), 100 minutes);
+        assertEq(constants.multiHours(100), 100 hours);
+        assertEq(constants.multiDays(100), 100 days);
+        assertEq(constants.multiWeeks(100), 100 weeks);
+    }
+}

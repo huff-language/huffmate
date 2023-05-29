@@ -2,7 +2,6 @@
 out = 'out'
 libs = ['lib']
 ffi = true
-fuzz_runs = 1000
 fs_permissions = [
     { access = "read", path = "./test/auth/mocks/AuthWrappers.huff" },
     { access = "read", path = "./test/auth/mocks/OwnedWrappers.huff" },
@@ -45,12 +44,18 @@ fs_permissions = [
     { access = "read", path = "./test/utils/mocks/RefundedWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/SafeTransferLibWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ShufflingWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/InsertionSortWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/SSTORE2Wrappers.huff" },
     { access = "read", path = "./test/utils/mocks/TSOwnableWrappers.huff" },
     { access = "read", path = "./test/utils/mocks/ECDSAWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/ConstantsWrappers.huff" },
+    { access = "read", path = "./test/utils/mocks/DateTimeLibWrappers.huff" }
 ]
 remappings = [
     "forge-std/=lib/forge-std/src/",
     "foundry-huff/=lib/foundry-huff/src/",
     "solmate/=lib/solmate/src/"
 ]
+
+[profile.default.fuzz]
+runs = 1000

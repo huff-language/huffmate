@@ -89,7 +89,7 @@ contract ERC721Test is Test {
     function setUp() public {
         // Deploy the ERC721
         string memory wrapper_code = vm.readFile("test/tokens/mocks/ERC721Wrappers.huff");
-        token = SafeMintableERC721(HuffDeployer.config().with_code(wrapper_code).deploy("tokens/ERC721"));
+        token = SafeMintableERC721(HuffDeployer.config().with_code(wrapper_code).with_args(bytes.concat(abi.encode("Token"), abi.encode("TKN"))).deploy("tokens/ERC721"));
     }
 
     /// @notice Test the ERC721 Metadata

@@ -1,0 +1,73 @@
+/// @title Sort
+/// @notice SPDX-License-Identifier: MIT
+/// @author tanim0la <https://github.com/tanim0la>
+/// @notice Insertion sort implementation
+
+/*   MACRO   */
+/// @notice Returns two items `offSet` and `arrSize`
+#define macro SORT() = takes (0) returns (2) {
+
+    0x04 calldatasize sub                       // [arrSize]
+    dup1                                        // [arrSize, arrSize]
+    0x04                                        // [offset, arrSize, arrSize]
+    0x40                                        // [mem, offset, arrSize, arrSize]
+    calldatacopy                                // [arrSize]
+
+    0x01 returndatasize mstore                  // i = 1
+    0x60 mload                                  // [len, arrSize]
+
+    // For loop
+    start:
+        // End if i == len
+        returndatasize mload                    // [i, len, arrSize]
+        dup2 dup2                               // [i, len, i, len, arrSize]
+        eq end jumpi
+
+        // Assign i to j
+        0x20 mstore                             // [len, arrSize]
+
+        // While loop
+        while:
+            returndatasize                      // [0, len, arrSize]
+            0x20 mload dup2 dup2                // [j, 0, j, 0, len, arrSize]
+            gt                                  // [cndt1, j, 0, len, arrSize]
+
+
+            // 0x80 + (0x20 * j)
+            dup2 0x20 mul 0x80 add              // [mem[arr[j]], cndt1, j, 0, len, arrSize]
+
+            // 0x80 + (0x20 * (j - 0x01))
+            0x01 dup4 sub 0x20 mul 0x80 add     // [mem[arr[j - i]], mem[arr[j]], cndt1, j, 0, len, arrSize]
+            dup2                                // [mem[arr[j]], mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
+
+            mload                               //  [arr[j], mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
+            dup2 mload                          // [arr[j - 1], arr[j], mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
+
+            gt dup4                             // [cndt1, cndt2, mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
+            and continueWhile jumpi             // [mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
+
+            // Go to continue
+            pop pop pop pop pop                 // [len, arrSize]
+
+            // Increment i++
+            returndatasize mload 0x01 add       // [i + 1, len, arrSize]
+            returndatasize mstore start jump    // [len, arrSize]
+
+            // While block
+            continueWhile:
+                //  arr[j - 1] = arr[j]
+                dup1 mload dup3 mload           // [arr[j], arr[j - i], mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
+                dup3 mstore                     // [arr[j - 1], mem[arr[j - 1]], mem[arr[j]], cndt1, j, 0, len, arrSize]
+
+                // arr[j] = arr[j - 1]
+                dup3 mstore                     // [mem[arr[j - 1], mem[arr[j]], cndt1, j, 0, len, arrSize]
+
+                pop pop pop                     // [j, 0, len, arrSize]
+
+                // Decrement j--
+                0x01 dup2 sub                   // [j - 1 ,j, 0, len, arrSize]
+                0x20 mstore pop pop             // [len, arrSize]
+                while jump
+    end:
+        pop pop 0x40                            // [offset, arrSize]
+}

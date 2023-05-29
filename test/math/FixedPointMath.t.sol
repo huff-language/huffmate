@@ -17,6 +17,7 @@ interface IFixedPointMath {
     function powWad(int256,int256) external pure returns(int256);
     function sqrt(uint256) external pure returns(uint256);
     function log2(uint256) external pure returns(uint256);
+    function cbrt(uint256) external pure returns(uint256);
 }
 
 contract FixedPointMathTest is Test {
@@ -263,6 +264,27 @@ contract FixedPointMathTest is Test {
         assertEq(math.log2(1073741824), 30);
     }
 
+    function testCbrt() public {
+        assertEq(math.cbrt(0), 0);
+        assertEq(math.cbrt(1), 1);
+        assertEq(math.cbrt(2), 1);
+        assertEq(math.cbrt(3), 1);
+        assertEq(math.cbrt(9), 2);
+        assertEq(math.cbrt(27), 3);
+        assertEq(math.cbrt(80), 4);
+        assertEq(math.cbrt(81), 4);
+        assertEq(math.cbrt(10 ** 18), 10 ** 6);
+        assertEq(math.cbrt(8 * 10 ** 18), 2 * 10 ** 6);
+        assertEq(math.cbrt(9 * 10 ** 18), 2080083);
+        assertEq(math.cbrt(type(uint8).max), 6);
+        assertEq(math.cbrt(type(uint16).max), 40);
+        assertEq(math.cbrt(type(uint32).max), 1625);
+        assertEq(math.cbrt(type(uint64).max), 2642245);
+        assertEq(math.cbrt(type(uint128).max), 6981463658331);
+        assertEq(math.cbrt(type(uint256).max), 48740834812604276470692694);
+    }
+
+
     function testFuzzMulWadDown(uint256 x, uint256 y) public {
         // Ignore cases where x * y overflows.
         unchecked {
@@ -415,11 +437,41 @@ contract FixedPointMathTest is Test {
         assertTrue(root * root <= x && next * next > x);
     }
 
+    function testFuzzCbrt(uint256 x) public {
+        uint256 result = math.cbrt(x);
+        assertEq(result, cbrt(x));
+    }
+
     function testFuzzLog2() public {
         for (uint256 i = 1; i < 255; i++) {
             assertEq(math.log2((1 << i) - 1), i - 1);
             assertEq(math.log2((1 << i)), i);
             assertEq(math.log2((1 << i) + 1), i);
+        }
+    }
+
+    /// Solady: https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol
+    function cbrt(uint256 x) internal pure returns (uint256 z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+            r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+            r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+            r := or(r, shl(4, lt(0xffff, shr(r, x))))
+            r := or(r, shl(3, lt(0xff, shr(r, x))))
+
+            z := shl(add(div(r, 3), lt(0xf, shr(r, x))), 0xff)
+            z := div(z, byte(mod(r, 3), shl(232, 0x7f624b)))
+
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+
+            z := sub(z, lt(div(x, mul(z, z)), z))
         }
     }
 }
