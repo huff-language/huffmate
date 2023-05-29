@@ -209,7 +209,7 @@ contract ERC20Test is Test {
 
         token.mint(from, 1e18);
 
-        vm.prank(from);
+        vm.startPrank(from);
         token.approve(address(this), type(uint256).max);
         vm.stopPrank();
 
