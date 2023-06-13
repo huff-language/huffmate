@@ -394,7 +394,7 @@
 /// @dev Used within batchMint, batchBurn and batchTransfer.
 /// @param {stack} [uint256 &ids, uint256 &data, uint256 i, uint256 ids.len, uint256 &amount++, uint256 &ids++, address to, address from]
 /// @return [uint256 len(ids, amounts), uint256 &ids, uint256 i, uint256 ids.len,  uint256 &amount++, uint256 &ids++, address to, address from]
-#define macro EMIT_BATCH_LOG() = takes (9) returns (8) {
+#define macro EMIT_BATCH_LOG() = takes (8) returns (8) {
     // takes:                       // [&ids, &data, i, ids.len, &amount++, &ids++, to, from]
     dup1                            // [&ids, &ids, &data, i, ids.len, &amount++, &ids++, to, from]
     swap2                           // [&data. &ids, &ids, i, ids.len, &amount++, &ids++, to, from]
@@ -407,11 +407,11 @@
 
     // Store the pointers to the ids and amounts in memory
     0x40 0x20 mstore                // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    0x40 0x20 dup5 dup2             // [0x40, i, 0x20, 0x40, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    0x40 0x20 dup5 dup2             // [0x20, i, 0x20, 0x40, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     mul add add 0x40 mstore         // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
 
-    dup8                            // [to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    dup8                            // [from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    dup7                            // [to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    dup9                            // [from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     caller                          // [caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     dup5 0x40 add                   // [len(ids, amounts), sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
