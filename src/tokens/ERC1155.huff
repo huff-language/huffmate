@@ -179,7 +179,7 @@
     [IS_APPROVED_FOR_ALL_LOCATION]    // [slot, owner, operator]
     LOAD_ELEMENT_FROM_KEYS_2D(0x00)   // [bool]
 
-    0x00 mstore                       // [] load into mem
+    0x00 mstore                       // [] store into mem
     0x20 0x00 return                  // [] return 32 bytes
 }
 
