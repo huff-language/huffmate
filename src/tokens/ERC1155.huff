@@ -303,7 +303,7 @@
 
 /// @title Batch Mint
 /// @notice Mint multiple tokens at once
-/// @dev Loop over the the given token ids and amounts
+/// @dev Loop over the given token ids and amounts
 /// @param {calldata} [address from, uint256[] tokenIds, uint256[] amounts, bytes data]
 /// @return []
 #define macro BATCH_MINT() = takes(0) returns(0){
