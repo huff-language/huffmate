@@ -86,7 +86,7 @@
     0x04 calldataload                               // [account, tokenId]
 
     GET_BALANCE_OF()                                // [balance]
-    0x00 mstore                                     // [] load into mem
+    0x00 mstore                                     // [] store into mem
     0x20 0x00 return                                // [] return 32 bytes
 }
 
@@ -177,10 +177,10 @@
     0x04 calldataload                 // [owner, operator]
 
     [IS_APPROVED_FOR_ALL_LOCATION]    // [slot, owner, operator]
-    LOAD_ELEMENT_FROM_KEYS_2D(0x00)   // [val]
+    LOAD_ELEMENT_FROM_KEYS_2D(0x00)   // [bool]
 
-    0x00 mstore
-    0x20 0x00 return
+    0x00 mstore                       // [] store into mem
+    0x20 0x00 return                  // [] return 32 bytes
 }
 
 /// @title Mint
@@ -302,8 +302,8 @@
 }
 
 /// @title Batch Mint
-/// @notice Mint multople tokens at once
-/// @dev Loop over the the given tokend and amounts
+/// @notice Mint multiple tokens at once
+/// @dev Loop over the given token ids and amounts
 /// @param {calldata} [address from, uint256[] tokenIds, uint256[] amounts, bytes data]
 /// @return []
 #define macro BATCH_MINT() = takes(0) returns(0){
@@ -394,7 +394,7 @@
 /// @dev Used within batchMint, batchBurn and batchTransfer.
 /// @param {stack} [uint256 &ids, uint256 &data, uint256 i, uint256 ids.len, uint256 &amount++, uint256 &ids++, address to, address from]
 /// @return [uint256 len(ids, amounts), uint256 &ids, uint256 i, uint256 ids.len,  uint256 &amount++, uint256 &ids++, address to, address from]
-#define macro EMIT_BATCH_LOG() = takes (9) returns (8) {
+#define macro EMIT_BATCH_LOG() = takes (8) returns (8) {
     // takes:                       // [&ids, &data, i, ids.len, &amount++, &ids++, to, from]
     dup1                            // [&ids, &ids, &data, i, ids.len, &amount++, &ids++, to, from]
     swap2                           // [&data. &ids, &ids, i, ids.len, &amount++, &ids++, to, from]
@@ -402,20 +402,20 @@
     dup1                            // [len(ids, amounts), len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
 
     dup3                            // [&ids, len(ids, amounts), len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    0x60                            // [0x60, &ids, len(ids, amounts), len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]]   // offset, &ids
+    0x60                            // [0x60, &ids, len(ids, amounts), len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]   // offset, &ids
     calldatacopy                    // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
 
     // Store the pointers to the ids and amounts in memory
     0x40 0x20 mstore                // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    0x40 0x20 dup5 dup2             // [0x40, i, 0x20, 0x40, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    0x40 0x20 dup5 dup2             // [0x20, i, 0x20, 0x40, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     mul add add 0x40 mstore         // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
 
-    dup8                            // [to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    dup8                            // [from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    dup7                            // [to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    dup9                            // [from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     caller                          // [caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     __EVENT_HASH(TransferBatch)     // [sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    dup5 0x40 add                   // [len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
-    0x20                            // [offset, len(ids, amounts), caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    dup5 0x40 add                   // [len(ids, amounts), sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
+    0x20                            // [offset, len(ids, amounts), sig, caller, from, to, len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
     log4                            // [len(ids, amounts), &ids, i, ids.len, &amount++, &ids++, to, from]
 }
 
@@ -678,7 +678,7 @@
     // takes 3 [from, tokenId, amount]
     [BALANCE_LOCATION]              // [&balance, from, tokenId, amount]
     GET_SLOT_FROM_KEYS_2D(0x00)      // [slot, amount]
-    dup1                            // [slot,slot,amount]
+    dup1                            // [slot, slot, amount]
     sload                           // [bal, slot, amount]
     swap1                           // [slot, bal, amount]
     swap2                           // [amount, bal, slot]
@@ -831,13 +831,13 @@
     // place calldatasize on the stack <- used when sending calldata to a contract
     calldatasize                    // [cds, to, from, &ids]
 
-    // store selctor in memory for comparison later
+    // store selector in memory for comparison later
     0xbc197c81 0xE0 shl             // [selector, cds, to, from, &ids]
     dup1 0x20 mstore                // [selector, cds, to, from, &ids]
 
     // Here all dynamic calldata is copied into memory to be forwarded to the onReceive function on the receiving contract
     // Store ENTIRE calldata in memory for batch call
-    dup5 dup3 sub                   // [(cds-4), cds, to, from, &ids]   // sub4 to not overwrite the new selctor
+    dup5 dup3 sub                   // [(cds-4), cds, to, from, &ids]   // sub4 to not overwrite the new selector
     dup6                            // [&ids, (cds-4), cds, to, from, &ids]
     0x64                            // [0x64, &ids, (cds-4), cds, to, from, &ids]
     calldatacopy                    // [selector, cds, to, from]
