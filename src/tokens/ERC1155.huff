@@ -86,7 +86,7 @@
     0x04 calldataload                               // [account, tokenId]
 
     GET_BALANCE_OF()                                // [balance]
-    0x00 mstore                                     // [] load into mem
+    0x00 mstore                                     // [] store into mem
     0x20 0x00 return                                // [] return 32 bytes
 }
 
