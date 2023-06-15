@@ -38,20 +38,20 @@
     // Input stack:            [from, to, amount, token]
     // Output stack:           []
 
-    0x23b872dd              // [transferFrom_selector, from, to, amount, token]
-    <mem_ptr>               // [mem[0x00:0x1c..0x1c:0x20], transferFrom_selector, from, to, amount, token]
+    __RIGHTPAD(0x23b872dd)  // [transferFrom_selector, from, to, amount, token]
+    <mem_ptr>               // [mem_ptr, transferFrom_selector, from, to, amount, token]
     mstore                  // [from, to, amount, token]
 
-    <mem_ptr> 0x20 add      // [mem_ptr + 0x20, from, to, amount, token]
+    <mem_ptr> 0x04 add      // [mem_ptr + 0x04, from, to, amount, token]
     mstore                  // [to, amount, token]
-    <mem_ptr> 0x40 add      // [mem_ptr + 0x40, to, amount, token]
+    <mem_ptr> 0x24 add      // [mem_ptr + 0x24, to, amount, token]
     mstore                  // [amount, token]
-    <mem_ptr> 0x60 add      // [mem_ptr + 0x60, amount, token]
+    <mem_ptr> 0x44 add      // [mem_ptr + 0x44, amount, token]
     mstore                  // [token]
 
     <mem_ptr> 0x64          // [0x64, mem_ptr, token]
-    dup2 0x1c add 0x00      // [0x00, [mem_ptr + 0x1c], 0x64, mem_ptr, token]
-    0x20 swap5              // [token, 0x00, [mem_ptr + 0x1c], 0x64, mem_ptr, 0x20]
+    dup2 0x00               // [0x00, mem_ptr, 0x64, mem_ptr, token]
+    0x20 swap5              // [token, 0x00, mem_ptr, 0x64, mem_ptr, 0x20]
     gas call                // [success]
 
     returndatasize          // [returndatasize, success]
@@ -75,18 +75,18 @@
     // Input stack:            [to, amount, token]
     // Output stack:           []
 
-    0xa9059cbb              // [transfer_selector, to, amount, token]
-    <mem_ptr>               // [mem[0x00:0x1c..0x1c:0x20], transfer_selector, to, amount, token]
+    __RIGHTPAD(0xa9059cbb)  // [transfer_selector, to, amount, token]
+    <mem_ptr>               // [mem_ptr, transfer_selector, to, amount, token]
     mstore                  // [to, amount, token]
 
-    <mem_ptr> 0x20 add      // [mem_ptr + 0x20, to, amount, token]
+    <mem_ptr> 0x04 add      // [mem_ptr + 0x04, to, amount, token]
     mstore                  // [amount, token]
-    <mem_ptr> 0x40 add      // [mem_ptr + 0x40, amount, token]
+    <mem_ptr> 0x24 add      // [mem_ptr + 0x24, amount, token]
     mstore
 
     <mem_ptr> 0x44          // [0x44, mem_ptr, token]
-    dup2 0x1c add 0x00      // [0x00, [mem_ptr + 0x1c], 0x44, mem_ptr, token]
-    0x20 swap5              // [token, 0x00, [mem_ptr + 0x1c], 0x44, mem_ptr, 0x20]
+    dup2 0x00               // [0x00, mem_ptr, 0x44, mem_ptr, token]
+    0x20 swap5              // [token, 0x00, mem_ptr, 0x44, mem_ptr, 0x20]
     gas call                // [success]
 
     returndatasize          // [returndatasize, success]
@@ -110,18 +110,18 @@
     // Input stack:        [to, amount, token]
     // Output stack:       []
 
-    0x095ea7b3              // [transfer_selector, to, amount, token]
-    <mem_ptr>               // [mem[0x00:0x1c..0x1c:0x20], transfer_selector, to, amount, token]
+    __RIGHTPAD(0x095ea7b3)  // [transfer_selector, to, amount, token]
+    <mem_ptr>               // [mem_ptr, transfer_selector, to, amount, token]
     mstore                  // [to, amount, token]
 
-    <mem_ptr> 0x20 add      // [mem_ptr + 0x20, to, amount, token]
+    <mem_ptr> 0x04 add      // [mem_ptr + 0x04, to, amount, token]
     mstore                  // [amount, token]
-    <mem_ptr> 0x40 add      // [mem_ptr + 0x40, amount, token]
+    <mem_ptr> 0x24 add      // [mem_ptr + 0x24, amount, token]
     mstore
 
     <mem_ptr> 0x44          // [0x44, mem_ptr, token]
-    dup2 0x1c add 0x00      // [0x00, [mem_ptr + 0x1c], 0x44, mem_ptr, token]
-    0x20 swap5              // [token, 0x00, [mem_ptr + 0x1c], 0x44, mem_ptr, 0x20]
+    dup2 0x00               // [0x00, mem_ptr, 0x44, mem_ptr, token]
+    0x20 swap5              // [token, 0x00, mem_ptr, 0x44, mem_ptr, 0x20]
     gas call                // [success]
 
     returndatasize          // [returndatasize, success]
