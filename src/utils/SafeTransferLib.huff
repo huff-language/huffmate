@@ -35,7 +35,7 @@
 
 /// @notice Safely transfers an `amount` of `token` from an address `from` to the address `to`
 #define macro SAFE_TRANSFER_FROM(mem_ptr) = takes (4) {
-    // Input stack:            [from, to, amount, token]
+    // Input stack:            [from, to, value, token]
     // Output stack:           []
 
     __RIGHTPAD(0x23b872dd)  // [transferFrom_selector, from, to, amount, token]
