@@ -110,8 +110,8 @@
     // Input stack:        [to, amount, token]
     // Output stack:       []
 
-    __RIGHTPAD(0x095ea7b3)  // [transfer_selector, to, amount, token]
-    <mem_ptr>               // [mem_ptr, transfer_selector, to, amount, token]
+    __RIGHTPAD(0x095ea7b3)  // [approve_selector, to, amount, token]
+    <mem_ptr>               // [mem_ptr, approve_selector, to, amount, token]
     mstore                  // [to, amount, token]
 
     <mem_ptr> 0x04 add      // [mem_ptr + 0x04, to, amount, token]
