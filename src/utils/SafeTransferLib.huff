@@ -107,7 +107,7 @@
 
 /// @notice Safely approves an `amount` for an address `to` for the provided `token`
 #define macro SAFE_APPROVE(mem_ptr) = takes (3) {
-    // Input stack:        [to, amount, token]
+    // Input stack:        [spender, value, token]
     // Output stack:       []
 
     __RIGHTPAD(0x095ea7b3)  // [approve_selector, to, amount, token]
