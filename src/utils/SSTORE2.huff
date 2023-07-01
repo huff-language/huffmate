@@ -29,7 +29,7 @@
     create                            // [address, &_data]
 
     // Check that the address is non-zero
-    dup1 iszero iszero success jumpi  // [address, &_data]
+    dup1 success jumpi                // [address, &_data]
     CREATE_FAILED(0x00)
     success:
 

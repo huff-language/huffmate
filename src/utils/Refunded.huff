@@ -52,7 +52,7 @@
     origin                              // [to, value, argOffset, argSize, retOffset, retSize]
     gas                                 // [gas, to, value, argOffset, argSize, retOffset, retSize]
     call
-    iszero iszero __Refund_Successful__j jumpi
+    __Refund_Successful__j jumpi
         0x00 dup1 revert
 
     // The refund was successful!

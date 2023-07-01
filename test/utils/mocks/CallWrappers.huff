@@ -11,7 +11,7 @@
     CALL(0x01, 0x00, 0x01, 0x00, 0x00, 0x04, 0xFFFFFFFF)     // [success, 0xba5ed]
 
     // Revert if call is unsuccessful
-    iszero iszero cont jumpi
+    cont jumpi
     0x00 dup1 revert
     cont:
 
@@ -34,7 +34,7 @@
     STATICCALL(0x01, 0x00, 0x01, 0x00, 0x04, 0xFFFFFFFF)     // [success, 0xba5ed]
 
     // Revert if call is unsuccessful
-    iszero iszero cont jumpi
+    cont jumpi
     0x00 dup1 revert
     cont:
 

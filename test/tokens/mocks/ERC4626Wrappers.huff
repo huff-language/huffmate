@@ -63,7 +63,7 @@
     call                            // [success, asset]
 
     // Verify the call succeeded
-    iszero iszero success jumpi     // [asset]
+    success jumpi                   // [asset]
     0x00 dup1 revert                // []
     success:
 

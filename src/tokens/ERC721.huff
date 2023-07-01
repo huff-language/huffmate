@@ -193,7 +193,7 @@
 
     // Check token ownership
     [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, from (0x00), to, tokenId]
-    iszero iszero unauthorized jumpi
+    unauthorized jumpi
 
     // Give tokens to the recipient.
     TRANSFER_GIVE_TO()                              // [from (0x00), to, tokenId]
@@ -497,7 +497,7 @@
     cont:
 
     // If to === address(0) revert with "INVALID_RECIPIENT"
-    dup2 iszero iszero continue jumpi               // [from, to, tokenId]
+    dup2 continue jumpi                             // [from, to, tokenId]
     INVALID_RECIPIENT(0x00)
     continue:
 
