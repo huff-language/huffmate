@@ -105,9 +105,9 @@
     NON_PAYABLE()                                       // []
     0x04 calldataload                                   // [account]
     // revert if account is zero address
-    dup1 continue jumpi 
+    dup1 cont jumpi 
     ZERO_ADDRESS(0x00)
-    continue:
+    cont:
     [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)     // [balance]
     0x00 mstore                                         // []
     0x20 0x00 return                                    // []
@@ -119,9 +119,9 @@
     0x04 calldataload                               // [tokenId]
     [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner]
     // revert if owner is zero address/not minted
-    dup1 continue jumpi
+    dup1 cont jumpi
     NOT_MINTED(0x00)
-    continue:
+    cont:
     0x00 mstore                                     // []
     0x20 0x00 return                                // []
 }
@@ -505,9 +505,9 @@
     cont:
 
     // If to === address(0) revert with "INVALID_RECIPIENT"
-    dup2 iszero iszero continue jumpi               // [from, to, tokenId]
+    dup2 iszero iszero cont jumpi               // [from, to, tokenId]
     INVALID_RECIPIENT(0x00)
-    continue:
+    cont:
 
     // Check if msg.sender == from
     dup1 caller eq                                  // [msg.sender == from, from, to, tokenId]
