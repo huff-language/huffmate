@@ -119,8 +119,8 @@ contract ERC721Test is Test {
         assertEq(token.balanceOf(address(this)), 0);
         assertEq(token.getApproved(1337), address(0));
         
-        // Commenting out as this will revert due to not having ownership
-        // assertEq(token.ownerOf(1337), address(0));
+        vm.expectRevert(bytes("ZERO_ADDRESS"));
+        assertEq(token.ownerOf(1337), address(0));
 
         vm.expectRevert(bytes("NOT_MINTED"));
         token.burn(1337);
