@@ -119,7 +119,7 @@ contract ERC721Test is Test {
         assertEq(token.balanceOf(address(this)), 0);
         assertEq(token.getApproved(1337), address(0));
         
-        vm.expectRevert(bytes("ZERO_ADDRESS"));
+        vm.expectRevert(bytes("NOT_MINTED"));
         assertEq(token.ownerOf(1337), address(0));
 
         vm.expectRevert(bytes("NOT_MINTED"));
@@ -140,7 +140,7 @@ contract ERC721Test is Test {
         assertEq(token.balanceOf(address(this)), 0);
         assertEq(token.getApproved(1337), address(0));
         
-        vm.expectRevert(bytes("ZERO_ADDRESS"));
+        vm.expectRevert(bytes("NOT_MINTED"));
         assertEq(token.ownerOf(1337), address(0));
 
         vm.expectRevert(bytes("NOT_MINTED"));
