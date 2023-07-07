@@ -25,7 +25,7 @@
     dup3                        // [value, args_offset, args_size, ret_offset, ret_size, acct_addr, amount, getter_addr]
     dup8                        // [to, value, args_offset, args_size, ret_offset, ret_size, acct_addr, amount, getter_addr]
     gas                         // [gas, to, value, args_offset, args_size, ret_offset, ret_size, acct_addr, amount, getter_addr]
-    call                        // [successs, acct_addr, amount, getter_addr]
+    call                        // [success, acct_addr, amount, getter_addr]
 
     transfer_success jumpi      // [acct_addr, amount, getter_addr]
     0x00 dup1 revert            // [] - Call failed, revert

@@ -51,7 +51,7 @@
     swap4                               // [value, argOffset, argSize, retOffset, retSize]
     origin                              // [to, value, argOffset, argSize, retOffset, retSize]
     gas                                 // [gas, to, value, argOffset, argSize, retOffset, retSize]
-    call
+    call                                // [success]
     __Refund_Successful__j jumpi
         0x00 dup1 revert
 
