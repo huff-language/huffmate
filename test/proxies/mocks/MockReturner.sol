@@ -1,4 +1,4 @@
-pragma solidity 0.8.19;
+pragma solidity 0.8.15;
 
 /// @dev Used to test proxies that they can both receive and return data
 contract MockReturner {

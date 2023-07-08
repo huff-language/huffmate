@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSD
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.15;
 
 interface IExampleClone {
     function param1() external pure returns (address);
