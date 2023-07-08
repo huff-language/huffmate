@@ -1,0 +1,303 @@
+#define function simulateRequire() pure returns ()
+#define function simulateAssert() pure returns ()
+#define function simulateAssertEq() pure returns ()
+#define function simulateAssertNotEq() pure returns ()
+#define function simulateAssertMemEq() pure returns ()
+#define function simulateAssertMemNotEq() pure returns ()
+#define function simulateAssertStorageEq() nonpayable returns ()
+#define function simulateAssertStorageNotEq() nonpayable returns ()
+#define function simulateCompilerPanic() pure returns ()
+#define function simulateArithmeticOverflow() pure returns ()
+#define function simulateDivideByZero() pure returns ()
+#define function simulateInvalidEnumValue() pure returns ()
+#define function simulateInvalidStorageByteArray() pure returns ()
+#define function simulateEmptyArrayPop() pure returns ()
+#define function simulateArrayOutOfBounds() pure returns ()
+#define function simulateMemoryTooLarge() pure returns ()
+#define function simulateUninitializedFunctionPointer() pure returns ()
+#define function simulateBubbleUpIfFailed(address) view returns ()
+
+#define constant REQUIRE_LENGTH = 0x06
+#define constant REQUIRE_STRING = 0x7265766572740000000000000000000000000000000000000000000000000000
+
+#define macro MAIN() = takes (0) returns (0) {
+    pc calldataload 0xe0 shr
+    dup1 __FUNC_SIG(simulateRequire) eq simulate_require jumpi
+    dup1 __FUNC_SIG(simulateAssert) eq simulate_assert jumpi
+    dup1 __FUNC_SIG(simulateAssertEq) eq simulate_assert_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertNotEq) eq simulate_assert_not_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertMemEq) eq simulate_assert_mem_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertMemNotEq) eq simulate_assert_mem_not_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertStorageEq) eq simulate_assert_storage_eq jumpi
+    dup1 __FUNC_SIG(simulateAssertStorageNotEq) eq simulate_assert_storage_not_eq jumpi
+    dup1 __FUNC_SIG(simulateCompilerPanic) eq simulate_compiler_panic jumpi
+    dup1 __FUNC_SIG(simulateArithmeticOverflow) eq simulateArithmeticOverflow jumpi
+    dup1 __FUNC_SIG(simulateDivideByZero) eq simulateDivideByZero jumpi
+    dup1 __FUNC_SIG(simulateInvalidEnumValue) eq simulateInvalidEnumValue jumpi
+    dup1 __FUNC_SIG(simulateInvalidStorageByteArray) eq simulateInvalidStorageByteArray jumpi
+    dup1 __FUNC_SIG(simulateEmptyArrayPop) eq simulateEmptyArrayPop jumpi
+    dup1 __FUNC_SIG(simulateArrayOutOfBounds) eq simulateArrayOutOfBounds jumpi
+    dup1 __FUNC_SIG(simulateMemoryTooLarge) eq simulateMemoryTooLarge jumpi
+    dup1 __FUNC_SIG(simulateUninitializedFunctionPointer) eq simulateUninitializedFunctionPointer jumpi
+    dup1 __FUNC_SIG(simulateBubbleUpIfFailed) eq simulateBubbleUpIfFailed jumpi
+
+    0x00 0x00 revert
+
+    simulate_require:
+        [REQUIRE_STRING]    // [message]
+        [REQUIRE_LENGTH]    // [message_length, message]
+        0x00                // [false, message_length, message]
+        REQUIRE()           // []
+
+    simulate_assert:
+        0x00        // [false]
+        ASSERT()    // []
+
+    simulate_assert_eq:
+        0x01 0x00   // [0x00, 0x01]
+        ASSERT_EQ()
+
+    simulate_assert_not_eq:
+        0x00 0x00   // [0x00, 0x00]
+        ASSERT_NOT_EQ()
+
+    simulate_assert_mem_eq:
+        0x00 dup1 mstore
+        0x01 0x20 mstore
+        ASSERT_MEM_EQ(0x00, 0x20)
+
+    simulate_assert_mem_not_eq:
+        0x00 dup1 mstore
+        0x00 0x20 mstore
+        ASSERT_MEM_NOT_EQ(0x00, 0x20)
+
+    simulate_assert_storage_eq:
+        0x00 dup1 sstore
+        0x01 dup1 sstore
+        ASSERT_STORAGE_EQ(0x00, 0x01)
+
+    simulate_assert_storage_not_eq:
+        0x00 dup1 sstore
+        0x00 0x01 sstore
+        ASSERT_STORAGE_NOT_EQ(0x00, 0x01)
+
+    simulate_compiler_panic:
+        [COMPILER_PANIC]
+        do_panic
+        jump
+
+    simulateArithmeticOverflow:
+        [ARITHMETIC_OVERFLOW]
+        do_panic
+        jump
+
+    simulateDivideByZero:
+        [DIVIDE_BY_ZERO]
+        do_panic
+        jump
+
+    simulateInvalidEnumValue:
+        [INVALID_ENUM_VALUE]
+        do_panic
+        jump
+
+    simulateInvalidStorageByteArray:
+        [INVALID_STORAGE_BYTE_ARRAY]
+        do_panic
+        jump
+
+    simulateEmptyArrayPop:
+        [EMPTY_ARRAY_POP]
+        do_panic
+        jump
+
+    simulateArrayOutOfBounds:
+        [ARRAY_OUT_OF_BOUNDS]
+        do_panic
+        jump
+
+    simulateMemoryTooLarge:
+        [MEMORY_TOO_LARGE]
+        do_panic
+        jump
+
+    simulateUninitializedFunctionPointer:
+        [UNINITIALIZED_FUNCTION_POINTER]
+        do_panic
+        jump
+
+    simulateBubbleUpIfFailed:
+        0x00                    // [ret_size]
+        dup1                    // [ret_offset, ret_size]
+        dup1                    // [args_size, ret_offset, ret_size]
+        dup1                    // [args_offset, args_size, ret_offst, ret_size]
+        dup1                    // [value, args_offset, args_size, ret_offst, ret_size]
+        0x04                    // [addr_offset, value, args_offset, args_size, ret_offst, ret_size]
+        calldataload            // [addr, value, args_offset, args_size, ret_offst, ret_size]
+        gas                     // [gas, addr, value, args_offset, args_size, ret_offst, ret_size]
+        call                    // [success]
+        BUBBLE_UP_IF_FAILED()   // []
+
+    do_panic:
+        PANIC()
+}
+
+
+/// @title Errors
+/// @notice SPDX-License-Identifier: MIT
+/// @author jtriley.eth
+/// @author clabby <https://github.com/clabby>
+/// @notice Custom error utilities.
+
+// https://docs.soliditylang.org/en/latest/control-structures.html?highlight=panic#panic-via-assert-and-error-via-require
+
+// Errors
+#define error Error(string)
+#define error Panic(uint256)
+
+// Constants
+// Solidity Panic Codes
+#define constant COMPILER_PANIC = 0x00
+#define constant ASSERT_FALSE = 0x01
+#define constant ARITHMETIC_OVERFLOW = 0x11
+#define constant DIVIDE_BY_ZERO = 0x12
+#define constant INVALID_ENUM_VALUE = 0x21
+#define constant INVALID_STORAGE_BYTE_ARRAY = 0x22
+#define constant EMPTY_ARRAY_POP = 0x31
+#define constant ARRAY_OUT_OF_BOUNDS = 0x32
+#define constant MEMORY_TOO_LARGE = 0x41
+#define constant UNINITIALIZED_FUNCTION_POINTER = 0x51
+
+/*
+
+Solidity Require. Error `string` MUST be no greater than 32 bytes.
+
+MEMORY LAYOUT WHEN THROWN
+| sig    || message offset                                                 || message length                                                 || message "revert"                                               |
+0x08c379a  0000000000000000000000000000000000000000000000000000000000000020  0000000000000000000000000000000000000000000000000000000000000006  7265766572740000000000000000000000000000000000000000000000000000
+
+*/
+#define macro REQUIRE() = takes (3) returns (0) {
+    // takes:       // [condition, message_length, message]
+    do_not_throw    // [do_not_throw_jumpdest, condition, message_length, message]
+    jumpi           // [message_length, message]
+    __ERROR(Error)  // [error_sig, , message_length, message]
+    0x00            // [mem_ptr, error_sig, message_length, message]
+    mstore          // [message_length, message]
+    0x20            // [message_offset, message_length, message]
+    0x04            // [message_offset_ptr, message_offset, message_length, message]
+    mstore          // [message_length, message]
+    0x24            // [message_length_ptr, message_length, message]
+    mstore          // [message]
+    0x44            // [message_ptr, message]
+    mstore          // []
+    0x80            // [size]
+    0x00            // [offset, size]
+    revert          // []
+    do_not_throw:   // [message_length, message]
+        pop         // [message]
+        pop         // []
+}
+
+/*
+
+Solidity Panic.
+
+MEMORY LAYOUT WHEN THROWN
+| sig     || panic code                                                     |
+0x4e487b71  0000000000000000000000000000000000000000000000000000000000000001
+
+*/
+#define macro PANIC() = takes (1) returns (0) {
+    // takes:       // [panic_code]
+    __ERROR(Panic)  // [panic_sig, panic_code]
+    0x00            // [panic_sig_offset, panic_sig, panic_code]
+    mstore          // [panic_code]
+    0x04            // [panic_code_offset, panic_code]
+    mstore          // []
+    0x24            // [revert_size]
+    0x00            // [revert_offset, revert_size]
+    revert          // []
+}
+
+/*
+Solidity Assert.
+
+MEMORY LAYOUT WHEN THROWN
+| sig     || assert failed panic code                                       |
+0x4e487b71  0000000000000000000000000000000000000000000000000000000000000001
+
+*/
+#define macro ASSERT() = takes (1) returns (0) {
+    // takes:               // [condition]
+    do_not_panic            // [do_not_panic_jumpdest, condition]
+    jumpi                   // []
+    [ASSERT_FALSE]          // [assert_false]
+    PANIC()                 // []
+    do_not_panic:           // []
+}
+
+// Assert that two stack elements are equal
+#define macro ASSERT_EQ() = {
+    // takes:             [a, b]
+    eq                 // [a == b]
+    ASSERT()           // []
+}
+
+// Assert that two stack elements are not equal
+#define macro ASSERT_NOT_EQ() = {
+    // takes:             [a, b]
+    eq iszero          // [a != b]
+    ASSERT()           // []
+}
+
+// Assert that two memory offsets contain equal words
+#define macro ASSERT_MEM_EQ(ptr_a, ptr_b) = {
+    // takes:             []
+    <ptr_b> mload      // [b]
+    <ptr_a> mload      // [a, b]
+    eq                 // [a == b]
+    ASSERT()           // []
+}
+
+// Assert that two memory offsets do not contain equal words
+#define macro ASSERT_MEM_NOT_EQ(ptr_a, ptr_b) = {
+    // takes:             []
+    <ptr_b> mload      // [b]
+    <ptr_a> mload      // [a, b]
+    eq iszero          // [a != b]
+    ASSERT()           // []
+}
+
+// Assert that two storage slots contain equal words
+#define macro ASSERT_STORAGE_EQ(slot_a, slot_b) = {
+    // takes:             []
+    <slot_b> sload     // [b]
+    <slot_a> sload     // [a, b]
+    eq                 // [a == b]
+    ASSERT()           // []
+}
+
+// Assert that two storage slots do not contain equal words
+#define macro ASSERT_STORAGE_NOT_EQ(slot_a, slot_b) = {
+    // takes:             []
+    <slot_b> sload     // [b]
+    <slot_a> sload     // [a, b]
+    eq iszero          // [a != b]
+    ASSERT()           // []
+}
+
+/* Bubbles up revert data if call failed. Call directly after `call`, `staticcall`, `delegatecall`. */
+#define macro BUBBLE_UP_IF_FAILED() = takes (1) returns (0) {
+    // takes:       // [call_succeeded]
+    call_succeeded  // [call_succeeded_jumpdest, call_succeeded]
+    jumpi           // []
+    returndatasize  // [returndatasize]
+    0x00            // [memory_offset, returndatasize]
+    returndatasize  // [returndatasize, memory_offset, returndatasize]
+    dup2            // [returndata_offset, returndatasize, memory_offset, returndatasize]
+    dup3            // [memory_offset, returndata_offset, returndatasize, memory_offset, returndatasize]
+    returndatacopy  // [memory_offset, returndatasize]
+    revert          // []
+    call_succeeded:
+}

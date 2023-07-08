@@ -1,0 +1,153 @@
+
+// Wrapper methods (for testing)
+#define macro SAFE_ADD_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    SAFE_ADD()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_SUB_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_SUB()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_MUL_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    SAFE_MUL()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_DIV_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_DIV()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+#define macro SAFE_MOD_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload       // [num1]
+    0x24 calldataload       // [num2, num1]
+    swap1                   // [num1, num2]
+    SAFE_MOD()              // [result]
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+}
+
+// Main
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xE0 shr
+    dup1 __FUNC_SIG(safeAdd) eq safe_add jumpi
+    dup1 __FUNC_SIG(safeSub) eq safe_sub jumpi
+    dup1 __FUNC_SIG(safeMul) eq safe_mul jumpi
+    dup1 __FUNC_SIG(safeDiv) eq safe_div jumpi
+    dup1 __FUNC_SIG(safeMod) eq safe_mod jumpi
+
+    0x00 0x00 revert
+
+    safe_add:
+        SAFE_ADD_WRAPPER()
+    safe_sub:
+        SAFE_SUB_WRAPPER()
+    safe_mul:
+        SAFE_MUL_WRAPPER()
+    safe_div:
+        SAFE_DIV_WRAPPER()
+    safe_mod:
+        SAFE_MOD_WRAPPER()
+}
+
+/// @title SafeMath
+/// @notice SPDX-License-Identifier: MIT
+/// @author kadenzipfel <https://github.com/kadenzipfel>
+/// @notice Math module over Solidity's arithmetic operations with safety checks
+/// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol)
+
+#include "../utils/Errors.huff"
+
+// Interface
+#define function safeAdd(uint256,uint256) pure returns (uint256)
+#define function safeSub(uint256,uint256) pure returns (uint256)
+#define function safeMul(uint256,uint256) pure returns (uint256)
+#define function safeDiv(uint256,uint256) pure returns (uint256)
+#define function safeMod(uint256,uint256) pure returns (uint256)
+
+/// @notice Adds two numbers and reverts on overflow
+#define macro SAFE_ADD() = takes (2) returns (1) {
+    // input stack          // [num1, num2]
+    dup2                    // [num2, num1, num2]
+    add                     // [result, num2]
+    dup1                    // [result, result, num2]
+    swap2                   // [num2, result, result]
+    gt                      // [is_overflow, result]
+    iszero                  // [is_not_overflow, result]
+    is_not_overflow jumpi   // [result]
+        [ARITHMETIC_OVERFLOW] PANIC()
+    is_not_overflow:        // [result]
+}
+
+/// @notice Subtracts two numbers and reverts on underflow
+#define macro SAFE_SUB() = takes (2) returns (1) {
+    // input stack          // [num1, num2]
+    dup1                    // [num1, num1, num2]
+    dup3                    // [num2, num1, num1, num2]
+    gt                      // [is_underflow, num1, num2]
+    iszero                  // [is_not_underflow, num1, num2]
+    is_not_underflow jumpi  // [num1, num2]
+        [ARITHMETIC_OVERFLOW] PANIC()
+    is_not_underflow:       // [num1, num2]
+    sub                     // [result]
+}
+
+/// @notice Multiplies two numbers and reverts on overflow
+#define macro SAFE_MUL() = takes (2) returns (1) {
+    // input stack              // [num1, num2]
+    dup1                        // [num1, num1, num2]
+    is_not_zero jumpi           // [num1, num2]
+        mul                     // [result]
+        0x01 is_not_overflow jumpi
+    is_not_zero:                // [num1, num2]
+    dup2                        // [num2, num1, num2]
+    dup2                        // [num1, num2, num1, num2]
+    mul                         // [result, num1, num2]
+    swap1                       // [num1, result, num2]
+    dup2                        // [result, num1, result, num2]
+    div                         // [div_check, result, num2]
+    swap1                       // [result, div_check, num2]
+    swap2                       // [num2, div_check, result]
+    eq                          // [is_not_overflow, result]
+    is_not_overflow jumpi       // [result]
+        [ARITHMETIC_OVERFLOW] PANIC()
+    is_not_overflow:
+}
+
+/// @notice Divides two numbers and reverts on division by zero
+#define macro SAFE_DIV() = takes (2) returns (1) {
+    // input stack          // [num1, num2]
+    0x00 dup3               // [num2, 0, num1, num2]
+    gt                      // [is_not_div_zero, num1, num2]
+    is_not_div_zero jumpi
+        [DIVIDE_BY_ZERO] PANIC()
+    is_not_div_zero:
+    div                     // [result]
+}
+
+/// @notice Divides two numbers and reverts on division by zero or modulo zero
+#define macro SAFE_MOD() = takes (2) returns (1) {
+    // input stack          // [num1, num2]
+    0x00 dup3               // [num2, 0, num1, num2]
+    gt                      // [is_not_mod_zero, num1, num2]
+    is_not_mod_zero jumpi
+        [ARITHMETIC_OVERFLOW] PANIC()
+    is_not_mod_zero:
+    mod                     // [result]
+}

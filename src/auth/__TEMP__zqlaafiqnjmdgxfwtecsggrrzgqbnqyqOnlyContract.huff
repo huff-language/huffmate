@@ -1,0 +1,26 @@
+#define macro MAIN() = takes(0) returns(0) {
+  ONLY_CONTRACT()
+  0x00 0x00 log0 // anonymous log
+  0x01 0x00 mstore
+  0x20 0x00 return
+}
+
+
+/// @title OnlyContract
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+/// @notice Reverts if the caller is not a contract with a tx.origin check.
+
+/// @notice Reverts if the caller is not a contract using tx.origin.
+/// @dev WARNING: This is an anti-pattern and prevents interoperability.
+///               Additionally, this will become ineffective once either EIP-2938 OR EIP-4337 account abstraction's are implemented.
+///               EIP-3074 is another concern as it essentially allows users to delegate control of an EOA to a contract.
+///               Additionally, users of wallets like argent, authereum and gnosis multi-sigs are able to "bypass" this access control.
+#define macro ONLY_CONTRACT() = takes (0) returns (0) {
+    caller              // [msg.sender]
+    origin              // [tx.origin, msg.sender]
+    eq iszero           // [tx.origin != msg.sender]
+    continue jumpi      // []
+    0x00 dup1 revert    // []
+    continue:
+}

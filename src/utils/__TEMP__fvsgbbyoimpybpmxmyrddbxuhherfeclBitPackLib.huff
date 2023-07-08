@@ -1,0 +1,104 @@
+#define function packValue(bytes32, uint256, uint256, uint256) pure returns (bytes32)
+#define function unpackValueFromRight(bytes32, uint256) pure returns (uint256)
+#define function unpackValueFromLeft(bytes32, uint256) pure returns (uint256)
+#define function unpackValueFromCenter(bytes32, uint256, uint256) pure returns (uint256)
+
+#define macro PACK_VALUE_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [value, word]
+    0x44 calldataload           // [index, value, word]
+    0x64 calldataload           // [length, index, value, word]
+    PACK_VALUE()                // [new_word]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro UNPACK_FROM_RIGHT_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [length, word]
+    UNPACK_FROM_RIGHT()         // [value]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro UNPACK_FROM_LEFT_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [length, word]
+    UNPACK_FROM_LEFT()          // [value]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro UNPACK_FROM_CENTER_WRAPPER() = takes (0) returns (0) {
+    0x04 calldataload           // [word]
+    0x24 calldataload           // [length, word]
+    0x44 calldataload           // [length, index, word]
+    UNPACK_FROM_CENTER()        // [value]
+    0x00 mstore                 // []
+    0x20 0x00 return
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    // Identify which function is being called using the 4 byte function signature
+    pc calldataload 0xE0 shr
+
+    dup1 __FUNC_SIG(packValue)                  eq packValue jumpi
+    dup1 __FUNC_SIG(unpackValueFromRight)       eq unpackValueFromRight jumpi
+    dup1 __FUNC_SIG(unpackValueFromLeft)        eq unpackValueFromLeft jumpi
+    dup1 __FUNC_SIG(unpackValueFromCenter)      eq unpackValueFromCenter jumpi
+
+    0x00 0x00 revert
+
+    packValue:
+        PACK_VALUE_WRAPPER()
+    unpackValueFromRight:
+        UNPACK_FROM_RIGHT_WRAPPER()
+    unpackValueFromLeft:
+        UNPACK_FROM_LEFT_WRAPPER()
+    unpackValueFromCenter:
+        UNPACK_FROM_CENTER_WRAPPER()
+}
+
+/// @title BitPackLib
+/// @notice SPDX-License-Identifier: MIT
+/// @author kadenzipfel <https://github.com/kadenzipfel>
+/// @notice Efficient bit packing library
+
+#define constant MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+/// @notice Packs value of given length at index of given word
+/// @dev Assumes index < 256 - length
+#define macro PACK_VALUE() = takes (4) returns (1) {
+    // Input stack:             // [length, index, value, word]
+    0x100 sub sub               // [shift, value, word]
+    shl or                      // [new_word]
+}
+
+/// @notice Unpacks value of given length from right of word
+/// @dev word & (~0 >> (256 - length))
+#define macro UNPACK_FROM_RIGHT() = takes (2) returns (1) {
+    // Input stack:             // [length, word]
+    [MAX]                       // [not(0), length, word]
+    swap1 0x100 sub             // [offset, not(0), word]
+    shr and                     // [value]
+}
+
+/// @notice Unpacks value of given length from left of word
+/// @dev word >> (256 - length)
+#define macro UNPACK_FROM_LEFT() = takes (2) returns (1) {
+    // Input stack:             // [length, word]
+    0x100 sub                   // [shift, word]
+    shr                         // [value]
+}
+
+/// @notice Unpacks value of given length from index of word
+/// @dev Assumes index < 256 - length
+///      (word & ((~0 >> 256 - length) << (256 - length - index))) >> (256 - length - index)
+#define macro UNPACK_FROM_CENTER() = takes (3) returns (1) {
+    // Input stack:             // [length, index, word]
+    0x100 sub                   // [256 - length, index, word]
+    swap1 dup2 sub              // [256 - length - index, 256 - length, word]
+    [MAX] swap1 swap2 shr       // [~0 >> 256 - length, 256 - length - index, word]
+    dup2 shl swap1 swap2 and    // [(word & ((~0 >> 256 - length) << (256 - length - index))), 256 - length - index]
+    swap1 shr                   // [value]
+}
