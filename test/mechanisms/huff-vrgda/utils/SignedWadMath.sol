@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.19;
 
 /// @title Signed Wad Math
 /// @author transmissions11 <t11s@paradigm.xyz>

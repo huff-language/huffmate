@@ -1,5 +1,5 @@
 
-pragma solidity 0.8.15;
+pragma solidity 0.8.19;
 
 /**
  * @dev This is the interface that {BeaconProxy} expects of its beacon.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.19;
 
 import {MockERC20} from "./safe-transfer-lib-mocks/mocks/MockERC20.sol";
 import {RevertingToken} from "./safe-transfer-lib-mocks/weird-tokens/RevertingToken.sol";

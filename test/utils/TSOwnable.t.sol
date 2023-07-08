@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.19;
 
 import "foundry-huff/HuffConfig.sol";
 import "forge-std/Test.sol";

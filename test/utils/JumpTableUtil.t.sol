@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.19;
 
 import "foundry-huff/HuffDeployer.sol";
 import "forge-std/Test.sol";
@@ -12,7 +12,7 @@ interface IJumpTableUtil {
 }
 
 contract JumpTableUtilTest is Test {
-    uint constant FIRST_LABEL_PC = 147;
+    uint constant FIRST_LABEL_PC = 141;
 
     IJumpTableUtil jtUtil;
 
@@ -20,7 +20,7 @@ contract JumpTableUtilTest is Test {
         /// @notice deploy a new instance of IJumpTableUtil by
         /// passing in the address of the deployed Huff contract
         string memory wrapper_code = vm.readFile("test/utils/mocks/JumpTableUtilWrappers.huff");
-        jtUtil = IJumpTableUtil(HuffDeployer.deploy_with_code("utils/JumpTableUtil", wrapper_code));
+        jtUtil = IJumpTableUtil(HuffDeployer.config().with_evm_version("shanghai").with_code(wrapper_code).deploy("utils/JumpTableUtil"));
     }
 
     function testGetJumpdestFromJT_Mem() public {

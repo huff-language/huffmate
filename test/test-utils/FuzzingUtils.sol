@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.19;
 
 // adapter from: https://github.com/transmissions11/solmate/blob/main/src/test/utils/DSTestPlus.sol
 abstract contract FuzzingUtils {
