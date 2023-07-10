@@ -235,9 +235,8 @@
 /// @notice Transfers an amount of tokens from one address to another.
 #define macro _TRANSFER_GIVE_TO() = takes (3) returns (3) {
     // input stack: [value, from, to]
-    dup3                                                // [to, value, from, to]
-    dup2                                                // [value, to, value, from, to]
-    swap1                                               // [to, value, value, from, to]
+    dup1                                                // [value, value, from, to]
+    dup4                                                // [to, value, value, from, to]
     [BALANCE_SLOT] LOAD_ELEMENT_FROM_KEYS(0x00)         // [balance, value, value, from, to]
     add                                                 // [balance + value, value, from, to]
     dup4                                                // [to, balance + value, value, from, to]
