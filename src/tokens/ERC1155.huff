@@ -764,7 +764,7 @@
         // parameter is needed when calling the onReceive function on the receiving contract, as safeTransferFrom already has an extra address parameter no 
         // resizing of dynamic data pointers are required.
         // We can check if this is coming from mint or safeTransferFrom by checking if the from value on the stack is the zero address or not
-        dup4 iszero iszero skipResize jumpi
+        dup4 skipResize jumpi
 
         // update location of the bytes calldata
         0xa0 0xa4 mstore
@@ -817,7 +817,7 @@
     // [to, from, &ids]
 
     // If being sent by a contract then do contract code check, no need to check for zero address and contract as it would not have code
-    dup1 extcodesize iszero iszero  // [!(codesize(to)), to, from, &ids]
+    dup1 extcodesize                // [codesize(to), to, from, &ids]
     isContract jumpi                // [to, from, &ids]
 
     // check is sending to the zero address, if so revert, otherwise continue
@@ -848,7 +848,7 @@
 
     // We can skip this rezise if we are transferring as we can assume the offsets are in the corrrect places, due to the increased address input parameter
     // We can tell if we are transferring as the from parameter on the stack will NOT be zero
-    dup4 iszero iszero skipResize jumpi
+    dup4 skipResize jumpi
 
     // increase the dyn pointer balances by 0x20 for each dynamic type, this is due to the introduction of the from value in the call
     0x20                                    // [0x20, selector, cds, to, from, &ids]

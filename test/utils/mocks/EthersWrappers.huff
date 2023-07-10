@@ -15,7 +15,7 @@
         0x00 dup1 revert
 
     non_payable_jump:
-        callvalue iszero iszero reverts jumpi
+        callvalue reverts jumpi
     payable_jump:
         balance 0x00 mstore
         0x20 0x00 return
