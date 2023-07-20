@@ -322,6 +322,16 @@ contract ERC20Test is Test {
         }
     }
 
+    function testFailMintTotalSupplyOverflow(
+        address to,
+        uint256 mintAmount
+    ) public {
+        mintAmount = bound(mintAmount, 1, type(uint256).max);
+
+        token.mint(to, type(uint256).max);
+        token.mint(to, mintAmount);
+    }
+
     function testFailBurnInsufficientBalance(
         address to,
         uint256 mintAmount,
