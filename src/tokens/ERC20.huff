@@ -244,24 +244,6 @@
     [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)        // [value, from, to]
 }
 
-/// @notice Approve
-/// @notice Approves an address to spend an amount of tokens on the caller's behalf
-#define macro APPROVE() = takes (0) returns (0) {
-    0x24 calldataload                           // [value]
-    dup1 0x00 mstore                            // [value]
-    0x04 calldataload                           // [to, value]
-    caller                                      // [from, to, value]
-
-    // Emit the approval event.
-    dup2 dup2                                   // [from, to, from, to, value]
-    __EVENT_HASH(APPROVAL_EVENT_SIGNATURE)      // [sig, from, to, from, to, value]
-    0x20 0x00                                   // [0, 32, sig, from, to, from, to, value]
-    log3                                        // [from, to, value]
-
-    // Store the value at slot = keccak256(from . to)
-    STORE_ELEMENT_FROM_KEYS(0x00)
-}
-
 /// @notice Domain Separator
 /// @notice Returns the EIP-712 domain separator
 #define macro DOMAIN_SEPARATOR() = takes (0) returns (0) {
