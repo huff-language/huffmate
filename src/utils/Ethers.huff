@@ -19,6 +19,6 @@
 
     // Clean the stack
     swap2   // [address, amount, success]
-    pop     // [success, address]
+    pop     // [amount, success]
     pop     // [success]
 }
