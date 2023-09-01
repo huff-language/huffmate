@@ -104,6 +104,10 @@
 #define macro BALANCE_OF() = takes (0) returns (0) {
     NON_PAYABLE()                                       // []
     0x04 calldataload                                   // [account]
+    // revert if account is zero address
+    dup1 continue jumpi 
+    ZERO_ADDRESS(0x00)
+    continue:
     [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)     // [balance]
     0x00 mstore                                         // []
     0x20 0x00 return                                    // []
@@ -114,6 +118,10 @@
 #define macro OWNER_OF() = takes (0) returns (0) {
     0x04 calldataload                               // [tokenId]
     [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner]
+    // revert if owner is zero address/not minted
+    dup1 continue jumpi
+    NOT_MINTED(0x00)
+    continue:
     0x00 mstore                                     // []
     0x20 0x00 return                                // []
 }

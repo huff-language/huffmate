@@ -118,7 +118,10 @@ contract ERC721Test is Test {
         // We can't burn a token we don't have
         assertEq(token.balanceOf(address(this)), 0);
         assertEq(token.getApproved(1337), address(0));
+        
+        vm.expectRevert(bytes("NOT_MINTED"));
         assertEq(token.ownerOf(1337), address(0));
+
         vm.expectRevert(bytes("NOT_MINTED"));
         token.burn(1337);
 
@@ -136,6 +139,8 @@ contract ERC721Test is Test {
         token.burn(1337);
         assertEq(token.balanceOf(address(this)), 0);
         assertEq(token.getApproved(1337), address(0));
+        
+        vm.expectRevert(bytes("NOT_MINTED"));
         assertEq(token.ownerOf(1337), address(0));
 
         vm.expectRevert(bytes("NOT_MINTED"));
@@ -459,8 +464,8 @@ contract ERC721Test is Test {
     }
 
     function testBalanceOfZeroAddress() public {
+        vm.expectRevert(bytes("ZERO_ADDRESS"));
         uint256 bal = token.balanceOf(address(0));
-        assertEq(0, bal);
     }
 
     // function testFailOwnerOfUnminted() public view {
@@ -484,12 +489,8 @@ contract ERC721Test is Test {
 
         assertEq(token.balanceOf(to), 0);
 
-        // vm.expectRevert("NOT_MINTED");
-        // token.ownerOf(id);
-
-        // vm.expectRevert("NOT_MINTED");
-        address owner = token.ownerOf(id);
-        assertEq(owner, address(0));
+        vm.expectRevert(bytes("NOT_MINTED"));
+        token.ownerOf(id);
     }
 
     function testApprove(address to, uint256 id) public {
@@ -512,7 +513,7 @@ contract ERC721Test is Test {
         assertEq(token.balanceOf(address(this)), 0);
         assertEq(token.getApproved(id), address(0));
 
-        // vm.expectRevert("NOT_MINTED");
+        vm.expectRevert(bytes("NOT_MINTED"));
         address owner = token.ownerOf(id);
         assertEq(owner, address(0));
     }
@@ -819,7 +820,7 @@ contract ERC721Test is Test {
     }
 
     function testOwnerOfUnminted(uint256 id) public {
+        vm.expectRevert(bytes("NOT_MINTED"));
         address owner = token.ownerOf(id);
-        assertEq(owner, address(0));
     }
 }
