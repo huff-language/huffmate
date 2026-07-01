@@ -221,6 +221,11 @@
     dup1 [TYPE_UINT_256_MAX]            // [type(uint256).max, allowance, allowance, shares, receiver, owner]
     eq infinite jumpi                   // [allowance, shares, receiver, owner]
 
+    // Revert unless the caller is approved for at least `shares` (allowance >= shares).
+    dup2 dup2 lt iszero redeem_approved jumpi  // [allowance, shares, receiver, owner]
+    0x00 dup1 revert
+    redeem_approved:
+
     // Set the new allowance
     dup2 dup2 sub                       // [new_allowance, allowance, shares, receiver, owner]
     caller dup6 [APPROVAL_SLOT]         // [slot, owner, msg.sender, new_allowance, allowance, shares, receiver, owner]
@@ -394,6 +399,11 @@
     // If the allowed is no infinite approval, set to the allowance less shares
     dup1 [TYPE_UINT_256_MAX]            // [type(uint256).max, allowance, allowance, shares, assets, receiver, owner]
     eq infinite jumpi                   // [allowance, shares, assets, receiver, owner]
+
+    // Revert unless the caller is approved for at least `shares` (allowance >= shares).
+    dup2 dup2 lt iszero withdraw_approved jumpi  // [allowance, shares, assets, receiver, owner]
+    0x00 dup1 revert
+    withdraw_approved:
 
     // Set the new allowance
     dup2 dup2 sub                       // [new_allowance, allowance, shares, assets, receiver, owner]
