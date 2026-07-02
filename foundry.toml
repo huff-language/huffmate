@@ -18,6 +18,7 @@ fs_permissions = [
 
     { access = "read", path = "./test/mechanisms/huff-vrgda/mocks/LinearVRGDAWrappers.huff" },
     { access = "read", path = "./test/mechanisms/huff-vrgda/mocks/LogisticVRGDAWrappers.huff" },
+    { access = "read", path = "./test/mechanisms/huff-vrgda/mocks/SignedWadMathWrappers.huff" },
 
     { access = "read", path = "./test/proxies/mocks/ClonesWrappers.huff" },
     { access = "read", path = "./test/proxies/mocks/ProxyWrappers.huff" },
