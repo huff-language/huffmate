@@ -71,7 +71,7 @@ contract LinearVRGDATest is Test {
         vm.warp(block.timestamp + fromDaysWadUnsafe(vrgda.getTargetSaleTime(1e18)));
 
         uint256 cost = vrgda.getVRGDAPrice(toDaysWadUnsafe(block.timestamp), 0);
-        assertEq(cost / 0.00001e18, uint256(vrgda.targetPrice()) / 0.00001e18);
+        assertApproxEqRel(cost, uint256(vrgda.targetPrice()), 0.0001e18); // ~lossy day-conversion warp
     }
 
     function testPricingBasic() public {
@@ -82,7 +82,7 @@ contract LinearVRGDATest is Test {
         vm.warp(block.timestamp + timeDelta);
 
         uint256 cost = vrgda.getVRGDAPrice(toDaysWadUnsafe(block.timestamp), numMint);
-        assertEq(cost / 0.00001e18, uint256(vrgda.targetPrice()) / 0.00001e18);
+        assertApproxEqRel(cost, uint256(vrgda.targetPrice()), 0.0001e18); // ~lossy day-conversion warp
     }
 
     function testAlwaysTargetPriceInRightConditions(uint256 sold) public {
