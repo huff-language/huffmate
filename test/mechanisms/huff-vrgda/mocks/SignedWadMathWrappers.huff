@@ -39,7 +39,7 @@
     toWad:
         0x04 calldataload TO_WAD_UNSAFE()      0x00 mstore 0x20 0x00 return
     toDays:
-        0x04 calldataload toDaysWadUnsafe()    0x00 mstore 0x20 0x00 return
+        0x04 calldataload TO_DAYS_WAD_UNSAFE()  0x00 mstore 0x20 0x00 return
     fromDays:
         0x04 calldataload FROM_DAYS_WAD_UNSAFE() 0x00 mstore 0x20 0x00 return
     uWadMul:
