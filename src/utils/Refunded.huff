@@ -4,7 +4,6 @@
 /// @notice Efficient gas refunds distributed through a modifier
 /// @notice Adapted from Zolidity (https://github.com/z0r0z/zolidity/blob/main/src/utils/Refunded.sol)
 
-#include "./Errors.huff"
 #include "./ReentrancyGuard.huff"
 
 /// @notice The base cost of refunding

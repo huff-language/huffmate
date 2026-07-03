@@ -4,6 +4,7 @@
 /// @notice Low-level bytecode utilities
 /// @notice Adapted from 0xsequence/sstore2 (https://github.com/0xsequence/sstore2/blob/master/contracts/utils/Bytecode.sol)
 
+#include "./Errors.huff"
 #include "./CommonErrors.huff"
 
 /// @notice Generate a creation code that results on a contract with `_code` as bytecode

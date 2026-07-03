@@ -5,7 +5,6 @@
 /// @notice Adapted from 0xsequence/sstore2 (https://github.com/0xsequence/sstore2)
 
 #include "./Bytecode.huff"
-#include "./CommonErrors.huff"
 
 #define constant TYPE_UINT_256_MAX = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 

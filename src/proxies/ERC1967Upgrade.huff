@@ -5,6 +5,7 @@
 /// @dev This abstract contract provides getters and event emitting update functions for https://eips.ethereum.org/EIPS/eip-1967[EIP1967] slots.
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/ERC1967/ERC1967Upgrade.sol)
 
+#include "../utils/Errors.huff"
 #include "../utils/CommonErrors.huff"
 
 // Function Definitions

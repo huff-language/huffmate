@@ -1,3 +1,4 @@
+#include "../utils/Errors.huff"
 
 // Wrapper methods (for testing)
 #define macro SAFE_ADD_WRAPPER() = takes (0) returns (0) {
