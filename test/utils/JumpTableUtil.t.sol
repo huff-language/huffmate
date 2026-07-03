@@ -12,7 +12,7 @@ interface IJumpTableUtil {
 }
 
 contract JumpTableUtilTest is Test {
-    uint constant FIRST_LABEL_PC = 147;
+    uint constant FIRST_LABEL_PC = 141;
 
     IJumpTableUtil jtUtil;
 

@@ -220,12 +220,13 @@ contract ERC20Test is Test {
         assertEq(token.balanceOf(address(0xBEEF)), 1e18);
     }
 
-    function testFailTransferInsufficientBalance() public {
+    function test_RevertWhen_TransferInsufficientBalance() public {
         token.mint(address(this), 0.9e18);
+        vm.expectRevert();
         token.transfer(address(0xBEEF), 1e18);
     }
 
-    function testFailTransferFromInsufficientAllowance() public {
+    function test_RevertWhen_TransferFromInsufficientAllowance() public {
         address from = address(0xABCD);
 
         token.mint(from, 1e18);
@@ -234,10 +235,11 @@ contract ERC20Test is Test {
         token.approve(address(this), 0.9e18);
         vm.stopPrank();
 
+        vm.expectRevert();
         token.transferFrom(from, address(0xBEEF), 1e18);
     }
 
-    function testFailTransferFromInsufficientBalance() public {
+    function test_RevertWhen_TransferFromInsufficientBalance() public {
         address from = address(0xABCD);
 
         token.mint(from, 0.9e18);
@@ -246,6 +248,7 @@ contract ERC20Test is Test {
         token.approve(address(this), 1e18);
         vm.stopPrank();
 
+        vm.expectRevert();
         token.transferFrom(from, address(0xBEEF), 1e18);
     }
 
@@ -321,33 +324,39 @@ contract ERC20Test is Test {
         }
     }
 
-    function testFailBurnInsufficientBalance(
+    function test_RevertWhen_BurnInsufficientBalance(
         address to,
         uint256 mintAmount,
         uint256 burnAmount
     ) public {
+        vm.assume(to != address(0));
+        vm.assume(mintAmount != type(uint256).max);
         burnAmount = bound(burnAmount, mintAmount + 1, type(uint256).max);
 
         token.mint(to, mintAmount);
+        vm.expectRevert();
         token.burn(to, burnAmount);
     }
 
-    function testFailTransferInsufficientBalance(
+    function test_RevertWhen_TransferInsufficientBalance(
         address to,
         uint256 mintAmount,
         uint256 sendAmount
     ) public {
+        vm.assume(mintAmount != type(uint256).max);
         sendAmount = bound(sendAmount, mintAmount + 1, type(uint256).max);
 
         token.mint(address(this), mintAmount);
+        vm.expectRevert();
         token.transfer(to, sendAmount);
     }
 
-    function testFailTransferFromInsufficientAllowance(
+    function test_RevertWhen_TransferFromInsufficientAllowance(
         address to,
         uint256 approval,
         uint256 amount
     ) public {
+        vm.assume(approval != type(uint256).max);
         amount = bound(amount, approval + 1, type(uint256).max);
 
         address from = address(0xABCD);
@@ -358,14 +367,16 @@ contract ERC20Test is Test {
         token.approve(address(this), approval);
         vm.stopPrank();
 
+        vm.expectRevert();
         token.transferFrom(from, to, amount);
     }
 
-    function testFailTransferFromInsufficientBalance(
+    function test_RevertWhen_TransferFromInsufficientBalance(
         address to,
         uint256 mintAmount,
         uint256 sendAmount
     ) public {
+        vm.assume(mintAmount != type(uint256).max);
         sendAmount = bound(sendAmount, mintAmount + 1, type(uint256).max);
 
         address from = address(0xABCD);
@@ -376,6 +387,7 @@ contract ERC20Test is Test {
         token.approve(address(this), sendAmount);
         vm.stopPrank();
 
+        vm.expectRevert();
         token.transferFrom(from, to, sendAmount);
     }
 
@@ -425,7 +437,7 @@ contract ERC20Test is Test {
         assertEq(token.nonces(owner), 1);
     }
 
-    function testFailPermitBadNonce() public {
+    function test_RevertWhen_PermitBadNonce() public {
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
 
@@ -449,10 +461,11 @@ contract ERC20Test is Test {
             )
         );
 
+        vm.expectRevert();
         token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
     }
 
-    function testFailPermitBadDeadline() public {
+    function test_RevertWhen_PermitBadDeadline() public {
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
 
@@ -476,6 +489,7 @@ contract ERC20Test is Test {
             )
         );
 
+        vm.expectRevert();
         token.permit(
             owner,
             address(0xCAFE),
@@ -523,7 +537,7 @@ contract ERC20Test is Test {
         );
     }
 
-    function testFailPermitReplay() public {
+    function test_RevertWhen_PermitReplay() public {
         uint256 privateKey = 0xBEEF;
         address owner = vm.addr(privateKey);
 
@@ -548,6 +562,7 @@ contract ERC20Test is Test {
         );
 
         token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
+        vm.expectRevert();
         token.permit(owner, address(0xCAFE), 1e18, block.timestamp, v, r, s);
     }
 
