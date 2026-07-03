@@ -1167,6 +1167,10 @@ contract ERC1155Test is Test, ERC1155Recipient, FuzzingUtils {
 
         address from = address(0xABCD);
 
+        // Skip self-transfers: the per-id balance bookkeeping below assumes `to`
+        // and `from` are distinct (a self-transfer leaves `from`'s balance whole).
+        if (to == from) return;
+
         uint256 minLength = min3(ids.length, mintAmounts.length, transferAmounts.length);
 
         uint256[] memory normalizedIds = new uint256[](minLength);
