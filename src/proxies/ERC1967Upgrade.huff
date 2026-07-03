@@ -99,12 +99,12 @@
     calldatacopy                                // [dataSize, address]
 
     // Call the implementation with the given data
-    0x00                                        // [retOffset, dataSize, address]
-    swap2                                       // [argSize, retOffset, address]
-    0x00                                        // [argOffset, argSize, retOffset, address]
-    0x00                                        // [retSize, argOffset, argSize, retOffset, address]
-    swap4                                       // [address, argOffset, argSize, retOffset, retSize]
-    gas                                         // [gas, address, argOffset, argSize, retOffset, retSize]
+    // delegatecall(gas, addr=address, argOffset=0, argSize=dataSize, retOffset=0, retSize=0)
+    0x00 0x00 0x00                              // [retOffset, argOffset, retSize, argSize, addr]
+    swap3                                       // [argSize, argOffset, retSize, retOffset, addr]
+    swap2                                       // [retSize, argOffset, argSize, retOffset, addr]
+    swap4                                       // [addr, argOffset, argSize, retOffset, retSize]
+    gas                                         // [gas, addr, argOffset, argSize, retOffset, retSize]
     delegatecall                                // [success]
     __DelegateCall_Success jumpi                // []
     0x00 dup1 revert
