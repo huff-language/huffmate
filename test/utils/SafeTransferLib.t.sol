@@ -353,10 +353,10 @@ contract SafeTransferLibTest is Test {
         bytes calldata brutalizeWith
     ) public brutalizeMemory(brutalizeWith) {
         // Transferring to msg.sender can fail because it's possible to overflow their ETH balance as it begins non-zero.
-        vm.assume(recipient > address(9) && recipient.code.length == 0 && recipient != msg.sender);
+        // >0xffff excludes precompiles (incl. the EIP-2537 BLS precompiles at 0x0a-0x11).
+        vm.assume(recipient > address(0xffff) && recipient.code.length == 0 && recipient != msg.sender);
         vm.assume(recipient != VM_ADDRESS && recipient != CONSOLE);
-        // Exclude precompiles (e.g. the EIP-2537 BLS precompiles at 0x0a-0x11) and any
-        // other address that rejects a plain ETH transfer.
+        // Also exclude any other address that rejects a plain ETH transfer.
         assumePayable(recipient);
 
         amount = bound(amount, 0, address(SafeTransferLib).balance);
