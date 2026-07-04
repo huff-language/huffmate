@@ -319,11 +319,9 @@ contract FixedPointMathTest is Test {
     }
 
     function test_RevertWhen_FuzzMulWadUpOverflow(uint256 x, uint256 y) public {
-        // Only test cases where x * y overflows.
-        vm.assume(x != 0);
-        unchecked {
-            vm.assume((x * y) / x != y);
-        }
+        // Bound the inputs so x * y is guaranteed to overflow
+        x = bound(x, 2, type(uint256).max);
+        y = bound(y, type(uint256).max / x + 1, type(uint256).max);
 
         vm.expectRevert();
         math.mulWadUp(x, y);
@@ -364,11 +362,9 @@ contract FixedPointMathTest is Test {
     }
 
     function test_RevertWhen_FuzzDivWadUpOverflow(uint256 x, uint256 y) public {
-        // Only test cases where x * WAD overflows and y is non-zero.
-        vm.assume(y != 0);
-        unchecked {
-            vm.assume((x * 1e18) / 1e18 != x);
-        }
+        // Bound the inputs so x * WAD is guaranteed to overflow and y is non-zero
+        x = bound(x, type(uint256).max / 1e18 + 1, type(uint256).max);
+        y = bound(y, 1, type(uint256).max);
 
         vm.expectRevert();
         math.divWadUp(x, y);
@@ -431,12 +427,10 @@ contract FixedPointMathTest is Test {
         uint256 y,
         uint256 denominator
     ) public {
-        // Only test cases where x * y overflows and denominator is non-zero.
-        vm.assume(denominator != 0);
-        vm.assume(x != 0);
-        unchecked {
-            vm.assume((x * y) / x != y);
-        }
+        // Bound the inputs so x * y is guaranteed to overflow and denominator is non-zero
+        x = bound(x, 2, type(uint256).max);
+        denominator = bound(denominator, 1, type(uint256).max);
+        y = bound(y, type(uint256).max / x + 1, type(uint256).max);
 
         vm.expectRevert();
         math.mulDivUp(x, y, denominator);
