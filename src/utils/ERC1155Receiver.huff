@@ -7,6 +7,6 @@
 /// @notice Returns the function selector for `onERC1155Received`
 #define macro ON_ERC1155_RECEIVED() = takes (0) returns (0) {
     // 0xf23a6e61 is the 4byte function selector for `onERC1155Received`
-    0xf23a6e61 0x00 mstore    // []
-    0x20 0x1c return          // []
+    0xf23a6e61 msize mstore    // []
+    msize 0x1c return          // []
 }
