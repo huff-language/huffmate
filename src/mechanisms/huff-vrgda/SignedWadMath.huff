@@ -13,18 +13,18 @@
     [WAD] mul
 }
 
-#define macro toDaysWadUnsafe() = takes (1) returns (1) {
-    [WAD] mul [DAY] div
+#define macro TO_DAYS_WAD_UNSAFE() = takes (1) returns (1) {
+    [WAD] mul [DAY] swap1 div
 }
 
 
 #define macro FROM_DAYS_WAD_UNSAFE() = takes (1) returns (1) {
-    [DAY] mul [WAD] div
+    [DAY] mul [WAD] swap1 div
 }
 
 
 #define macro UNSAFE_WAD_MUL() = takes (2) returns (1) {
-    mul [WAD] sdiv
+    mul [WAD] swap1 sdiv
 }
 
 
@@ -129,7 +129,7 @@
     dup2                    // [x, 0xb17217f7d1cf79abc9e3b398, x]
     0x60 shl                // [x << 96, 0xb17217f7d1cf79abc9e3b398, x]
     sdiv                    // [x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
-    0x7ffffff20f9306d2eea00000 // [2**95, x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
+    0x800000000000000000000000 // [2**95, x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
     add                     // [2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398, x]
     0x60 sar                // [(2**95 + x << 96 / 0xb17217f7d1cf79abc9e3b398) >> 96, x]
 
@@ -314,7 +314,7 @@
     add                     // [q, p, k, x]
 
     dup4 mul                // [q * x, p, k, x]
-    0x60 shr                // [(q * x) >> 0x60, p, k, x]
+    0x60 sar                // [(q * x) >> 0x60, p, k, x]
     0x0a0f742023def783a307a986912e
     add                     // [q, p, k, x]
 

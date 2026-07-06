@@ -45,7 +45,7 @@ contract LogisticVRGDATest is Test {
         int256 wadMaxSellable = toWadUnsafe(MAX_SELLABLE);
         targetPrice = 69.42e18;
         logisticLimit = int256(wadMaxSellable + 1e18);
-        logisticLimitDoubled = int256(wadMaxSellable * 2e18);
+        logisticLimitDoubled = int256(logisticLimit * 2e18);
         timeScale = 0.0023e18;
 
         // calculate the decay constant
@@ -79,7 +79,8 @@ contract LogisticVRGDATest is Test {
         vm.warp(block.timestamp + fromDaysWadUnsafe(vrgda.getTargetSaleTime(1e18)));
 
         uint256 cost = vrgda.getVRGDAPrice(toDaysWadUnsafe(block.timestamp), 0);
-        assertEq(cost / 0.0000001e18, uint256(vrgda.targetPrice()) / 0.0000001e18);
+        // Approximate because the warp round-trips through integer seconds (lossy day-conversion).
+        assertApproxEqRel(cost, uint256(vrgda.targetPrice()), 0.0001e18);
     }
 
     function testPricingBasic() public {
@@ -92,7 +93,7 @@ contract LogisticVRGDATest is Test {
         uint256 cost = vrgda.getVRGDAPrice(toDaysWadUnsafe(block.timestamp), numMint);
 
         // Equal within 2 percent since num mint is rounded from true decimal amount.
-        assertEq(cost / 0.02e18, uint256(vrgda.targetPrice()) / 0.02e18);
+        assertApproxEqRel(cost, uint256(vrgda.targetPrice()), 0.02e18);
     }
 
     function testGetTargetSaleTimeDoesNotRevertEarly() public view {

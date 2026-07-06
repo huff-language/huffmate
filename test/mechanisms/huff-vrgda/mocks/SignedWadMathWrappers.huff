@@ -1,0 +1,63 @@
+/// @title SignedWadMath Test Wrappers
+/// @notice Exposes every SignedWadMath macro as an external function for
+///         differential testing against the reference Solidity implementation.
+/// @dev The body of src/mechanisms/huff-vrgda/SignedWadMath.huff is appended
+///      automatically by HuffDeployer.deploy_with_code("mechanisms/huff-vrgda/SignedWadMath", ...).
+
+#define function toWadUnsafe(uint256) nonpayable returns (int256)
+#define function toDaysWadUnsafe(uint256) nonpayable returns (int256)
+#define function fromDaysWadUnsafe(int256) nonpayable returns (uint256)
+#define function unsafeWadMul(int256, int256) nonpayable returns (int256)
+#define function unsafeWadDiv(int256, int256) nonpayable returns (int256)
+#define function unsafeDiv(int256, int256) nonpayable returns (int256)
+#define function wadMul(int256, int256) nonpayable returns (int256)
+#define function wadDiv(int256, int256) nonpayable returns (int256)
+#define function wadExp(int256) nonpayable returns (int256)
+#define function wadLn(int256) nonpayable returns (int256)
+#define function powWad(int256, int256) nonpayable returns (int256)
+#define function log2(uint256) nonpayable returns (uint256)
+
+#define macro MAIN() = takes (0) returns (0) {
+    0x00 calldataload 0xE0 shr                          // [selector]
+
+    dup1 __FUNC_SIG(toWadUnsafe)      eq toWad    jumpi
+    dup1 __FUNC_SIG(toDaysWadUnsafe)  eq toDays   jumpi
+    dup1 __FUNC_SIG(fromDaysWadUnsafe) eq fromDays jumpi
+    dup1 __FUNC_SIG(unsafeWadMul)     eq uWadMul  jumpi
+    dup1 __FUNC_SIG(unsafeWadDiv)     eq uWadDiv  jumpi
+    dup1 __FUNC_SIG(unsafeDiv)        eq uDiv     jumpi
+    dup1 __FUNC_SIG(wadMul)           eq wMul     jumpi
+    dup1 __FUNC_SIG(wadDiv)           eq wDiv     jumpi
+    dup1 __FUNC_SIG(wadExp)           eq wExp     jumpi
+    dup1 __FUNC_SIG(wadLn)            eq wLn      jumpi
+    dup1 __FUNC_SIG(powWad)           eq wPow     jumpi
+    dup1 __FUNC_SIG(log2)             eq wLog2    jumpi
+
+    fail:
+        0x00 0x00 revert
+
+    toWad:
+        0x04 calldataload TO_WAD_UNSAFE()      0x00 mstore 0x20 0x00 return
+    toDays:
+        0x04 calldataload TO_DAYS_WAD_UNSAFE()  0x00 mstore 0x20 0x00 return
+    fromDays:
+        0x04 calldataload FROM_DAYS_WAD_UNSAFE() 0x00 mstore 0x20 0x00 return
+    uWadMul:
+        0x24 calldataload 0x04 calldataload UNSAFE_WAD_MUL() 0x00 mstore 0x20 0x00 return
+    uWadDiv:
+        0x24 calldataload 0x04 calldataload UNSAFE_WAD_DIV() 0x00 mstore 0x20 0x00 return
+    uDiv:
+        0x24 calldataload 0x04 calldataload UNSAFE_DIV()     0x00 mstore 0x20 0x00 return
+    wMul:
+        0x24 calldataload 0x04 calldataload WAD_MUL(fail)   0x00 mstore 0x20 0x00 return
+    wDiv:
+        0x24 calldataload 0x04 calldataload WAD_DIV(fail)   0x00 mstore 0x20 0x00 return
+    wExp:
+        0x04 calldataload EXP_WAD(fail) 0x00 mstore 0x20 0x00 return
+    wLn:
+        0x04 calldataload LN_WAD(fail)  0x00 mstore 0x20 0x00 return
+    wPow:
+        0x24 calldataload 0x04 calldataload POW_WAD(fail) 0x00 mstore 0x20 0x00 return
+    wLog2:
+        0x04 calldataload LOG_2(fail)   0x00 mstore 0x20 0x00 return
+}
