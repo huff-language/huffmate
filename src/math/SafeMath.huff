@@ -4,8 +4,6 @@
 /// @notice Math module over Solidity's arithmetic operations with safety checks
 /// @notice Adapted from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol)
 
-#include "../utils/Errors.huff"
-
 // Interface
 #define function safeAdd(uint256,uint256) pure returns (uint256)
 #define function safeSub(uint256,uint256) pure returns (uint256)

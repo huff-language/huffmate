@@ -105,13 +105,13 @@ contract SSTORE2Test is Test {
 
     /// @notice End can never be less than start
     function testReadBetweenOutOfBounds(uint256 start, uint256 end, bytes memory input) public {
-        // Make sure the end is always less than the start
-        if (end > start) (start, end) = (end, start);
-        vm.assume(end != type(uint256).max);
-        if (end == start) start = end + 1;
+        // Need at least one byte so there is a valid [end, start) range with end < start.
+        vm.assume(input.length > 0);
 
-        // Make sure the start is never greater than the codesize (the length of input)
-        vm.assume(start <= input.length);
+        // Bound (rather than assume) into range so the fuzzer isn't starved:
+        // start in [1, input.length], end strictly less than start.
+        start = bound(start, 1, input.length);
+        end = bound(end, 0, start - 1);
 
         // Write the input
         address pointer = store.write(input);

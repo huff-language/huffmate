@@ -4,6 +4,7 @@
 /// @notice Gas optimized reentrancy guard for smart contracts.
 /// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/ReentrancyGuard.sol)
 
+#include "./Errors.huff"
 #include "./CommonErrors.huff"
 
 // Interface

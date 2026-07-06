@@ -6,7 +6,6 @@
 /// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC20.sol)
 
 // Imports
-#include "../utils/Errors.huff"
 #include "../auth/NonPayable.huff"
 #include "../data-structures/Hashmap.huff"
 
@@ -70,7 +69,7 @@
     [INITIAL_DOMAIN_SEPARATOR] sstore       // []
     
     // Copy the runtime bytecode with constructor argument concatenated.
-    0x67                                    // [offset] - constructor code size
+    __codesize(CONSTRUCTOR)                 // [offset] - constructor code size
     dup1                                    // [offset, offset]
     codesize                                // [total_size, offset, offset]
     sub                                     // [runtime_size, offset]
@@ -241,24 +240,6 @@
     add                                                 // [balance + value, value, from, to]
     dup4                                                // [to, balance + value, value, from, to]
     [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)        // [value, from, to]
-}
-
-/// @notice Approve
-/// @notice Approves an address to spend an amount of tokens on the caller's behalf
-#define macro APPROVE() = takes (0) returns (0) {
-    0x24 calldataload                           // [value]
-    dup1 0x00 mstore                            // [value]
-    0x04 calldataload                           // [to, value]
-    caller                                      // [from, to, value]
-
-    // Emit the approval event.
-    dup2 dup2                                   // [from, to, from, to, value]
-    __EVENT_HASH(APPROVAL_EVENT_SIGNATURE)      // [sig, from, to, from, to, value]
-    0x20 0x00                                   // [0, 32, sig, from, to, from, to, value]
-    log3                                        // [from, to, value]
-
-    // Store the value at slot = keccak256(from . to)
-    STORE_ELEMENT_FROM_KEYS(0x00)
 }
 
 /// @notice Domain Separator

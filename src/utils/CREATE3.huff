@@ -5,6 +5,7 @@
 /// @notice Deploy to deterministic addresses without an initcode factor
 /// @notice Adapted from Solmate (https://github.com/transmissions11/solmate/blob/main/src/utils/CREATE3.sol)
 
+#include "./Errors.huff"
 #include "./CommonErrors.huff"
 
 

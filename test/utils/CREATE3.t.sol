@@ -41,17 +41,19 @@ contract CREATE3Test is Test {
         assertEq(deployed.decimals(), 18);
     }
 
-    function testFailDoubleDeploySameBytecode() public {
+    function test_RevertWhen_DoubleDeploySameBytecode() public {
         bytes32 salt = keccak256(bytes("Salty..."));
 
         create3.deploy(salt, type(MockAuthChild).creationCode, 0);
+        vm.expectRevert();
         create3.deploy(salt, type(MockAuthChild).creationCode, 0);
     }
 
-    function testFailDoubleDeployDifferentBytecode() public {
+    function test_RevertWhen_DoubleDeployDifferentBytecode() public {
         bytes32 salt = keccak256(bytes("and sweet!"));
 
         create3.deploy(salt, type(WETH).creationCode, 0);
+        vm.expectRevert();
         create3.deploy(salt, type(MockAuthChild).creationCode, 0);
     }
 
@@ -72,16 +74,24 @@ contract CREATE3Test is Test {
         assertEq(deployed.decimals(), decimals);
     }
 
-    function testFailDoubleDeploySameBytecode(bytes32 salt, bytes calldata bytecode) public {
-        create3.deploy(salt, bytecode, 0);
-        create3.deploy(salt, bytecode, 0);
+    function test_RevertWhen_DoubleDeploySameBytecode(bytes32 salt, bytes calldata bytecode) public {
+        vm.expectRevert();
+        this.doubleDeploy(salt, bytecode, bytecode);
     }
 
-    function testFailDoubleDeployDifferentBytecode(
+    function test_RevertWhen_DoubleDeployDifferentBytecode(
         bytes32 salt,
         bytes calldata bytecode1,
         bytes calldata bytecode2
     ) public {
+        vm.expectRevert();
+        this.doubleDeploy(salt, bytecode1, bytecode2);
+    }
+
+    /// @dev External helper so `vm.expectRevert` can capture a revert from
+    ///      either deploy (the first may revert on garbage bytecode, the
+    ///      second always reverts on the salt collision).
+    function doubleDeploy(bytes32 salt, bytes calldata bytecode1, bytes calldata bytecode2) public {
         create3.deploy(salt, bytecode1, 0);
         create3.deploy(salt, bytecode2, 0);
     }
