@@ -90,21 +90,21 @@
     // Copy the data from calldata to memory
     swap2 not                                   // [!forceCall, data, address]
 
-    dup2 calldataload dup1                      // [dataSize, dataSize, forceCall, data, address]
+    dup2 0x04 add calldataload dup1             // [dataSize, dataSize, !forceCall, data, address]
     swap2 swap1 iszero and                      // [(!forceCall && dataSize == 0), dataSize, data, address]
     __IgnoreCall_And_Clean_Stack jumpi
 
-    dup1 swap2 0x20 add                         // [&data[0], dataSize, dataSize, address]
+    dup1 swap2 0x24 add                         // [&data[0] (= data + 0x04 + 0x20), dataSize, dataSize, address]
     0x00                                        // [destOffset, calldataOffset, dataSize, dataSize, address]
     calldatacopy                                // [dataSize, address]
 
     // Call the implementation with the given data
-    0x00                                        // [retOffset, dataSize, address]
-    swap2                                       // [argSize, retOffset, address]
-    0x00                                        // [argOffset, argSize, retOffset, address]
-    0x00                                        // [retSize, argOffset, argSize, retOffset, address]
-    swap4                                       // [address, argOffset, argSize, retOffset, retSize]
-    gas                                         // [gas, address, argOffset, argSize, retOffset, retSize]
+    // delegatecall(gas, addr=address, argOffset=0, argSize=dataSize, retOffset=0, retSize=0)
+    0x00 0x00 0x00                              // [retOffset, argOffset, retSize, argSize, addr]
+    swap3                                       // [argSize, argOffset, retSize, retOffset, addr]
+    swap2                                       // [retSize, argOffset, argSize, retOffset, addr]
+    swap4                                       // [addr, argOffset, argSize, retOffset, retSize]
+    gas                                         // [gas, addr, argOffset, argSize, retOffset, retSize]
     delegatecall                                // [success]
     __DelegateCall_Success jumpi                // []
     0x00 dup1 revert
@@ -267,7 +267,7 @@
     0x00 0x00 log2                              // [newBeacon, data, forceCall]
 
     // Copy the calldata to memory
-    dup2 calldataload dup1                      // [dataSize, dataSize, newBeacon, data, forceCall]
+    dup2 0x04 add calldataload dup1             // [dataSize, dataSize, newBeacon, data, forceCall]
     swap4 not swap1 iszero and                  // [(!forceCall && dataSize == 0), newBeacon, data, dataSize]
     __IgnoreCall_And_Clean_Stack jumpi
 
@@ -287,7 +287,7 @@
     // Delegate call to the implementation address
     0x00 mload                                  // [implementation, newBeacon, data, dataSize]
     swap3 swap1 swap2                           // [data, dataSize, newBeacon, implementation]
-    dup2 dup2 0x20 add                          // [&data[0], dataSize, data, dataSize, newBeacon, implementation]
+    dup2 dup2 0x24 add                          // [&data[0] (= data + 0x04 + 0x20), dataSize, data, dataSize, newBeacon, implementation]
     0x00                                        // [destOffset, calldataOffset, dataSize, data, dataSize, newBeacon, implementation]
     calldatacopy                                // [data, dataSize, newBeacon, implementation]
     swap1                                       // [dataSize, data, newBeacon, implementation]

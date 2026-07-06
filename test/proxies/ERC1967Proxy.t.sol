@@ -155,7 +155,39 @@ contract ProxiesTest is Test, ERC1155Recipient {
 
         proxy.upgradeToAndCallUUPS(address(proxiableUUID), bytes(mintCalldata), false);
         assertEq(proxy.implementation(), address(proxiableUUID));
-    } 
+    }
+
+    function testUpgradeToAndCallExecutesInitCall() public {
+        bytes memory mintCalldata = abi.encodeWithSignature(
+            "mint(address,uint256,uint256,bytes)",
+            address(this), uint256(1), uint256(7), bytes("")
+        );
+        proxy.upgradeToAndCall(address(implementation), mintCalldata, false);
+        assertEq(MockERC1155(address(proxy)).balanceOf(address(this), 1), 7);
+    }
+
+    function testUpgradeToAndCallUUPSExecutesInitCall() public {
+        bytes memory mintCalldata = abi.encodeWithSignature(
+            "mint(address,uint256,uint256,bytes)",
+            address(this), uint256(2), uint256(9), bytes("")
+        );
+        proxy.upgradeToAndCallUUPS(address(proxiableUUID), mintCalldata, false);
+        assertEq(MockERC1155(address(proxy)).balanceOf(address(this), 2), 9);
+    }
+
+    function testUpgradeBeaconAndCallExecutesInitCall() public {
+        // The beacon path only sets the beacon slot; point the implementation slot at the same
+        // logic (MockERC1155) so state written by the beacon's init call can be read back through
+        // the proxy's delegatecall fallback (which routes via the implementation slot).
+        proxy.upgradeTo(address(implementation));
+
+        bytes memory mintCalldata = abi.encodeWithSignature(
+            "mint(address,uint256,uint256,bytes)",
+            address(this), uint256(3), uint256(11), bytes("")
+        );
+        proxy.upgradeBeaconAndCall(address(beacon), mintCalldata, false);
+        assertEq(MockERC1155(address(proxy)).balanceOf(address(this), 3), 11);
+    }
 
 
     function testProxyPassthrough() public {
