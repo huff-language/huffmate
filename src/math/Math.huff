@@ -237,14 +237,26 @@
         pop             // [min(num1, num2)]
 }
 
+/*
+fn AVG(num1, num2) -> (avg) {
+    avg = add(
+        and(num1, num2),
+        div(xor(num2, num1), 2)
+    )
+}
+*/
 /// @notice Returns the average of two values on the stack
 #define macro AVG() = takes (2) returns (1) {
-    // input stack:     // [num1, num2]
-    dup2 dup2 and       // [num1 & num2, num1, num2]
-    swap2               // [num2, num1, num1 & num2]
-    xor                 // [num2 ^ num1, num1 & num2]
-    0x02 swap1 div      // [num2 ^ num1 / 2, num1 & num2]
-    add                 // [sum]
+    // takes:                      [num2, num1]
+    0x2                         // [num2, num1, 0x2]
+    dup2                        // [num2, num1, 0x2, num1]
+    dup4                        // [num2, num1, 0x2, num1, num2]
+    xor                         // [num2, num1, 0x2, xor(num2, num1)]
+    div                         // [num2, num1, div(xor(num2, num1), 0x2)]
+    swap2                       // [div(xor(num2, num1), 0x2), num1, num2]
+    and                         // [div(xor(num2, num1), 0x2), and(num2, num1)]
+    add                         // [avg]
+    // returns:                    [avg]
 }
 
 /// @notice Unsafely subtracts 1 from a uint256 using the 2's complement representation
