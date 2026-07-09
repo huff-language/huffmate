@@ -1,0 +1,98 @@
+/// @title HashMap
+/// @notice SPDX-License-Identifier: MIT
+/// @author asnared <https://github.com/abigger87>
+
+/// @notice A Module Encapsulating HashMap Methods
+/// @notice Adapted from <https://github.com/huff-language/huff-examples/blob/main/erc20/contracts/utils/HashMap.huff>
+
+/// @notice Given a piece of data (ie an address), hash it, generating the storage slot for a hashmap.
+/// @notice Port to BALLs by eugenioclrc taken from https://github.com/huff-language/huffmate/blob/4e2c9bd3412ab8cc65f6ceadafc01a1ff1815796/src/data-structures/Hashmap.huff
+
+/// @notice Given a piece of data (ie an address), hash it, generating the storage slot for a hashmap.
+fn GET_SLOT_FROM_KEY<mem_ptr>(key) -> (hashed) {
+    // Load the data into memory and hash it, while preserving the memory location.
+    mstore(mem_ptr, key)
+    // Hash the data, generating a key.
+    hashed = sha3(mem_ptr, 0x20)
+}
+
+/// @notice Given two keys (ie a slot and a key), hash them together, generating a slot for a secondary hashmap.
+fn GET_SLOT_FROM_KEYS<mem_ptr>(slot, key) -> (hashed) {
+    // Load the data into memory.
+    mstore(add(mem_ptr, 0x20), slot)
+    mstore(mem_ptr, key)
+    
+    // Hash the data, generating a slot.
+    hashed = sha3(mem_ptr, 0x40)
+}
+
+
+/// @notice Calculate the slot from two keys
+fn GET_SLOT_FROM_KEYS_2D<mem_ptr>(slot, key1, key2) -> (hashed) {
+    mstore(mem_ptr, key1)
+
+    _ptr_plus_32 = add(mem_ptr, 0x20)
+    mstore(_ptr_plus_32, slot)
+    mstore(_ptr_plus_32, sha3(mem_ptr, 0x40))
+    
+    mstore(mem_ptr, key2)
+    // Hash the data, generating a slot.
+    hashed = sha3(mem_ptr, 0x40)
+}
+
+/// @notice Calculate the slot from three keys
+fn GET_SLOT_FROM_KEYS_3D<mem_ptr>(slot, key1, key2, key3) -> (hashed) {
+    mstore(mem_ptr, key1)
+
+    _ptr_plus_32 = add(mem_ptr, 0x20)
+    mstore(_ptr_plus_32, slot)
+    mstore(_ptr_plus_32, sha3(mem_ptr, 0x40))
+    
+    mstore(mem_ptr, key2)
+    mstore(_ptr_plus_32, sha3(mem_ptr, 0x40))
+
+    // put key3 in memory, before slot2
+    mstore(mem_ptr, key3)
+    // Hash the data, generating the final slot3
+    hashed = sha3(mem_ptr, 0x40)
+}
+
+/// @notice Load an element onto the stack from a key
+fn LOAD_ELEMENT<mem_ptr>(key) -> (value) {
+    value = sload(GET_SLOT_FROM_KEY<mem_ptr>(key))
+}
+
+/// @notice Load an element onto the stack from two keys
+fn LOAD_ELEMENT_FROM_KEYS<mem_ptr>(key1, key2) -> (value) {
+    value = sload(GET_SLOT_FROM_KEYS<mem_ptr>(key1, key2))
+}
+
+/// @notice Load an element onto the stack from a slot and two keys
+fn LOAD_ELEMENT_FROM_KEYS_2D<mem_ptr>(slot, key1, key2) -> (value) {
+    value = sload(GET_SLOT_FROM_KEYS_2D<mem_ptr>(slot, key1, key2))
+}
+
+/// @notice Load an element onto the stack from a slot and three keys
+fn LOAD_ELEMENT_FROM_KEYS_3D<mem_ptr>(slot, key1, key2, key3) -> (value) {
+    value = sload(GET_SLOT_FROM_KEYS_3D<mem_ptr>(slot, key1, key2, key3))
+}
+
+/// @notice Store an element from a key
+fn STORE_ELEMENT<mem_ptr>(key, value) {
+    sstore(GET_SLOT_FROM_KEY<mem_ptr>(key), value)
+}
+
+/// @notice Store an element from two keys
+fn STORE_ELEMENT_FROM_KEYS<mem_ptr>(key1, key2, value) {
+    sstore(GET_SLOT_FROM_KEYS<mem_ptr>(key1, key2), value)
+}
+
+/// @notice Store an element from a slot and two keys
+fn STORE_ELEMENT_FROM_KEYS_2D<mem_ptr>(slot, key1, key2, value) {
+    sstore(GET_SLOT_FROM_KEYS_2D<mem_ptr>(slot, key1, key2), value)
+}
+
+/// @notice Store an element from a slot and three keys
+fn STORE_ELEMENT_FROM_KEYS_3D<mem_ptr>(slot, key1, key2, key3, value) {
+    sstore(GET_SLOT_FROM_KEYS_3D<mem_ptr>(slot, key1, key2, key3), value)
+}

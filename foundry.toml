@@ -2,6 +2,7 @@
 out = 'out'
 libs = ['lib']
 ffi = true
+evm_version = "cancun"
 fs_permissions = [
     { access = "read", path = "./test/auth/mocks/AuthWrappers.huff" },
     { access = "read", path = "./test/auth/mocks/OwnedWrappers.huff" },

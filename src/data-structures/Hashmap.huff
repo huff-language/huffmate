@@ -1,160 +1,163 @@
 /// @title HashMap
 /// @notice SPDX-License-Identifier: MIT
 /// @author asnared <https://github.com/abigger87>
+
 /// @notice A Module Encapsulating HashMap Methods
 /// @notice Adapted from <https://github.com/huff-language/huff-examples/blob/main/erc20/contracts/utils/HashMap.huff>
 
 /// @notice Given a piece of data (ie an address), hash it, generating the storage slot for a hashmap.
-#define macro GET_SLOT_FROM_KEY(mem_ptr) = takes(1) returns (1) {
-    // Input stack: [key]
-    // Load the data into memory and hash it, while preserving the memory location.
-    <mem_ptr>   // [<mem_ptr>, key]
-    mstore      // []
+/// @notice Port to BALLs by eugenioclrc taken from https://github.com/huff-language/huffmate/blob/4e2c9bd3412ab8cc65f6ceadafc01a1ff1815796/src/data-structures/Hashmap.huff
 
-    // Hash the data, generating a key.
-    0x20                // [32]
-    <mem_ptr>           // [<mem_ptr>, 32]
-    sha3                // [slot]
+/// @notice Given a piece of data (ie an address), hash it, generating the storage slot for a hashmap.
+#define macro GET_SLOT_FROM_KEY(mem_ptr) = takes(1) returns(1) {
+    // takes:                      [key]
+    <mem_ptr>                   // [key, mem_ptr]
+    mstore                      // []
+    0x20                        // [0x20]
+    <mem_ptr>                   // [0x20, mem_ptr]
+    sha3                        // [hashed]
+    // returns:                    [hashed]
 }
 
 /// @notice Given two keys (ie a slot and a key), hash them together, generating a slot for a secondary hashmap.
-#define macro GET_SLOT_FROM_KEYS(mem_ptr) = takes(2) returns (1) {
-    // Input stack: [slot, key]
-    // Load the data into memory.
-    <mem_ptr> 0x20 add  // [<mem_ptr> + 32, slot, key]
-    mstore              // [key]
-    <mem_ptr>           // [<mem_ptr>, key]
-    mstore              // []
-
-    // Hash the data, generating a slot.
-    0x40        // [64]
-    <mem_ptr>   // [<mem_ptr>, 64]
-    sha3        // [slot]
+#define macro GET_SLOT_FROM_KEYS(mem_ptr) = takes(2) returns(1) {
+    // takes:                      [key, slot]
+    <mem_ptr>                   // [key, slot, mem_ptr]
+    0x20                        // [key, slot, mem_ptr, 0x20]
+    add                         // [key, slot, add(0x20, mem_ptr)]
+    mstore                      // [key]
+    <mem_ptr>                   // [key, mem_ptr]
+    mstore                      // []
+    0x40                        // [0x40]
+    <mem_ptr>                   // [0x40, mem_ptr]
+    sha3                        // [hashed]
+    // returns:                    [hashed]
 }
 
 /// @notice Calculate the slot from two keys
-#define macro GET_SLOT_FROM_KEYS_2D(mem_ptr) = takes(3) returns (1) {
-    // Input stack: [slot, key1, key2]
-    // Load the data into memory
-    <mem_ptr> 0x20 add  // [<mem_ptr> + 32, slot, key1, key2]
-    mstore              // [key1, key2]
-
-    // next byte
-    <mem_ptr>           // [<mem_ptr>, key1, key2]
-    mstore              // [key2]
-
-    0x40                // [0x40, key2]
-    <mem_ptr>           // [<mem_ptr>, 0x40, key2]
-    sha3                // [hash, key2]
-
-    // concat the two keys
-    <mem_ptr> 0x20 add  // [<mem_ptr> + 32, hash, key2] put hash in memory
-    mstore              // [key2]
-
-    // next byte
-    <mem_ptr>           // [<mem_ptr>, key2]
-    mstore              // []
-
-    // Hash the data, generating a slot.
-    0x40                // [0x40]
-    <mem_ptr>           // [<mem_ptr>, 0x40]
-    sha3                // [slot]
+#define macro GET_SLOT_FROM_KEYS_2D(mem_ptr) = takes(3) returns(1) {
+    // takes:                      [key2, key1, slot]
+    0x20                        // [key2, key1, slot, 0x20]
+    <mem_ptr>                   // [key2, key1, slot, 0x20, mem_ptr]
+    add                         // [key2, key1, slot, _ptr_plus_32]
+    swap2                       // [key2, _ptr_plus_32, slot, key1]
+    <mem_ptr>                   // [key2, _ptr_plus_32, slot, key1, mem_ptr]
+    mstore                      // [key2, _ptr_plus_32, slot]
+    dup2                        // [key2, _ptr_plus_32, slot, _ptr_plus_32]
+    mstore                      // [key2, _ptr_plus_32]
+    0x40                        // [key2, _ptr_plus_32, 0x40]
+    <mem_ptr>                   // [key2, _ptr_plus_32, 0x40, mem_ptr]
+    sha3                        // [key2, _ptr_plus_32, sha3(mem_ptr, 0x40)]
+    swap1                       // [key2, sha3(mem_ptr, 0x40), _ptr_plus_32]
+    mstore                      // [key2]
+    <mem_ptr>                   // [key2, mem_ptr]
+    mstore                      // []
+    0x40                        // [0x40]
+    <mem_ptr>                   // [0x40, mem_ptr]
+    sha3                        // [hashed]
+    // returns:                    [hashed]
 }
 
 /// @notice Calculate the slot from three keys
-#define macro GET_SLOT_FROM_KEYS_3D(mem_ptr) = takes(4) returns (1) {
-    // Input stack: [slot, key1, key2, key3]
-    // Load the data into memory
-    <mem_ptr> 0x20 add     // [<mem_ptr> + 32, slot, key1, key2, key3]
-    swap1 dup2             // [<mem_ptr> + 32, slot, <mem_ptr> + 32, key1, key2, key3]
-    mstore                 // [<mem_ptr> + 32, key1, key2, key3]
-
-    swap1 <mem_ptr>      // [<mem_ptr>, key1, <mem_ptr> + 32, key2, key3]
-    mstore               // [<mem_ptr> + 32, key2, key3]
-
-    0x40                // [0x40, <mem_ptr> + 32, key2, key3]
-    <mem_ptr>           // [<mem_ptr>, 0x40, <mem_ptr> + 32, key2, key3]
-    sha3                // [slot1, <mem_ptr> + 32, key2, key3]
-
-    // concat the first two keys
-    dup2                // [<mem_ptr> + 32, slot1, <mem_ptr> + 32, key2, key3] put slot1 in memory
-    mstore              // [<mem_ptr> + 32, key2, key3]
-
-    // put key2 in memory, before slot1
-    swap1               // [key2, <mem_ptr> + 32, key3]
-    <mem_ptr>           // [<mem_ptr>, key2, <mem_ptr> + 32, key3]
-    mstore              // [key3]
-
-    0x40                // [0x40, <mem_ptr> + 32, key3]
-    <mem_ptr>           // [<mem_ptr>, 0x40, <mem_ptr> + 32, key3]
-    sha3                // [slot2, <mem_ptr> + 32, key3]
-
-    // concat with the third key
-    swap1               // [<mem_ptr> + 32, slot2, key3] put slot2 in memory
-    mstore              // [key3]
-
-    // put key3 in memory, before slot2
-    <mem_ptr>           // [<mem_ptr>, key3]
-    mstore              // []
-
-    // Hash the data, generating the final slot3
-    0x40                // [0x40]
-    <mem_ptr>           // [<mem_ptr>, 0x40]
-    sha3                // [slot3]
+#define macro GET_SLOT_FROM_KEYS_3D(mem_ptr) = takes(4) returns(1) {
+    // takes:                      [key3, key2, key1, slot]
+    <mem_ptr>                   // [key3, key2, key1, slot, mem_ptr]
+    0x20                        // [key3, key2, key1, slot, mem_ptr, 0x20]
+    add                         // [key3, key2, key1, slot, _ptr_plus_32]
+    swap2                       // [key3, key2, _ptr_plus_32, slot, key1]
+    <mem_ptr>                   // [key3, key2, _ptr_plus_32, slot, key1, mem_ptr]
+    mstore                      // [key3, key2, _ptr_plus_32, slot]
+    dup2                        // [key3, key2, _ptr_plus_32, slot, _ptr_plus_32]
+    mstore                      // [key3, key2, _ptr_plus_32]
+    <mem_ptr>                   // [key3, key2, _ptr_plus_32, mem_ptr]
+    swap2                       // [key3, mem_ptr, _ptr_plus_32, key2]
+    <mem_ptr>                   // [key3, mem_ptr, _ptr_plus_32, key2, mem_ptr]
+    0x40                        // [key3, mem_ptr, _ptr_plus_32, key2, mem_ptr, 0x40]
+    <mem_ptr>                   // [key3, mem_ptr, _ptr_plus_32, key2, mem_ptr, 0x40, mem_ptr]
+    sha3                        // [key3, mem_ptr, _ptr_plus_32, key2, mem_ptr, sha3(mem_ptr, 0x40)]
+    dup4                        // [key3, mem_ptr, _ptr_plus_32, key2, mem_ptr, sha3(mem_ptr, 0x40), _ptr_plus_32]
+    mstore                      // [key3, mem_ptr, _ptr_plus_32, key2, mem_ptr]
+    mstore                      // [key3, mem_ptr, _ptr_plus_32]
+    0x40                        // [key3, mem_ptr, _ptr_plus_32, 0x40]
+    <mem_ptr>                   // [key3, mem_ptr, _ptr_plus_32, 0x40, mem_ptr]
+    sha3                        // [key3, mem_ptr, _ptr_plus_32, sha3(mem_ptr, 0x40)]
+    swap1                       // [key3, mem_ptr, sha3(mem_ptr, 0x40), _ptr_plus_32]
+    mstore                      // [key3, mem_ptr]
+    mstore                      // []
+    0x40                        // [0x40]
+    <mem_ptr>                   // [0x40, mem_ptr]
+    sha3                        // [hashed]
+    // returns:                    [hashed]
 }
 
 /// @notice Load an element onto the stack from a key
 #define macro LOAD_ELEMENT(mem_ptr) = takes(1) returns(1) {
-    // Input stack: [key]
-    GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot]
-    sload                           // [value]
+    // takes:                      [key]
+    GET_SLOT_FROM_KEY(<mem_ptr>)
+    //                             [GET_SLOT_FROM_KEY<mem_ptr>(key)]
+    sload                       // [value]
+    // returns:                    [value]
 }
 
 /// @notice Load an element onto the stack from two keys
 #define macro LOAD_ELEMENT_FROM_KEYS(mem_ptr) = takes(2) returns(1) {
-    // Input stack: [key1, key2]
-    GET_SLOT_FROM_KEYS(<mem_ptr>)   // [slot]
-    sload                           // [value]
+    // takes:                      [key2, key1]
+    GET_SLOT_FROM_KEYS(<mem_ptr>)
+    //                             [GET_SLOT_FROM_KEYS<mem_ptr>(key1, key2)]
+    sload                       // [value]
+    // returns:                    [value]
 }
 
 /// @notice Load an element onto the stack from a slot and two keys
 #define macro LOAD_ELEMENT_FROM_KEYS_2D(mem_ptr) = takes(3) returns(1) {
-    // Input stack: [slot, key1, key2]
-    GET_SLOT_FROM_KEYS_2D(<mem_ptr>) // [slot]
-    sload                            // [value]
+    // takes:                      [key2, key1, slot]
+    GET_SLOT_FROM_KEYS_2D(<mem_ptr>)
+    //                             [GET_SLOT_FROM_KEYS_2D<mem_ptr>(slot, key1, key2)]
+    sload                       // [value]
+    // returns:                    [value]
 }
 
 /// @notice Load an element onto the stack from a slot and three keys
 #define macro LOAD_ELEMENT_FROM_KEYS_3D(mem_ptr) = takes(4) returns(1) {
-    // Input stack: [slot, key1, key2, key3]
-    GET_SLOT_FROM_KEYS_3D(<mem_ptr>) // [slot]
-    sload                            // [value]
+    // takes:                      [key3, key2, key1, slot]
+    GET_SLOT_FROM_KEYS_3D(<mem_ptr>)
+    //                             [GET_SLOT_FROM_KEYS_3D<mem_ptr>(slot, key1, key2, key3)]
+    sload                       // [value]
+    // returns:                    [value]
 }
 
 /// @notice Store an element from a key
 #define macro STORE_ELEMENT(mem_ptr) = takes(2) returns(0) {
-    // Input stack: [key, value]
-    GET_SLOT_FROM_KEY(<mem_ptr>)    // [slot, value]
-    sstore                          // []
+    // takes:                      [value, key]
+    GET_SLOT_FROM_KEY(<mem_ptr>)
+    //                             [value, GET_SLOT_FROM_KEY<mem_ptr>(key)]
+    sstore                      // []
+    // returns:                    []
 }
 
 /// @notice Store an element from two keys
-#define macro STORE_ELEMENT_FROM_KEYS(mem_ptr) = takes(3) returns (0) {
-    // Input stack: [key1, key2, value]
-    GET_SLOT_FROM_KEYS(<mem_ptr>)   // [slot, value]
-    sstore                          // []
+#define macro STORE_ELEMENT_FROM_KEYS(mem_ptr) = takes(3) returns(0) {
+    // takes:                      [value, key2, key1]
+    GET_SLOT_FROM_KEYS(<mem_ptr>)
+    //                             [value, GET_SLOT_FROM_KEYS<mem_ptr>(key1, key2)]
+    sstore                      // []
+    // returns:                    []
 }
 
 /// @notice Store an element from a slot and two keys
-#define macro STORE_ELEMENT_FROM_KEYS_2D(mem_ptr) = takes(4) returns (0) {
-    // Input stack: [slot, key1, key2, value]
-    GET_SLOT_FROM_KEYS_2D(<mem_ptr>)    // [slot, value]
-    sstore                              // []
+#define macro STORE_ELEMENT_FROM_KEYS_2D(mem_ptr) = takes(4) returns(0) {
+    // takes:                      [value, key2, key1, slot]
+    GET_SLOT_FROM_KEYS_2D(<mem_ptr>)
+    //                             [value, GET_SLOT_FROM_KEYS_2D<mem_ptr>(slot, key1, key2)]
+    sstore                      // []
+    // returns:                    []
 }
 
 /// @notice Store an element from a slot and three keys
-#define macro STORE_ELEMENT_FROM_KEYS_3D(mem_ptr) = takes(5) returns (0) {
-    // Input stack: [slot, key1, key2, key3, value]
-    GET_SLOT_FROM_KEYS_3D(<mem_ptr>)    // [slot, value]
-    sstore                              // []
+#define macro STORE_ELEMENT_FROM_KEYS_3D(mem_ptr) = takes(5) returns(0) {
+    // takes:                      [value, key3, key2, key1, slot]
+    GET_SLOT_FROM_KEYS_3D(<mem_ptr>)
+    //                             [value, GET_SLOT_FROM_KEYS_3D<mem_ptr>(slot, key1, key2, key3)]
+    sstore                      // []
+    // returns:                    []
 }

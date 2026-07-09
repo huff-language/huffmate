@@ -47,9 +47,14 @@ contract HashmapTest is Test {
 
   /// @notice Test set a key
   function testSetKey(bytes32 key, bytes32 value) public {
-    assertEq(hmap.loadElement(key), bytes32(0));
+    bytes32 expectedSlot = keccak256(abi.encode(key));
+    assertEq(hmap.loadElement(key), bytes32(0), "Expected key to be empty");
+    assertEq(vm.load(address(hmap), expectedSlot), bytes32(0), "Expected slot to be empty");
+
     hmap.storeElement(key, value);
-    assertEq(hmap.loadElement(key), value);
+
+    assertEq(hmap.loadElement(key), value, "Expected key to be filled with value");
+    assertEq(vm.load(address(hmap), expectedSlot), value, "Expected slot to be filled with value");
   }
 
   /// @notice Test get with keys
@@ -60,9 +65,14 @@ contract HashmapTest is Test {
 
   /// @notice Test set with keys
   function testSetKeys(bytes32 key_one, bytes32 key_two, bytes32 value) public {
-    assertEq(hmap.loadElementFromKeys(key_one, key_two), bytes32(0));
+    bytes32 expectedSlot = keccak256(abi.encode(key_two, key_one));
+    assertEq(hmap.loadElementFromKeys(key_one, key_two), bytes32(0), "Expected key to be empty");
+    assertEq(vm.load(address(hmap), expectedSlot), bytes32(0), "Expected slot to be empty");
+    
     hmap.storeElementFromKeys(key_one, key_two, value);
-    assertEq(hmap.loadElementFromKeys(key_one, key_two), value);
+
+    assertEq(hmap.loadElementFromKeys(key_one, key_two), value, "Expected slot to be filled with value");
+    assertEq(vm.load(address(hmap), expectedSlot), value, "Expected slot to be filled with value");
   }
 
   /// @notice Test set with slot and 2 keys
@@ -72,9 +82,16 @@ contract HashmapTest is Test {
     bytes32 key_two, 
     bytes32 value
   ) public {
-    assertEq(hmap.loadElementFromKeys2D(slot, key_one, key_two), bytes32(0));
+    bytes32 expectedSlot = keccak256(abi.encode(key_one, slot ));
+    expectedSlot = keccak256(abi.encode(key_two, expectedSlot));
+    
+    assertEq(hmap.loadElementFromKeys2D(slot, key_one, key_two), bytes32(0), "Expected key to be empty");
+    assertEq(vm.load(address(hmap), expectedSlot), bytes32(0), "Expected slot to be empty");
+    
     hmap.storeElementFromKeys2D(slot, key_one, key_two, value);
+    
     assertEq(hmap.loadElementFromKeys2D(slot, key_one, key_two), value);
+    assertEq(vm.load(address(hmap), expectedSlot), value, "Expected slot to be filled with value");
   }
 
   /// @notice Test set with slot and 3 keys
@@ -85,8 +102,16 @@ contract HashmapTest is Test {
     bytes32 key_three, 
     bytes32 value
   ) public {
-    assertEq(hmap.loadElementFromKeys3D(slot, key_one, key_two, key_three), bytes32(0));
+    bytes32 expectedSlot = keccak256(abi.encode(key_one, slot ));
+    expectedSlot = keccak256(abi.encode(key_two, expectedSlot));
+    expectedSlot = keccak256(abi.encode(key_three, expectedSlot));
+    
+    assertEq(hmap.loadElementFromKeys3D(slot, key_one, key_two, key_three), bytes32(0), "Expected key to be empty");
+    assertEq(vm.load(address(hmap), expectedSlot), bytes32(0), "Expected slot to be empty");
+
     hmap.storeElementFromKeys3D(slot, key_one, key_two, key_three, value);
+
     assertEq(hmap.loadElementFromKeys3D(slot, key_one, key_two, key_three), value);
+    assertEq(vm.load(address(hmap), expectedSlot), value, "Expected slot to be filled with value");
   }
 }
