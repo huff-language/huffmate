@@ -152,40 +152,36 @@
     0x04 calldataload                       // [from, to]
     caller                                  // [msg.sender, from, to]
     dup2                                    // [from, msg.sender, from, to]
-    [APPROVAL_SLOT]                         // [slot, from, msg.sender, from, to]
 
-    // Check for max approval
-    LOAD_ELEMENT_FROM_KEYS_2D(0x00)         // [approved, from, to]
-    dup1                                    // [approved, approved, from, to]
-    0x44 calldataload                       // [value, approved, approved, from, to]
+    [APPROVAL_SLOT] MAPPING_SLOT_2D()       // [slot, from, to]
+    dup1 sload                              // [approved, slot, from, to]
+    0x44 calldataload                       // [value, approved, slot, from, to]
 
     // Check isOwner
-    dup4                                    // [from, value, approved, approved, from, to]
-    caller                                  // [msg.sender, from, value, approved, approved, from, to]
-    eq                                      // [msg.sender == from, value, approved, approved, from, to]
-    approved1 jumpi                         // [value, approved, approved, from, to]
+    dup4                                    // [from, value, approved, slot, from, to]
+    caller                                  // [msg.sender, from, value, approved, slot, from, to]
+    eq                                      // [msg.sender == from, value, approved, slot, from, to]
+    approved1 jumpi                         // [value, approved, slot, from, to]
 
     // Check max approval
-    dup2                                    // [approved, value, approved, approved, from, to]
-    [UINT_256_MAX]                          // [type(uint).max, approved, value, approved, approved, from, to]
-    eq                                      // [type(uint).max == approved, value, approved, approved, from, to]
-    approved1 jumpi                         // [value, approved, approved, from, to]
+    dup2                                    // [approved, value, approved, slot, from, to]
+    [UINT_256_MAX]                          // [type(uint).max, approved, value, approved, slot, from, to]
+    eq                                      // [type(uint).max == approved, value, approved, slot, from, to]
+    approved1 jumpi                         // [value, approved, slot, from, to]
 
     // Check has approval
-    gt                                      // [value > approved, approved, from, to]
-    insufficientApproval jumpi              // [approved, from, to]
+    dup2 dup2                               // [value, approved, value, approved, slot, from, to]
+    gt                                      // [value > approved, value, approved, slot, from, to]
+    insufficientApproval jumpi              // [value, approved, slot, from, to]
 
     // Adjust approval
-    0x44 calldataload                       // [value, approved, from, to]
-    swap1                                   // [approved, value, from, to]
-    sub                                     // [approved - value => newApprovalValue, from, to]
-    caller                                  // [msg.sender, newApprovalValue, from, to]
-    dup3                                    // [from, msg.sender, newApprovalValue, from, to]
-    [APPROVAL_SLOT]                         // [slot, from, msg.sender, newApprovalValue, from, to]
-    STORE_ELEMENT_FROM_KEYS_2D(0x00)        // [from, to]
+    swap1                                   // [approved, value, slot, from, to]
+    sub                                     // [approved - value => newApprovalValue, slot, from, to]
+    swap1                                   // [slot, newApprovalValue, from, to]
+    sstore                                  // [from, to]
     approved2 jump                          // [from, to]
 
-    approved1:                              // [value, approved, approved, from, to]
+    approved1:                              // [value, approved, slot, from, to]
         pop pop pop                         // [from, to]
 
     approved2:                              // [from, to]
@@ -212,34 +208,36 @@
 /// @notice Transfers an amount of tokens from
 #define macro _TRANSFER_TAKE_FROM() = takes (3) returns (3) {
     // input stack: [value, from, to]
-    dup2 [BALANCE_SLOT] LOAD_ELEMENT_FROM_KEYS(0x00)        // [balance, value, from, to]                                                // [from, value, from, to]
-    dup1                                                    // [balance, balance, value, from, to]
-    dup3                                                    // [value, balance, balance, value, from, to]
-    gt                                                      // [value > balance, balance, value, from, to]
-    iszero                                                  // [value <= balance, balance, value, from, to]
-    valid jumpi                                             // [balance, value, from, to]
+    dup2                                                    // [from, value, from, to]
+    [BALANCE_SLOT] MAPPING_SLOT()                           // [slot, value, from, to]
+    dup1 sload                                              // [balance, slot, value, from, to]
+    dup1                                                    // [balance, balance, slot, value, from, to]
+    dup4                                                    // [value, balance, balance, slot, value, from, to]
+    gt                                                      // [value > balance, balance, slot, value, from, to]
+    iszero                                                  // [value <= balance, balance, slot, value, from, to]
+    valid jumpi                                             // [balance, slot, value, from, to]
 
     // Insufficient balance
     0x00 0x00 revert                                        // []
 
     // Update the sender's balance.
     valid:
-        dup2                                                // [value, balance, value, from, to]
-        swap1                                               // [balance, value, value, from, to]
-        sub                                                 // [balance - value, value, from, to]
-        dup3                                                // [from, balance - value, value, from, to]
-        [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)        // [value, from, to]
+        dup3                                                // [value, balance, slot, value, from, to]
+        swap1                                               // [balance, value, slot, value, from, to]
+        sub                                                 // [balance - value, slot, value, from, to]
+        swap1                                               // [slot, balance - value, value, from, to]
+        sstore                                              // [value, from, to]
 }
 
 /// @notice Transfers an amount of tokens from one address to another.
 #define macro _TRANSFER_GIVE_TO() = takes (3) returns (3) {
     // input stack: [value, from, to]
-    dup1                                                // [value, value, from, to]
-    dup4                                                // [to, value, value, from, to]
-    [BALANCE_SLOT] LOAD_ELEMENT_FROM_KEYS(0x00)         // [balance, value, value, from, to]
-    add                                                 // [balance + value, value, from, to]
-    dup4                                                // [to, balance + value, value, from, to]
-    [BALANCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)        // [value, from, to]
+    dup3                                                // [to, value, from, to]
+    [BALANCE_SLOT] MAPPING_SLOT()                       // [slot, value, from, to]
+    dup1 sload                                          // [balance, slot, value, from, to]
+    dup3 add                                            // [balance + value, slot, value, from, to]
+    swap1                                               // [slot, balance + value, value, from, to]
+    sstore                                              // [value, from, to]
 }
 
 /// @notice Domain Separator
@@ -425,15 +423,15 @@
 /// @notice Increments the nonce for next time,
 #define macro _NONCE_PLUS_PLUS() = takes (1) returns (1) {
     // input stack                                  // [account]
-    dup1                                            // [account, account]
-    [NONCE_SLOT] LOAD_ELEMENT_FROM_KEYS(0x00)       // [currentNonce, account]
-    dup1                                            // [currentNonce, currentNonce, account]
-    0x01                                            // [1, currentNonce, currentNonce, account]
-    add                                             // [nextNonce, currentNonce, account]
-    dup3                                            // [account, nextNonce, currentNonce, account]
-    [NONCE_SLOT] STORE_ELEMENT_FROM_KEYS(0x00)      // [currentNonce, account]
-    swap1 // clean up stack                         // [account, currentNonce]
-    pop   // clean up stack                         // [currentNonce]
+    [NONCE_SLOT] MAPPING_SLOT()                     // [slot]
+    dup1                                            // [slot, slot]
+    sload                                           // [currentNonce, slot]
+    dup1                                            // [currentNonce, currentNonce, slot]
+    0x01                                            // [1, currentNonce, currentNonce, slot]
+    add                                             // [nextNonce, currentNonce, slot]
+    swap1                                           // [currentNonce, nextNonce, slot]
+    swap2                                           // [slot, nextNonce, currentNonce]
+    sstore                                          // [currentNonce]
 }
 
 /// @notice Nonces
