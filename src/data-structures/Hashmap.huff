@@ -103,6 +103,39 @@
     sha3                // [slot3]
 }
 
+/// @notice Computes the storage slot of `mapping[key]`
+#define macro MAPPING_SLOT() = takes(2) returns(1) {
+    // Input stack: [base_slot, key]
+    0x20 mstore     // [key]
+    0x00 mstore     // []
+    0x40 0x00 sha3  // [slot]
+}
+
+/// @notice Computes the storage slot of `mapping[key1][key2]`
+#define macro MAPPING_SLOT_2D() = takes(3) returns(1) {
+    // Input stack: [base_slot, key1, key2]
+    0x20 mstore     // [key1, key2]
+    0x00 mstore     // [key2]
+    0x40 0x00 sha3  // [slot_1, key2]
+    0x20 mstore     // [key2]
+    0x00 mstore     // []
+    0x40 0x00 sha3  // [slot]
+}
+
+/// @notice Computes the storage slot of `mapping[key1][key2][key3]`
+#define macro MAPPING_SLOT_3D() = takes(4) returns(1) {
+    // Input stack: [base_slot, key1, key2, key3]
+    0x20 mstore     // [key1, key2, key3]
+    0x00 mstore     // [key2, key3]
+    0x40 0x00 sha3  // [slot_1, key2, key3]
+    0x20 mstore     // [key2, key3]
+    0x00 mstore     // [key3]
+    0x40 0x00 sha3  // [slot_2, key3]
+    0x20 mstore     // [key3]
+    0x00 mstore     // []
+    0x40 0x00 sha3  // [slot]
+}
+
 /// @notice Load an element onto the stack from a key
 #define macro LOAD_ELEMENT(mem_ptr) = takes(1) returns(1) {
     // Input stack: [key]
