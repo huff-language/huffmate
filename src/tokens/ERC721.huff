@@ -228,30 +228,34 @@
     // Input stack:                                 // [tokenId]
     NON_PAYABLE()                                   // [tokenId]
 
+    // ownerOf[tokenId] is read here and zeroed below, so hash it once and keep the slot
     dup1                                            // [tokenId, tokenId]
-    [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, tokenId]
+    [OWNER_LOCATION] MAPPING_SLOT()                 // [ownerSlot, tokenId]
+    dup1 sload                                      // [owner, ownerSlot, tokenId]
 
     // Check that the recipient is valid
-    dup1 iszero                                     // [owner == 0, owner, tokenId]
-    not_minted jumpi                                // [owner, tokenId]
+    dup1 iszero                                     // [owner == 0, owner, ownerSlot, tokenId]
+    not_minted jumpi                                // [owner, ownerSlot, tokenId]
 
     // Create the burning params
-    0x00 swap1                                      // [owner, to (0x00), tokenId]
+    0x00 swap1                                      // [owner, to (0x00), ownerSlot, tokenId]
 
-    // Reduce the balance of owner by 1
-    0x01 dup2                                       // [owner, 1, owner, to, tokenId]
-    [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00) // [balance, 1, owner, to, tokenId]
-    sub dup2                                        // [owner, balance-1, owner, to, tokenId]
-    [BALANCE_LOCATION]
-    STORE_ELEMENT_FROM_KEYS(0x00)                   // [owner, to, tokenId]
-
-    // Set the owner of the token to 0x00
-    0x00 dup4 [OWNER_LOCATION]                      // [slot, owner, 0x00, owner, to, tokenId]
-    STORE_ELEMENT_FROM_KEYS(0x00)                   // [owner, to, tokenId]
+    // Reduce the balance of owner by 1, hashing balanceOf[owner] once for the read and write
+    dup1                                            // [owner, owner, to, ownerSlot, tokenId]
+    [BALANCE_LOCATION] MAPPING_SLOT()               // [balSlot, owner, to, ownerSlot, tokenId]
+    dup1 sload                                      // [balance, balSlot, owner, to, ownerSlot, tokenId]
+    0x01 swap1 sub                                  // [balance-1, balSlot, owner, to, ownerSlot, tokenId]
+    swap1 sstore                                    // [owner, to, ownerSlot, tokenId]
 
     // Set the approval of the token to 0x00 for the owner
-    0x00 dup4 [SINGLE_APPROVAL_LOCATION]            // [slot, owner, 0x00, owner, to, tokenId]
-    STORE_ELEMENT_FROM_KEYS(0x00)                   // [owner, to, tokenId]
+    0x00 dup5 [SINGLE_APPROVAL_LOCATION]            // [slot, tokenId, 0x00, owner, to, ownerSlot, tokenId]
+    STORE_ELEMENT_FROM_KEYS(0x00)                   // [owner, to, ownerSlot, tokenId]
+
+    // Set the owner of the token to 0x00, reusing the slot hashed above
+    swap2                                           // [ownerSlot, to, owner, tokenId]
+    0x00 swap1                                      // [ownerSlot, 0x00, to, owner, tokenId]
+    sstore                                          // [to, owner, tokenId]
+    swap1                                           // [owner, to, tokenId]
 
     // Emit the transfer event.
     __EVENT_HASH(Transfer)                          // [sig, owner, to (0x00), tokenId]
@@ -529,27 +533,24 @@
 
     is_authorized:
 
-    // Update balance of from
-    0x01 dup2                                       // [from, 1, from, to, tokenId]
-    [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00) // [balance, 1, from, to, tokenId]
-    sub dup2                                        // [from, balance-1, from, to, tokenId]
-    [BALANCE_LOCATION]
-    STORE_ELEMENT_FROM_KEYS(0x00)                   // [from, to, tokenId]
+    // Update balance of from. The entry is read and written, so hash it once and reuse the slot
+    dup1                                            // [from, from, to, tokenId]
+    [BALANCE_LOCATION] MAPPING_SLOT()               // [slot, from, to, tokenId]
+    dup1 sload                                      // [balance, slot, from, to, tokenId]
+    0x01 swap1 sub                                  // [balance-1, slot, from, to, tokenId]
+    swap1 sstore                                    // [from, to, tokenId]
 }
 
 /// @notice Internal Macro to update Transfer to accounting
 #define macro TRANSFER_GIVE_TO() = takes (3) returns (3) {
-    // retrieve balance
+    // Bump the balance of to. The entry is read and written, so hash it once and reuse the slot
     // input stack:                 // [from, to, tokenId]
     dup2                            // [to, from, to, tokenId]
 	[BALANCE_LOCATION]              // [balance_slot, to, from, to, tokenId]
-    LOAD_ELEMENT_FROM_KEYS(0x00)    // [balance, from, to, tokenId]
-    0x01 add                        // [balance+1, from, to, tokenId]
-
-    // update balance
-	dup3                            // [to, balance+1, from, to, tokenId]
-    [BALANCE_LOCATION]              // [balance_slot, to, balance+1, from, to, tokenId]
-    STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
+    MAPPING_SLOT()                  // [slot, from, to, tokenId]
+    dup1 sload                      // [balance, slot, from, to, tokenId]
+    0x01 add                        // [balance+1, slot, from, to, tokenId]
+    swap1 sstore                    // [from, to, tokenId]
 
     // update ownerOf
     dup2 dup4                       // [tokenId, to, from, to, tokenId]
