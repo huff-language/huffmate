@@ -5,6 +5,8 @@ import "forge-std/Test.sol";
 import { HuffDeployer } from "foundry-huff/HuffDeployer.sol";
 import { HuffConfig } from "foundry-huff/HuffConfig.sol";
 import {NonMatchingSelectorsHelper} from "../test-utils/NonMatchingSelectorHelper.sol";
+import {RolesAuthority as SolmateRolesAuthority} from "solmate/auth/authorities/RolesAuthority.sol";
+import {Authority} from "solmate/auth/Auth.sol";
 
 
 interface RolesAuthority {
@@ -18,6 +20,9 @@ interface RolesAuthority {
 
 contract RolesAuthorityTest is Test, NonMatchingSelectorsHelper {
   RolesAuthority roleAuth;
+
+  /// @dev Reference implementation used to assert the expected behaviour of the huff port
+  SolmateRolesAuthority solmateRoleAuth;
 
   address constant OWNER = address(0x420);
   address constant INIT_AUTHORITY = address(0x0);
@@ -41,6 +46,9 @@ contract RolesAuthorityTest is Test, NonMatchingSelectorsHelper {
     emit AuthorityUpdated(address(config), INIT_AUTHORITY);
     emit OwnerUpdated(address(config), OWNER);
     roleAuth = RolesAuthority(config.deploy("auth/RolesAuthority"));
+
+    // Deploy the solmate reference implementation with the same owner / authority
+    solmateRoleAuth = new SolmateRolesAuthority(OWNER, Authority(INIT_AUTHORITY));
   }
 
   /// @notice Test that a non-matching selector reverts
@@ -120,5 +128,123 @@ contract RolesAuthorityTest is Test, NonMatchingSelectorsHelper {
     roleAuth.setUserRole(user, role, true);
 
     assertEq(roleAuth.hasRole(user, role), true);
+  }
+
+  /*//////////////////////////////////////////////////////////////
+                  CAPABILITY MAPPING COLLISION TESTS
+  //////////////////////////////////////////////////////////////*/
+
+  /// @notice Granting a capability to a role must not make that capability public.
+  /// @dev Regression test: `isCapabilityPublic` and `getRolesWithCapability` were both
+  ///      keyed on `keccak256(target, functionSig)` without a distinct mapping slot, so
+  ///      writing a role bitmap for a capability was misread as the capability being public.
+  function testSetRoleCapabilityDoesNotMakeCapabilityPublic() public {
+    uint8 role = 5;
+    address target = address(0xCAFE);
+    bytes4 sig = bytes4(0xBEEFCAFE);
+    address user = address(0xBEEF);
+
+    // Nothing has been configured yet
+    assertFalse(roleAuth.canCall(user, target, sig));
+
+    // Only grant the capability to the role. It is NOT made public.
+    vm.prank(OWNER);
+    roleAuth.setRoleCapability(role, target, sig, true);
+    assertTrue(roleAuth.doesRoleHaveCapability(role, target, sig));
+
+    // The user holds no roles, so it must not be authorized
+    assertFalse(roleAuth.hasRole(user, role));
+    assertFalse(roleAuth.canCall(user, target, sig));
+
+    // Once the user is granted the role it must be authorized
+    vm.prank(OWNER);
+    roleAuth.setUserRole(user, role, true);
+    assertTrue(roleAuth.canCall(user, target, sig));
+
+    // Revoking the role must revoke access again
+    vm.prank(OWNER);
+    roleAuth.setUserRole(user, role, false);
+    assertFalse(roleAuth.canCall(user, target, sig));
+  }
+
+  /// @notice Making a capability public must not grant it to any role.
+  /// @dev The inverse of the collision: `setPublicCapability(.., true)` stores a `1`, which
+  ///      was misread as role `0` holding the capability.
+  function testSetPublicCapabilityDoesNotGrantRoleCapability() public {
+    address target = address(0xCAFE);
+    bytes4 sig = bytes4(0xBEEFCAFE);
+
+    vm.prank(OWNER);
+    roleAuth.setPublicCapability(target, sig, true);
+
+    // Anyone can call a public capability
+    assertTrue(roleAuth.canCall(address(0xBEEF), target, sig));
+
+    // But no role has been granted the capability
+    assertFalse(roleAuth.doesRoleHaveCapability(0, target, sig));
+
+    // Disabling a public capability must not clear a previously granted role capability
+    vm.prank(OWNER);
+    roleAuth.setRoleCapability(3, target, sig, true);
+    vm.prank(OWNER);
+    roleAuth.setPublicCapability(target, sig, false);
+    assertTrue(roleAuth.doesRoleHaveCapability(3, target, sig));
+    assertFalse(roleAuth.canCall(address(0xBEEF), target, sig));
+  }
+
+  /// @notice Equivalent of `testSetRoleCapabilityDoesNotMakeCapabilityPublic` run against the
+  ///         solmate reference implementation, asserting the behaviour the huff port must match.
+  function testSolmateSetRoleCapabilityDoesNotMakeCapabilityPublic() public {
+    uint8 role = 5;
+    address target = address(0xCAFE);
+    bytes4 sig = bytes4(0xBEEFCAFE);
+    address user = address(0xBEEF);
+
+    assertFalse(solmateRoleAuth.canCall(user, target, sig));
+
+    vm.prank(OWNER);
+    solmateRoleAuth.setRoleCapability(role, target, sig, true);
+    assertTrue(solmateRoleAuth.doesRoleHaveCapability(role, target, sig));
+
+    assertFalse(solmateRoleAuth.doesUserHaveRole(user, role));
+    assertFalse(solmateRoleAuth.canCall(user, target, sig));
+
+    vm.prank(OWNER);
+    solmateRoleAuth.setUserRole(user, role, true);
+    assertTrue(solmateRoleAuth.canCall(user, target, sig));
+
+    vm.prank(OWNER);
+    solmateRoleAuth.setUserRole(user, role, false);
+    assertFalse(solmateRoleAuth.canCall(user, target, sig));
+  }
+
+  /// @notice Differential fuzz: the huff port must agree with solmate for any combination of
+  ///         role capability / public capability / user role configuration.
+  function testFuzzCanCallMatchesSolmate(
+    uint8 role,
+    address target,
+    bytes4 sig,
+    address user,
+    bool roleEnabled,
+    bool publicEnabled,
+    bool userHasRole
+  ) public {
+    vm.startPrank(OWNER);
+    roleAuth.setRoleCapability(role, target, sig, roleEnabled);
+    solmateRoleAuth.setRoleCapability(role, target, sig, roleEnabled);
+
+    roleAuth.setPublicCapability(target, sig, publicEnabled);
+    solmateRoleAuth.setPublicCapability(target, sig, publicEnabled);
+
+    roleAuth.setUserRole(user, role, userHasRole);
+    solmateRoleAuth.setUserRole(user, role, userHasRole);
+    vm.stopPrank();
+
+    assertEq(roleAuth.hasRole(user, role), solmateRoleAuth.doesUserHaveRole(user, role));
+    assertEq(roleAuth.doesRoleHaveCapability(role, target, sig), solmateRoleAuth.doesRoleHaveCapability(role, target, sig));
+    assertEq(roleAuth.canCall(user, target, sig), solmateRoleAuth.canCall(user, target, sig));
+
+    // Expected outcome spelled out explicitly
+    assertEq(roleAuth.canCall(user, target, sig), publicEnabled || (roleEnabled && userHasRole));
   }
 }
