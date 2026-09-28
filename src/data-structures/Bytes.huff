@@ -49,7 +49,7 @@
   
     bridge:                           // [index(j), free_loc_pos, len2, mem_ptr2]
       dup4 0x20 add                   // [index(i), index(j), free_loc_pos, len2, mem_ptr2]
-      dup5                            // [len2, index(i), index(j), free_loc_pos, len2, mem_ptr2]
+      dup4                            // [len2, index(i), index(j), free_loc_pos, len2, mem_ptr2]
       0x01                            // [is_sec_loop, len2, index(i), index(j), free_loc_pos, len2, mem_ptr2]
       loop jump
         

@@ -40,10 +40,11 @@ contract BytesTest is Test {
 
     function testConcat2() public {
         b.concatMemoryAndSet2();
-        assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(96)));
+        assertEq(vm.load(address(b), bytes32(0)), bytes32(uint256(128)));
         assertEq(vm.load(address(b), bytes32(uint256(32))), bytes32(0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe));
         assertEq(vm.load(address(b), bytes32(uint256(64))), bytes32(0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe));
         assertEq(vm.load(address(b), bytes32(uint256(96))), bytes32(0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe));
+        assertEq(vm.load(address(b), bytes32(uint256(128))), bytes32(0xbabe3babe3babe3babe3babe3babe3babe3babe3babe3babe3babe3babe3babe));
     }
 
     function testConcat3() public {
