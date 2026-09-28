@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "foundry-huff/HuffDeployer.sol";
 import {NonMatchingSelectorsHelper} from "../test-utils/NonMatchingSelectorHelper.sol";
+import {RolesAuthority as SolmateRolesAuthority, Authority} from "solmate/auth/authorities/RolesAuthority.sol";
 
 interface Auth {
   function setOwner(address) external;
@@ -147,6 +148,20 @@ contract AuthTest is Test, NonMatchingSelectorsHelper {
     emit AuthorityUpdated(address(this), new_authority);
     auth.setAuthority(new_authority);
     // vm.stopPrank();
+    assertEq(new_authority, auth.authority());
+
+    vm.prank(OWNER);
+    auth.setAuthority(INIT_AUTHORITY);
+    assertEq(INIT_AUTHORITY, auth.authority());
+
+    // A Solidity authority ABI-decodes canCall, so the full calldata must be sent
+    SolmateRolesAuthority solmateAuth = new SolmateRolesAuthority(OWNER, Authority(address(0)));
+    vm.prank(OWNER);
+    auth.setAuthority(address(solmateAuth));
+    vm.prank(OWNER);
+    solmateAuth.setPublicCapability(address(auth), bytes4(0x7a9e5e4b), true);
+
+    auth.setAuthority(new_authority);
     assertEq(new_authority, auth.authority());
 
     vm.prank(OWNER);
