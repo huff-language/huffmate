@@ -67,12 +67,16 @@ contract ERC4626Test is Test {
         underlying = new TestToken(); // 10_000 ** 18
 
         // Deploy the ERC4626
+        vault = deployVault(address(underlying));
+    }
+
+    function deployVault(address asset) internal returns (MockERC4626) {
         string memory wrapper_code = vm.readFile("test/tokens/mocks/ERC4626Wrappers.huff");
-        vault = MockERC4626(
+        return MockERC4626(
             HuffDeployer
                 .config()
                 .with_code(wrapper_code)
-                .with_args(bytes.concat(abi.encode(address(underlying)), abi.encode("Token"), abi.encode("TKN")))
+                .with_args(bytes.concat(abi.encode(asset), abi.encode("Token"), abi.encode("TKN")))
                 .deploy("tokens/ERC4626")
         );
     }
@@ -510,10 +514,115 @@ contract ERC4626Test is Test {
         assertEq(vault.balanceOf(bob), 0);
         assertEq(underlying.balanceOf(alice), 1e18);
     }
+
+    /// @notice Tokens that return false instead of reverting must not be treated as a successful transfer
+    function test_RevertWhen_DepositTransferFromReturnsFalse() public {
+        FalseReturnToken token = new FalseReturnToken();
+        MockERC4626 falseVault = deployVault(address(token));
+
+        vm.expectRevert();
+        falseVault.deposit(1e18, address(this));
+        assertEq(falseVault.balanceOf(address(this)), 0);
+    }
+
+    function test_RevertWhen_MintTransferFromReturnsFalse() public {
+        FalseReturnToken token = new FalseReturnToken();
+        MockERC4626 falseVault = deployVault(address(token));
+
+        vm.expectRevert();
+        falseVault.mint(1e18, address(this));
+        assertEq(falseVault.balanceOf(address(this)), 0);
+    }
+
+    function test_RevertWhen_RedeemTransferReturnsFalse() public {
+        FalseReturnToken token = new FalseReturnToken();
+        MockERC4626 falseVault = deployVault(address(token));
+
+        token.mint(address(this), 1e18);
+        token.approve(address(falseVault), 1e18);
+        falseVault.deposit(1e18, address(this));
+
+        token.setBlockTransfer(true);
+        vm.expectRevert();
+        falseVault.redeem(1e18, address(this), address(this));
+        assertEq(falseVault.balanceOf(address(this)), 1e18);
+    }
+
+    function test_RevertWhen_WithdrawTransferReturnsFalse() public {
+        FalseReturnToken token = new FalseReturnToken();
+        MockERC4626 falseVault = deployVault(address(token));
+
+        token.mint(address(this), 1e18);
+        token.approve(address(falseVault), 1e18);
+        falseVault.deposit(1e18, address(this));
+
+        token.setBlockTransfer(true);
+        vm.expectRevert();
+        falseVault.withdraw(1e18, address(this), address(this));
+        assertEq(falseVault.balanceOf(address(this)), 1e18);
+    }
+
+    /// @notice Tokens that return no data (e.g. USDT) must still work
+    function testNoReturnDataToken() public {
+        NoReturnToken token = new NoReturnToken();
+        MockERC4626 noReturnVault = deployVault(address(token));
+
+        token.mint(address(this), 1e18);
+        token.approve(address(noReturnVault), 1e18);
+
+        noReturnVault.deposit(1e18, address(this));
+        assertEq(noReturnVault.balanceOf(address(this)), 1e18);
+
+        noReturnVault.redeem(1e18, address(this), address(this));
+        assertEq(noReturnVault.balanceOf(address(this)), 0);
+        assertEq(token.balanceOf(address(this)), 1e18);
+    }
 }
 
 contract TestToken is MockERC20 {
     constructor() MockERC20("Mock Token", "TKN", 18) {
         // _mint(msg.sender, initialSupply);
+    }
+}
+
+/// @notice Returns false instead of reverting on failure (e.g. ZRX)
+contract FalseReturnToken {
+    uint8 public decimals = 18;
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+    bool public blockTransfer;
+
+    function setBlockTransfer(bool v) external { blockTransfer = v; }
+    function mint(address to, uint256 a) external { balanceOf[to] += a; }
+    function approve(address s, uint256 a) external returns (bool) { allowance[msg.sender][s] = a; return true; }
+
+    function transfer(address to, uint256 a) external returns (bool) {
+        if (blockTransfer || balanceOf[msg.sender] < a) return false;
+        balanceOf[msg.sender] -= a; balanceOf[to] += a; return true;
+    }
+
+    function transferFrom(address f, address to, uint256 a) external returns (bool) {
+        if (balanceOf[f] < a || allowance[f][msg.sender] < a) return false;
+        allowance[f][msg.sender] -= a; balanceOf[f] -= a; balanceOf[to] += a; return true;
+    }
+}
+
+/// @notice Returns no data from transfer/transferFrom (e.g. USDT)
+contract NoReturnToken {
+    uint8 public decimals = 18;
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    function mint(address to, uint256 a) external { balanceOf[to] += a; }
+    function approve(address s, uint256 a) external { allowance[msg.sender][s] = a; }
+
+    function transfer(address to, uint256 a) external {
+        require(balanceOf[msg.sender] >= a);
+        balanceOf[msg.sender] -= a; balanceOf[to] += a;
+    }
+
+    function transferFrom(address f, address to, uint256 a) external {
+        require(balanceOf[f] >= a && allowance[f][msg.sender] >= a);
+        allowance[f][msg.sender] -= a; balanceOf[f] -= a; balanceOf[to] += a;
     }
 }

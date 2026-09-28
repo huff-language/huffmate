@@ -154,7 +154,7 @@
     _GET_IMMUTABLE(ASSET_OFFSET, 0x80) // [asset, assets, shares, receiver]
 
     // Construct the call
-    0x00                            // [retSize, asset, assets, shares, receiver]
+    0x20                            // [retSize, asset, assets, shares, receiver]
     0x00                            // [retOffset, retSize, asset, assets, shares, receiver]
     0x64                            // [argSize, retOffset, retSize, asset, assets, shares, receiver]
     0x00                            // [argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver]
@@ -163,7 +163,11 @@
     gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver]
     call                            // [success, asset, assets, shares, receiver]
 
-    // Verify the call succeeded
+    // Verify the call succeeded and that the token signalled success:
+    // either no return data, or a single word equal to one
+    returndatasize iszero           // [no_ret_data, success, asset, assets, shares, receiver]
+    0x00 mload 0x01 eq              // [ret_is_true, no_ret_data, success, asset, assets, shares, receiver]
+    or and                          // [transfer_ok, asset, assets, shares, receiver]
     success jumpi                   // [asset, assets, shares, receiver]
     0x00 dup1 revert                // []
     success:
@@ -272,7 +276,7 @@
     // [ADDRESS]
 
     // Construct the call
-    0x00                            // [retSize, asset, assets, shares, receiver, owner]
+    0x20                            // [retSize, asset, assets, shares, receiver, owner]
     0x00                            // [retOffset, retSize, asset, assets, shares, receiver, owner]
     0x44                            // [argSize, retOffset, retSize, asset, assets, shares, receiver, owner]
     0x00                            // [argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver, owner]
@@ -281,7 +285,11 @@
     gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, assets, shares, receiver, owner]
     call                            // [success, asset, assets, shares, receiver, owner]
 
-    // Verify the call succeeded
+    // Verify the call succeeded and that the token signalled success:
+    // either no return data, or a single word equal to one
+    returndatasize iszero           // [no_ret_data, success, asset, assets, shares, receiver, owner]
+    0x00 mload 0x01 eq              // [ret_is_true, no_ret_data, success, asset, assets, shares, receiver, owner]
+    or and                          // [transfer_ok, asset, assets, shares, receiver, owner]
     success jumpi                   // [asset, assets, shares, receiver, owner]
     0x00 dup1 revert                // []
     success:
@@ -332,7 +340,7 @@
     _GET_IMMUTABLE(ASSET_OFFSET, 0x80) // [asset, shares, assets, receiver]
 
     // Construct the call
-    0x00                            // [retSize, asset, shares, assets, receiver]
+    0x20                            // [retSize, asset, shares, assets, receiver]
     0x00                            // [retOffset, retSize, asset, shares, assets, receiver]
     0x64                            // [argSize, retOffset, retSize, asset, shares, assets, receiver]
     0x00                            // [argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver]
@@ -341,7 +349,11 @@
     gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver]
     call                            // [success, asset, shares, assets, receiver]
 
-    // Verify the call succeeded
+    // Verify the call succeeded and that the token signalled success:
+    // either no return data, or a single word equal to one
+    returndatasize iszero           // [no_ret_data, success, asset, shares, assets, receiver]
+    0x00 mload 0x01 eq              // [ret_is_true, no_ret_data, success, asset, shares, assets, receiver]
+    or and                          // [transfer_ok, asset, shares, assets, receiver]
     success jumpi                   // [asset, shares, assets, receiver]
     0x00 dup1 revert                // []
     success:
@@ -445,7 +457,7 @@
     _GET_IMMUTABLE(ASSET_OFFSET, 0x80) // [asset, shares, assets, receiver, owner]
 
     // Construct the call
-    0x00                            // [retSize, asset, shares, assets, receiver, owner]
+    0x20                            // [retSize, asset, shares, assets, receiver, owner]
     0x00                            // [retOffset, retSize, asset, shares, assets, receiver, owner]
     0x44                            // [argSize, retOffset, retSize, asset, shares, assets, receiver, owner]
     0x00                            // [argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver, owner]
@@ -454,7 +466,11 @@
     gas                             // [gas, to, value, argOffset, argSize, retOffset, retSize, asset, shares, assets, receiver, owner]
     call                            // [success, asset, shares, assets, receiver, owner]
 
-    // Verify the call succeeded
+    // Verify the call succeeded and that the token signalled success:
+    // either no return data, or a single word equal to one
+    returndatasize iszero           // [no_ret_data, success, asset, shares, assets, receiver, owner]
+    0x00 mload 0x01 eq              // [ret_is_true, no_ret_data, success, asset, shares, assets, receiver, owner]
+    or and                          // [transfer_ok, asset, shares, assets, receiver, owner]
     success jumpi                   // [asset, shares, assets, receiver, owner]
     0x00 dup1 revert                // []
     success:
