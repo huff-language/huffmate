@@ -1,6 +1,7 @@
 
 #define function getTargetSaleTime(int256) view returns (int256)
 #define function getVRGDAPrice(int256, uint256) view returns (uint256)
+#define function expWadPlusOne(int256) pure returns (int256)
 
 // Getters to demonstrate how to override constants in huff
 #define function targetPrice() view returns(int256)
@@ -10,10 +11,20 @@
 #define function logisticLimitDoubled() view returns(int256)
 
 
+/// @notice Runs code after EXP_WAD, which only executes if the macro hands control back
+#define macro EXP_WAD_PLUS_ONE_WRAPPER(fail) = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    EXP_WAD(fail)     // [result]
+    0x01 add          // [result + 1]
+    0x00 mstore
+    0x20 0x00 return
+}
+
 #define macro MAIN() = {
     pc calldataload 0xE0 shr
     dup1 __FUNC_SIG(getVRGDAPrice) eq getVRGDAPrice jumpi
     dup1 __FUNC_SIG(getTargetSaleTime) eq getTargetSaleTime jumpi
+    dup1 __FUNC_SIG(expWadPlusOne) eq expWadPlusOne jumpi
     dup1 __FUNC_SIG(targetPrice) eq targetPrice jumpi
     dup1 __FUNC_SIG(decayConstant) eq decayConstant jumpi
     dup1 __FUNC_SIG(timeScale) eq timeScale jumpi
@@ -27,6 +38,8 @@
         GET_VRGDA_PRICE_EXTERNAL(fail)
     getTargetSaleTime:
         GET_TARGET_SALE_TIME_EXTERNAL(fail)
+    expWadPlusOne:
+        EXP_WAD_PLUS_ONE_WRAPPER(fail)
     targetPrice:
         RETURN_CONSTANT(TARGET_PRICE)
     decayConstant:

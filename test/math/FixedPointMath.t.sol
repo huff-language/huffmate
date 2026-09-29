@@ -13,6 +13,7 @@ interface IFixedPointMath {
     function divWadUp(uint256,uint256) external pure returns(uint256);
     function rpow(uint256,uint256,uint256) external pure returns(uint256);
     function expWad(int256) external pure returns(int256);
+    function expWadPlusOne(int256) external pure returns(int256);
     function lnWad(int256) external pure returns(int256);
     function powWad(int256,int256) external pure returns(int256);
     function sqrt(uint256) external pure returns(uint256);
@@ -32,6 +33,10 @@ contract FixedPointMathTest is Test {
 
     function testExpWad() public {
         assertEq(math.expWad(-42139678854452767551), 0);
+        // The zero branch must hand control back to the caller instead of returning
+        assertEq(math.expWadPlusOne(-42139678854452767551), 1);
+        assertEq(math.expWadPlusOne(type(int256).min), 1);
+        assertEq(math.expWadPlusOne(-1e18), 367879441171442321 + 1);
 
         assertEq(math.expWad(-3e18), 49787068367863942);
         assertEq(math.expWad(-2e18), 135335283236612691);

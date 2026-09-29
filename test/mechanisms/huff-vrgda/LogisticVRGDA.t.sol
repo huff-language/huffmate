@@ -17,6 +17,7 @@ uint256 constant MAX_SELLABLE = 6392;
 interface MockLogisticVRGDA {
     function getTargetSaleTime(int256 sold) external view returns (int256);
     function getVRGDAPrice(int256 timeSinceStart, uint256 sold) external view returns (uint256);
+    function expWadPlusOne(int256 x) external pure returns (int256);
 
     function targetPrice() external view returns (int256);
     function timeScale() external view returns (int256);
@@ -93,6 +94,13 @@ contract LogisticVRGDATest is Test {
 
         // Equal within 2 percent since num mint is rounded from true decimal amount.
         assertEq(cost / 0.02e18, uint256(vrgda.targetPrice()) / 0.02e18);
+    }
+
+    function testExpWadZeroBranchReturnsToCaller() public {
+        // The zero branch must hand control back to the caller instead of returning
+        assertEq(vrgda.expWadPlusOne(-42139678854452767551), 1);
+        assertEq(vrgda.expWadPlusOne(type(int256).min), 1);
+        assertEq(vrgda.expWadPlusOne(-1e18), 367879441171442321 + 1);
     }
 
     function testGetTargetSaleTimeDoesNotRevertEarly() public view {

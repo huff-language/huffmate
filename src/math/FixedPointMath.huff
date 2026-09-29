@@ -172,8 +172,8 @@
     finish jump
 
     ret_zero:
-        0x00 dup1 mstore
-        0x20 0x00 return
+        pop                 // []
+        0x00                // [result]
     finish:
     // Return stack:           [result]
 }
