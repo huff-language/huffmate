@@ -78,6 +78,33 @@ contract ERC20Test is Test {
         assertEq(mockTokenDecimals, DECIMALS);
     }
 
+    function testDomainSeparatorIsEIP712Compliant() public {
+        bytes32 expected = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes(NAME)),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(token)
+            )
+        );
+        assertEq(token.DOMAIN_SEPARATOR(), expected);
+
+        // End-to-end: a permit signed against the canonical domain separator must be accepted.
+        uint256 ownerPk = 0xA11CE;
+        address owner = vm.addr(ownerPk);
+        address spender = address(0xCAFE);
+        uint256 value = 1e18;
+        uint256 deadline = block.timestamp;
+
+        bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, uint256(0), deadline));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", expected, structHash));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPk, digest);
+
+        token.permit(owner, spender, value, deadline, v, r, s);
+        assertEq(token.allowance(owner, spender), value);
+    }
+
     function testNonPayable() public {
         vm.deal(address(this), 10 ether);
 
