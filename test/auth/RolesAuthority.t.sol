@@ -121,4 +121,31 @@ contract RolesAuthorityTest is Test, NonMatchingSelectorsHelper {
 
     assertEq(roleAuth.hasRole(user, role), true);
   }
+
+  /// @notice Test capability maps do not collide
+  function testCapabilityMapsDoNotCollide() public {
+    address target = address(0xDEAD);
+    bytes4 sig = bytes4(0xdeadbeef);
+    address mallory = address(0xBAD);
+
+    // Grant a specific role the capability. It is NOT made public.
+    vm.prank(OWNER);
+    roleAuth.setRoleCapability(5, target, sig, true);
+    assertTrue(roleAuth.doesRoleHaveCapability(5, target, sig));
+
+    // A role bitmap must not be misread as "public": Mallory holds no roles...
+    assertFalse(roleAuth.hasRole(mallory, 5));
+    // ...so Mallory must not be authorized to call the capability.
+    assertFalse(roleAuth.canCall(mallory, target, sig));
+
+    // A user actually granted the role should be authorized.
+    vm.prank(OWNER);
+    roleAuth.setUserRole(mallory, 5, true);
+    assertTrue(roleAuth.canCall(mallory, target, sig));
+
+    // Toggling the distinct public-capability flag must leave the role bitmap intact.
+    vm.prank(OWNER);
+    roleAuth.setPublicCapability(target, sig, false);
+    assertTrue(roleAuth.doesRoleHaveCapability(5, target, sig));
+  }
 }

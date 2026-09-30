@@ -47,7 +47,8 @@
 
 /// @notice Helper to get the role for a capability
 #define macro GET_ROLE_FOR_CAPABILITY() = takes (2) returns (1) {
-  LOAD_ELEMENT_FROM_KEYS(0x00)       // [role]
+  [GET_ROLES_WITH_CAPABILITY_LOCATION]  // [location, target, sig]
+  LOAD_ELEMENT_FROM_KEYS_2D(0x00)       // [role]
 }
 
 /// @notice Checks if a Role has a Capability
@@ -67,7 +68,8 @@
 
 /// @notice Helper to get if a capability is public
 #define macro IS_CAPABILITY_PUBLIC() = takes (2) returns (1) {
-  LOAD_ELEMENT_FROM_KEYS(0x00)       // [public]
+  [IS_CAPABILITY_PUBLIC_LOCATION]    // [location, target, sig]
+  LOAD_ELEMENT_FROM_KEYS_2D(0x00)    // [public]
 }
 
 /// @notice Checks if an account can call a function on a given address
@@ -115,7 +117,8 @@
   0x44 calldataload                         // [value]
   0x24 calldataload                         // [sig, value]
   0x04 calldataload                         // [target, sig, value]
-  STORE_ELEMENT_FROM_KEYS(0x00)             // []
+  [IS_CAPABILITY_PUBLIC_LOCATION]           // [location, target, sig, value]
+  STORE_ELEMENT_FROM_KEYS_2D(0x00)          // []
 
   // Emit the capability updated event
   0x44 calldataload                         // [value]
@@ -158,7 +161,8 @@
     // Store the new capability
     0x44 calldataload                         // [sig, updated]
     0x24 calldataload                         // [target, sig, updated]
-    STORE_ELEMENT_FROM_KEYS(0x00)             // []
+    [GET_ROLES_WITH_CAPABILITY_LOCATION]      // [location, target, sig, updated]
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)          // []
 
     // Jump to the emit log label
     emit_log jump
@@ -177,7 +181,8 @@
     // Store the new capability
     0x44 calldataload                         // [sig, capabilies]
     0x24 calldataload                         // [target, sig, capabilies]
-    STORE_ELEMENT_FROM_KEYS(0x00)             // []
+    [GET_ROLES_WITH_CAPABILITY_LOCATION]      // [location, target, sig, capabilies]
+    STORE_ELEMENT_FROM_KEYS_2D(0x00)          // []
 
   // Emit the capability updated event
   emit_log:
