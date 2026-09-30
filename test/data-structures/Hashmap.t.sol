@@ -25,6 +25,10 @@ interface Hashmap {
     bytes32 key3,
     bytes32 value
   ) external;
+  function mappingSlot(bytes32 baseSlot, bytes32 key) external view returns (bytes32);
+  function mappingSlot2D(bytes32 baseSlot, bytes32 key1, bytes32 key2) external view returns (bytes32);
+  function mappingSlot3D(bytes32 baseSlot, bytes32 key1, bytes32 key2, bytes32 key3)
+    external view returns (bytes32);
 }
 
 contract HashmapTest is Test {
@@ -88,5 +92,58 @@ contract HashmapTest is Test {
     assertEq(hmap.loadElementFromKeys3D(slot, key_one, key_two, key_three), bytes32(0));
     hmap.storeElementFromKeys3D(slot, key_one, key_two, key_three, value);
     assertEq(hmap.loadElementFromKeys3D(slot, key_one, key_two, key_three), value);
+  }
+
+  /// >>>>>>>>>>>>>>>>>>>  MAPPING_SLOT EQUIVALENCE  <<<<<<<<<<<<<<<<<<<<< ///
+
+  /// @notice MAPPING_SLOT must match the Solidity mapping slot convention.
+  function testMappingSlotMatchesConvention(bytes32 baseSlot, bytes32 key) public {
+    assertEq(hmap.mappingSlot(baseSlot, key), keccak256(abi.encode(key, baseSlot)));
+  }
+
+  function testMappingSlot2DMatchesConvention(bytes32 baseSlot, bytes32 key1, bytes32 key2) public {
+    bytes32 inner = keccak256(abi.encode(key1, baseSlot));
+    assertEq(hmap.mappingSlot2D(baseSlot, key1, key2), keccak256(abi.encode(key2, inner)));
+  }
+
+  function testMappingSlot3DMatchesConvention(
+    bytes32 baseSlot,
+    bytes32 key1,
+    bytes32 key2,
+    bytes32 key3
+  ) public {
+    bytes32 inner = keccak256(abi.encode(key2, keccak256(abi.encode(key1, baseSlot))));
+    assertEq(hmap.mappingSlot3D(baseSlot, key1, key2, key3), keccak256(abi.encode(key3, inner)));
+  }
+
+  /// @notice MAPPING_SLOT must resolve to the exact slot STORE_ELEMENT_FROM_KEYS writes to,
+  ///         otherwise swapping one for the other silently relocates storage.
+  function testMappingSlotAgreesWithStoreElement(bytes32 key1, bytes32 key2, bytes32 value) public {
+    vm.assume(value != bytes32(0));
+    hmap.storeElementFromKeys(key1, key2, value);
+    assertEq(vm.load(address(hmap), hmap.mappingSlot(key1, key2)), value);
+  }
+
+  function testMappingSlot2DAgreesWithStoreElement(
+    bytes32 slot,
+    bytes32 key1,
+    bytes32 key2,
+    bytes32 value
+  ) public {
+    vm.assume(value != bytes32(0));
+    hmap.storeElementFromKeys2D(slot, key1, key2, value);
+    assertEq(vm.load(address(hmap), hmap.mappingSlot2D(slot, key1, key2)), value);
+  }
+
+  function testMappingSlot3DAgreesWithStoreElement(
+    bytes32 slot,
+    bytes32 key1,
+    bytes32 key2,
+    bytes32 key3,
+    bytes32 value
+  ) public {
+    vm.assume(value != bytes32(0));
+    hmap.storeElementFromKeys3D(slot, key1, key2, key3, value);
+    assertEq(vm.load(address(hmap), hmap.mappingSlot3D(slot, key1, key2, key3)), value);
   }
 }

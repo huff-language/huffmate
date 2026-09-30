@@ -212,28 +212,29 @@
 
     // Check if the caller is approved to redeem the shares
 
-    // Get the allowance[owner][msg.sender]
+    // Get the allowance[owner][msg.sender]. The slot is kept on the stack because the
+    // approval is read here and written again below
     caller dup4                         // [owner, msg.sender, shares, receiver, owner]
-    [APPROVAL_SLOT]                     // [slot, owner, msg.sender, shares, receiver, owner]
-    LOAD_ELEMENT_FROM_KEYS_2D(0x00)     // [allowance, shares, receiver, owner]
+    [APPROVAL_SLOT] MAPPING_SLOT_2D()   // [slot, shares, receiver, owner]
+    dup1 sload                          // [allowance, slot, shares, receiver, owner]
 
     // If the allowed is no infinite approval, set to the allowance less shares
-    dup1 [TYPE_UINT_256_MAX]            // [type(uint256).max, allowance, allowance, shares, receiver, owner]
-    eq infinite jumpi                   // [allowance, shares, receiver, owner]
+    dup1 [TYPE_UINT_256_MAX]            // [type(uint256).max, allowance, allowance, slot, shares, receiver, owner]
+    eq infinite jumpi                   // [allowance, slot, shares, receiver, owner]
 
     // Revert unless the caller is approved for at least `shares` (allowance >= shares).
-    dup2 dup2 lt iszero redeem_approved jumpi  // [allowance, shares, receiver, owner]
+    dup3 dup2 lt iszero redeem_approved jumpi  // [allowance, slot, shares, receiver, owner]
     0x00 dup1 revert
     redeem_approved:
 
     // Set the new allowance
-    dup2 dup2 sub                       // [new_allowance, allowance, shares, receiver, owner]
-    caller dup6 [APPROVAL_SLOT]         // [slot, owner, msg.sender, new_allowance, allowance, shares, receiver, owner]
-    STORE_ELEMENT_FROM_KEYS_2D(0x00)    // [allowance, shares, receiver, owner]
+    dup3 dup2 sub                       // [new_allowance, allowance, slot, shares, receiver, owner]
+    dup3                                // [slot, new_allowance, allowance, slot, shares, receiver, owner]
+    sstore                              // [allowance, slot, shares, receiver, owner]
 
     // Jump dests for initial checks
     infinite:
-    pop                                 // [shares, receiver, owner]
+    pop pop                             // [shares, receiver, owner]
     ahead:
 
     // Validate that the assets are non-zero
@@ -391,27 +392,28 @@
     // Skip ahead if msg.sender is the owner
     dup4 caller eq owner_jump jumpi     // [shares, assets, receiver, owner]
 
-    // Get the allowance[owner][msg.sender]
+    // Get the allowance[owner][msg.sender]. The slot is kept on the stack because the
+    // approval is read here and written again below
     caller dup5                         // [owner, msg.sender, shares, assets, receiver, owner]
-    [APPROVAL_SLOT]                     // [slot, owner, msg.sender, shares, assets, receiver, owner]
-    LOAD_ELEMENT_FROM_KEYS_2D(0x00)     // [allowance, shares, assets, receiver, owner]
+    [APPROVAL_SLOT] MAPPING_SLOT_2D()   // [slot, shares, assets, receiver, owner]
+    dup1 sload                          // [allowance, slot, shares, assets, receiver, owner]
 
     // If the allowed is no infinite approval, set to the allowance less shares
-    dup1 [TYPE_UINT_256_MAX]            // [type(uint256).max, allowance, allowance, shares, assets, receiver, owner]
-    eq infinite jumpi                   // [allowance, shares, assets, receiver, owner]
+    dup1 [TYPE_UINT_256_MAX]            // [type(uint256).max, allowance, allowance, slot, shares, assets, receiver, owner]
+    eq infinite jumpi                   // [allowance, slot, shares, assets, receiver, owner]
 
     // Revert unless the caller is approved for at least `shares` (allowance >= shares).
-    dup2 dup2 lt iszero withdraw_approved jumpi  // [allowance, shares, assets, receiver, owner]
+    dup3 dup2 lt iszero withdraw_approved jumpi  // [allowance, slot, shares, assets, receiver, owner]
     0x00 dup1 revert
     withdraw_approved:
 
     // Set the new allowance
-    dup2 dup2 sub                       // [new_allowance, allowance, shares, assets, receiver, owner]
-    caller dup6 [APPROVAL_SLOT]         // [slot, owner, msg.sender, new_allowance, allowance, shares, assets, receiver, owner]
-    STORE_ELEMENT_FROM_KEYS_2D(0x00)    // [allowance, shares, assets, receiver, owner]
+    dup3 dup2 sub                       // [new_allowance, allowance, slot, shares, assets, receiver, owner]
+    dup3                                // [slot, new_allowance, allowance, slot, shares, assets, receiver, owner]
+    sstore                              // [allowance, slot, shares, assets, receiver, owner]
 
     infinite:
-    pop                                 // [shares, assets, receiver, owner]
+    pop pop                             // [shares, assets, receiver, owner]
 
     owner_jump:
 

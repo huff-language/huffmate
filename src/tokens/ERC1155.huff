@@ -677,7 +677,7 @@
 #define macro DECREASE_BALANCE() = takes (3) returns (0) {
     // takes 3 [from, tokenId, amount]
     [BALANCE_LOCATION]              // [&balance, from, tokenId, amount]
-    GET_SLOT_FROM_KEYS_2D(0x00)      // [slot, amount]
+    MAPPING_SLOT_2D()               // [slot, amount]
     dup1                            // [slot, slot, amount]
     sload                           // [bal, slot, amount]
     swap1                           // [slot, bal, amount]
@@ -700,7 +700,7 @@
     // input stack: [to, tokenId, amount]
 
     [BALANCE_LOCATION]              // [&balance, to, tokenId, amount]
-    GET_SLOT_FROM_KEYS_2D(0x00)     // [slot, amount]
+    MAPPING_SLOT_2D()               // [slot, amount]
     dup1                            // [slot, slot,amount]
     sload                           // [bal, slot, amount]
     swap1                           // [slot, bal, amount]

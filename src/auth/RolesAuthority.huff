@@ -26,10 +26,18 @@
 #define constant IS_CAPABILITY_PUBLIC_LOCATION = FREE_STORAGE_POINTER()
 #define constant GET_ROLES_WITH_CAPABILITY_LOCATION = FREE_STORAGE_POINTER()
 
+/// @notice Helper to get the storage slot holding a user's roles
+/// @dev Callers that both read and write the entry should use this and keep the slot on the
+///      stack, rather than hashing it once per access
+#define macro GET_ROLES_FOR_ACCOUNT_SLOT() = takes (1) returns (1) {
+  [USER_ROLES_LOCATION]              // [location, account]
+  MAPPING_SLOT()                     // [slot]
+}
+
 /// @notice Helper to get the roles for a user
 #define macro GET_ROLES_FOR_ACCOUNT() = takes (1) returns (1) {
-  [USER_ROLES_LOCATION]              // [location, account]
-  LOAD_ELEMENT_FROM_KEYS(0x00)       // [roles]
+  GET_ROLES_FOR_ACCOUNT_SLOT()       // [slot]
+  sload                              // [roles]
 }
 
 /// @notice Returns if an account has a role
@@ -45,10 +53,19 @@
   0x20 0x00 return                   // []
 }
 
+/// @notice Helper to get the storage slot holding the roles with a capability
+/// @dev Callers that both read and write the entry should use this and keep the slot on the
+///      stack, rather than hashing it once per access
+#define macro GET_ROLE_FOR_CAPABILITY_SLOT() = takes (2) returns (1) {
+  // Input stack: [target, functionSig]
+  [GET_ROLES_WITH_CAPABILITY_LOCATION]  // [location, target, functionSig]
+  MAPPING_SLOT_2D()                     // [slot]
+}
+
 /// @notice Helper to get the role for a capability
 #define macro GET_ROLE_FOR_CAPABILITY() = takes (2) returns (1) {
-  [GET_ROLES_WITH_CAPABILITY_LOCATION]  // [location, target, sig]
-  LOAD_ELEMENT_FROM_KEYS_2D(0x00)       // [role]
+  GET_ROLE_FOR_CAPABILITY_SLOT()     // [slot]
+  sload                              // [role]
 }
 
 /// @notice Checks if a Role has a Capability
@@ -69,7 +86,8 @@
 /// @notice Helper to get if a capability is public
 #define macro IS_CAPABILITY_PUBLIC() = takes (2) returns (1) {
   [IS_CAPABILITY_PUBLIC_LOCATION]    // [location, target, sig]
-  LOAD_ELEMENT_FROM_KEYS_2D(0x00)    // [public]
+  MAPPING_SLOT_2D()                  // [slot]
+  sload                              // [public]
 }
 
 /// @notice Checks if an account can call a function on a given address
@@ -148,41 +166,38 @@
 
   // Disable the capability
   disable:
-    // Get the current roles with the capability
+    // Get the current roles with the capability. The entry is read and written, so hash it
+    // once and keep the slot on the stack
     0x44 calldataload                         // [sig]
     0x24 calldataload                         // [target, sig]
-    GET_ROLE_FOR_CAPABILITY()                 // [roles]
+    GET_ROLE_FOR_CAPABILITY_SLOT()            // [slot]
+    dup1 sload                                // [roles, slot]
 
     // Shift 1 left the role
-    0x01 0x04 calldataload shl                // [role, roles]
-    not                                       // [others, roles]
-    and                                       // [updated]
+    0x01 0x04 calldataload shl                // [role, roles, slot]
+    not                                       // [others, roles, slot]
+    and                                       // [updated, slot]
 
     // Store the new capability
-    0x44 calldataload                         // [sig, updated]
-    0x24 calldataload                         // [target, sig, updated]
-    [GET_ROLES_WITH_CAPABILITY_LOCATION]      // [location, target, sig, updated]
-    STORE_ELEMENT_FROM_KEYS_2D(0x00)          // []
+    swap1 sstore                              // []
 
     // Jump to the emit log label
     emit_log jump
 
   // Enable the capability
   enable:
-    // Get the current roles with the capability
+    // Get the current roles with the capability, hashing the entry once
     0x44 calldataload                         // [sig]
     0x24 calldataload                         // [target, sig]
-    GET_ROLE_FOR_CAPABILITY()                 // [roles]
+    GET_ROLE_FOR_CAPABILITY_SLOT()            // [slot]
+    dup1 sload                                // [roles, slot]
 
     // Shift 1 left the role
-    0x01 0x04 calldataload shl                // [role, roles]
-    or                                        // [capabilies]
+    0x01 0x04 calldataload shl                // [role, roles, slot]
+    or                                        // [capabilies, slot]
 
     // Store the new capability
-    0x44 calldataload                         // [sig, capabilies]
-    0x24 calldataload                         // [target, sig, capabilies]
-    [GET_ROLES_WITH_CAPABILITY_LOCATION]      // [location, target, sig, capabilies]
-    STORE_ELEMENT_FROM_KEYS_2D(0x00)          // []
+    swap1 sstore                              // []
 
   // Emit the capability updated event
   emit_log:
@@ -213,37 +228,36 @@
 
   // Disable the role
   disable:
-    // Get the account roles
+    // Get the account roles. The entry is read and written, so hash it once and keep the
+    // slot on the stack
     0x04 calldataload                  // [account]
-    GET_ROLES_FOR_ACCOUNT()            // [roles]
+    GET_ROLES_FOR_ACCOUNT_SLOT()       // [slot]
+    dup1 sload                         // [roles, slot]
 
     // Shift 1 left the role
-    0x01 0x24 calldataload shl         // [new_role, roles]
-    not                                // [others, roles]
-    and                                // [updated]
+    0x01 0x24 calldataload shl         // [new_role, roles, slot]
+    not                                // [others, roles, slot]
+    and                                // [updated, slot]
 
     // Store the new roles
-    0x04 calldataload                  // [account, updated]
-    [USER_ROLES_LOCATION]              // [key, account, updated]
-    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+    swap1 sstore                       // []
 
     // Jump to the emit log label
     emit_log jump
 
   // Enable the role
   enable:
-    // Get the account roles
+    // Get the account roles, hashing the entry once
     0x04 calldataload                  // [account]
-    GET_ROLES_FOR_ACCOUNT()            // [roles]
+    GET_ROLES_FOR_ACCOUNT_SLOT()       // [slot]
+    dup1 sload                         // [roles, slot]
 
     // Shift 1 left the role
-    0x01 0x24 calldataload shl         // [new_role, roles]
-    or                                 // [updated]
+    0x01 0x24 calldataload shl         // [new_role, roles, slot]
+    or                                 // [updated, slot]
 
     // Store the new roles
-    0x04 calldataload                  // [account, updated]
-    [USER_ROLES_LOCATION]              // [key, account, updated]
-    STORE_ELEMENT_FROM_KEYS(0x00)      // []
+    swap1 sstore                       // []
 
 
   // Emit the user role updated event

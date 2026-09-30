@@ -41,6 +41,15 @@
     bytes32 value
 ) nonpayable returns ()
 
+// Returns the slot computed by MAPPING_SLOT for a base slot and one key.
+#define function mappingSlot(bytes32 baseSlot, bytes32 key) view returns (bytes32)
+
+// Returns the slot computed by MAPPING_SLOT_2D for a base slot and two keys.
+#define function mappingSlot2D(bytes32 baseSlot, bytes32 key1, bytes32 key2) view returns (bytes32)
+
+// Returns the slot computed by MAPPING_SLOT_3D for a base slot and three keys.
+#define function mappingSlot3D(bytes32 baseSlot, bytes32 key1, bytes32 key2, bytes32 key3) view returns (bytes32)
+
 #define constant LOCATION = FREE_STORAGE_POINTER()
 
 // Get the value for the given key.
@@ -119,6 +128,36 @@
     stop
 }
 
+// Get the slot for a base slot and one key.
+#define macro GET_MAPPING_SLOT() = takes(0) returns(0) {
+    0x24 calldataload   // [key]
+    0x04 calldataload   // [baseSlot, key]
+    MAPPING_SLOT()      // [slot]
+    0x00 mstore
+    0x20 0x00 return
+}
+
+// Get the slot for a base slot and two keys.
+#define macro GET_MAPPING_SLOT_2D() = takes(0) returns(0) {
+    0x44 calldataload   // [key2]
+    0x24 calldataload   // [key1, key2]
+    0x04 calldataload   // [baseSlot, key1, key2]
+    MAPPING_SLOT_2D()   // [slot]
+    0x00 mstore
+    0x20 0x00 return
+}
+
+// Get the slot for a base slot and three keys.
+#define macro GET_MAPPING_SLOT_3D() = takes(0) returns(0) {
+    0x64 calldataload   // [key3]
+    0x44 calldataload   // [key2, key3]
+    0x24 calldataload   // [key1, key2, key3]
+    0x04 calldataload   // [baseSlot, key1, key2, key3]
+    MAPPING_SLOT_3D()   // [slot]
+    0x00 mstore
+    0x20 0x00 return
+}
+
 // Main Macro - The contract entrypoint
 #define macro MAIN() = takes(0) returns (0) {
     // Identify which function is being called using the 4 byte function signature
@@ -132,6 +171,9 @@
     dup1 __FUNC_SIG(storeElementFromKeys)   eq store_element_from_keys jumpi
     dup1 __FUNC_SIG(storeElementFromKeys2D) eq store_element_from_keys_2d jumpi
     dup1 __FUNC_SIG(storeElementFromKeys3D) eq store_element_from_keys_3d jumpi
+    dup1 __FUNC_SIG(mappingSlot)            eq mapping_slot jumpi
+    dup1 __FUNC_SIG(mappingSlot2D)          eq mapping_slot_2d jumpi
+    dup1 __FUNC_SIG(mappingSlot3D)          eq mapping_slot_3d jumpi
 
     // Revert if otherwise
     0x00 dup1 revert
@@ -152,4 +194,10 @@
         STORE_FROM_KEYS_2D()
     store_element_from_keys_3d:
         STORE_FROM_KEYS_3D()
+    mapping_slot:
+        GET_MAPPING_SLOT()
+    mapping_slot_2d:
+        GET_MAPPING_SLOT_2D()
+    mapping_slot_3d:
+        GET_MAPPING_SLOT_3D()
 }
