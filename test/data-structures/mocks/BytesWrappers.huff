@@ -1,5 +1,6 @@
-#define macro SET_STOR(offset, value) = takes(2) returns(0) {
-    <value> <offset> sstore        // []
+#define macro SET_STOR() = takes(2) returns(0) {
+    // input stack: [offset, value]
+    sstore                         // []
 }
 
 #define macro CONCAT_MEMORY_AND_SET1() = takes (0) returns (0) {
@@ -33,9 +34,11 @@
     0x20 0x00 mstore        
     0xbabe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe1babe 0x20 mstore
     
-    0x40 0x40 mstore
+    // len2 (0x60) > mem_ptr2 (0x40)
+    0x60 0x40 mstore
     0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x60 mstore
     0xbabe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe2babe 0x80 mstore
+    0xbabe3babe3babe3babe3babe3babe3babe3babe3babe3babe3babe3babe3babe 0xa0 mstore
 
     0x40 0x00
     CONCAT_MEMORY()    
@@ -49,8 +52,11 @@
     dup1 0x40 add mload     
     0x40 SET_STOR()          
         
-    0x60 add mload            
+    dup1 0x60 add mload       
     0x60 SET_STOR()            
+
+    0x80 add mload
+    0x80 SET_STOR()
     
     stop
 }
