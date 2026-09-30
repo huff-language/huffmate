@@ -26,7 +26,7 @@
     [LOGISTIC_LIMIT]            // [logisticLimit, sold, 1e18, timeScale]
     add                         // [sold + logisticLimit, 1e18, timeScale]
     [LOGISTIC_LIMIT_DOUBLED]    // [logisticLimitDoubled, (sold+logisticLimit), 1e18, timeScale]
-    UNSAFE_WAD_DIV()            // [(logisticLimitDoubled / (sold + logisticLimit)), 1e18, timeScale]
+    UNSAFE_DIV()                // [(logisticLimitDoubled / (sold + logisticLimit)), 1e18, timeScale]
     sub                         // [((logisticLimitDoubled / (sold + logisticLimit)) - 1e18), timeScale]
 
     LN_WAD(fail)                // [wadLn((logisticLimitDoubled / (sold + logisticLimit)) - 1e18), timeScale]
