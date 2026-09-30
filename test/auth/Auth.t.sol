@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "foundry-huff/HuffDeployer.sol";
 import {NonMatchingSelectorsHelper} from "../test-utils/NonMatchingSelectorHelper.sol";
+import {RolesAuthority as SolmateRolesAuthority, Authority} from "solmate/auth/authorities/RolesAuthority.sol";
 
 interface Auth {
   function setOwner(address) external;
@@ -152,6 +153,76 @@ contract AuthTest is Test, NonMatchingSelectorsHelper {
     vm.prank(OWNER);
     auth.setAuthority(INIT_AUTHORITY);
     assertEq(INIT_AUTHORITY, auth.authority());
+
+    // A Solidity authority ABI-decodes canCall, so the full calldata must be sent
+    SolmateRolesAuthority solmateAuth = new SolmateRolesAuthority(OWNER, Authority(address(0)));
+    vm.prank(OWNER);
+    auth.setAuthority(address(solmateAuth));
+    vm.prank(OWNER);
+    solmateAuth.setPublicCapability(address(auth), bytes4(0x7a9e5e4b), true);
+
+    auth.setAuthority(new_authority);
+    assertEq(new_authority, auth.authority());
+
+    vm.prank(OWNER);
+    auth.setAuthority(INIT_AUTHORITY);
+    assertEq(INIT_AUTHORITY, auth.authority());
+  }
+
+  /// @dev Deploys a solmate RolesAuthority and makes it the authority of `auth`
+  function _useSolmateAuthority() internal returns (SolmateRolesAuthority solmateAuth) {
+    solmateAuth = new SolmateRolesAuthority(OWNER, Authority(address(0)));
+    vm.prank(OWNER);
+    auth.setAuthority(address(solmateAuth));
+  }
+
+  /// @notice The Huff RolesAuthority must match the selector whatever the call's arguments are
+  function testFuzzHuffAuthorityCanSetAuthority(address caller, address newAuthority) public {
+    vm.assume(caller != OWNER);
+    vm.prank(OWNER);
+    auth.setAuthority(address(rolesAuth));
+    vm.prank(OWNER);
+    rolesAuth.setPublicCapability(address(auth), Auth.setAuthority.selector, true);
+
+    vm.prank(caller);
+    auth.setAuthority(newAuthority);
+    assertEq(newAuthority, auth.authority());
+  }
+
+  /// @notice A Solidity authority must accept a public capability whatever the call's arguments are
+  function testFuzzSolidityAuthorityCanSetAuthority(address caller, address newAuthority) public {
+    vm.assume(caller != OWNER);
+    SolmateRolesAuthority solmateAuth = _useSolmateAuthority();
+    vm.prank(OWNER);
+    solmateAuth.setPublicCapability(address(auth), Auth.setAuthority.selector, true);
+
+    vm.prank(caller);
+    auth.setAuthority(newAuthority);
+    assertEq(newAuthority, auth.authority());
+  }
+
+  /// @notice A Solidity authority must accept a role-based capability whatever the call's arguments are
+  function testFuzzSolidityAuthorityRoleCanSetOwner(address caller, address newOwner, uint8 role) public {
+    vm.assume(caller != OWNER);
+    SolmateRolesAuthority solmateAuth = _useSolmateAuthority();
+    vm.startPrank(OWNER);
+    solmateAuth.setRoleCapability(role, address(auth), Auth.setOwner.selector, true);
+    solmateAuth.setUserRole(caller, role, true);
+    vm.stopPrank();
+
+    vm.prank(caller);
+    auth.setOwner(newOwner);
+    assertEq(newOwner, auth.owner());
+  }
+
+  /// @notice A Solidity authority must deny a caller without the capability
+  function testFuzzSolidityAuthorityDenies(address caller, address newOwner) public {
+    vm.assume(caller != OWNER);
+    _useSolmateAuthority();
+
+    vm.prank(caller);
+    vm.expectRevert();
+    auth.setOwner(newOwner);
   }
 
   function testAuthoritiesCannotSetAuthority(address user) public {
