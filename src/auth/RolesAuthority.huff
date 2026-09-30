@@ -58,7 +58,8 @@
 ///      stack, rather than hashing it once per access
 #define macro GET_ROLE_FOR_CAPABILITY_SLOT() = takes (2) returns (1) {
   // Input stack: [target, functionSig]
-  MAPPING_SLOT()                     // [slot]
+  [GET_ROLES_WITH_CAPABILITY_LOCATION]  // [location, target, functionSig]
+  MAPPING_SLOT_2D()                     // [slot]
 }
 
 /// @notice Helper to get the role for a capability
@@ -84,7 +85,8 @@
 
 /// @notice Helper to get if a capability is public
 #define macro IS_CAPABILITY_PUBLIC() = takes (2) returns (1) {
-  MAPPING_SLOT()                     // [slot]
+  [IS_CAPABILITY_PUBLIC_LOCATION]    // [location, target, sig]
+  MAPPING_SLOT_2D()                  // [slot]
   sload                              // [public]
 }
 
@@ -133,7 +135,8 @@
   0x44 calldataload                         // [value]
   0x24 calldataload                         // [sig, value]
   0x04 calldataload                         // [target, sig, value]
-  STORE_ELEMENT_FROM_KEYS(0x00)             // []
+  [IS_CAPABILITY_PUBLIC_LOCATION]           // [location, target, sig, value]
+  STORE_ELEMENT_FROM_KEYS_2D(0x00)          // []
 
   // Emit the capability updated event
   0x44 calldataload                         // [value]
