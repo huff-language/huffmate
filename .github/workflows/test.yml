@@ -66,17 +66,10 @@ jobs:
   btt:
     name: Test trees (btt)
     runs-on: ubuntu-latest
-    env:
-      BTT_VERSION: v0.2.0
-      BTT_SHA256: 2b80ad4cf92390e21de1546b95e86c8acfd04a5375d37f86c23001ac68c09b48
     steps:
       - uses: actions/checkout@v3
       - name: Install btt
-        run: |
-          cd "$RUNNER_TEMP"
-          curl --proto '=https' --tlsv1.2 -LsSfO "https://github.com/Maddiaa0/btt/releases/download/${BTT_VERSION}/btt-cli-x86_64-unknown-linux-gnu.tar.xz"
-          echo "${BTT_SHA256}  btt-cli-x86_64-unknown-linux-gnu.tar.xz" | sha256sum -c -
-          tar xJf btt-cli-x86_64-unknown-linux-gnu.tar.xz
-          echo "$RUNNER_TEMP/btt-cli-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+        # --locked builds with the Cargo.lock published in the crate
+        run: cargo install btt-cli --version 0.2.0 --locked
       - name: Check .tree specs
         run: btt --version && btt check test

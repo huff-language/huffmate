@@ -29,7 +29,7 @@ npm install @pentagonxyz/huffmate
 
 Test suites can be specified as `.tree` files checked by [btt](https://github.com/Maddiaa0/btt). A tree sits next to its test file with the same stem (`test/auth/Owned.tree` ↔ `test/auth/Owned.t.sol`). Its root is the test contract and each `it …` leaf is one `testX` function. Trees are flat because Solidity can't nest contracts. See [`test/auth/Owned.tree`](./test/auth/Owned.tree) for an example.
 
-Install v0.2.0 (the version CI pins) from its [GitHub release](https://github.com/Maddiaa0/btt/releases/tag/v0.2.0) and put `btt` on your `PATH`, then:
+Install the version CI pins with `cargo install btt-cli --version 0.2.0 --locked`, then:
 
 ```sh
 btt scaffold test/auth/Foo.tree   # generate Foo.t.sol from a new tree
