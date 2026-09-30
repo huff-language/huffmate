@@ -6,6 +6,7 @@
 #define function divWadUp(uint256,uint256) pure returns(uint256)
 #define function rpow(uint256,uint256,uint256) pure returns(uint256)
 #define function expWad(int256) pure returns(int256)
+#define function expWadPlusOne(int256) pure returns(int256)
 #define function powWad(int256,int256) pure returns(int256)
 #define function lnWad(int256) pure returns(int256)
 #define function sqrt(uint256) pure returns(uint256)
@@ -78,6 +79,15 @@
     0x20 0x00 return
 }
 
+/// @notice Runs code after EXP_WAD, which only executes if the macro hands control back
+#define macro EXP_WAD_PLUS_ONE_WRAPPER(fail) = takes (0) returns (0) {
+    0x04 calldataload // [x]
+    EXP_WAD(fail)     // [result]
+    0x01 add          // [result + 1]
+    0x00 mstore
+    0x20 0x00 return
+}
+
 #define macro LN_WAD_WRAPPER(fail) = takes (0) returns (0) {
     0x04 calldataload // [x]
     LN_WAD(fail)      // [result]
@@ -124,6 +134,7 @@
     dup1 __FUNC_SIG(divWadUp)   eq divWadUp   jumpi
     dup1 __FUNC_SIG(rpow)       eq rpow       jumpi
     dup1 __FUNC_SIG(expWad)     eq expWad     jumpi
+    dup1 __FUNC_SIG(expWadPlusOne) eq expWadPlusOne jumpi
     dup1 __FUNC_SIG(lnWad)      eq lnWad      jumpi
     dup1 __FUNC_SIG(powWad)     eq powWad     jumpi
     dup1 __FUNC_SIG(sqrt)       eq sqrt       jumpi
@@ -149,6 +160,8 @@
         RPOW_WRAPPER(fail)
     expWad:
         EXP_WAD_WRAPPER(fail)
+    expWadPlusOne:
+        EXP_WAD_PLUS_ONE_WRAPPER(fail)
     lnWad:
         LN_WAD_WRAPPER(fail)
     powWad:
