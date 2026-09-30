@@ -28,7 +28,7 @@ contract OwnedTest is Test, NonMatchingSelectorsHelper {
   }
 
   /// @notice Test that a non-matching selector reverts
-    function testNonMatchingSelector(bytes32 callData) public {
+    function testRevertsOnANonMatchingSelector(bytes32 callData) public {
         bytes4[] memory func_selectors = new bytes4[](2);
         func_selectors[0] = Owned.setOwner.selector;
         func_selectors[1] = Owned.owner.selector;
@@ -42,11 +42,11 @@ contract OwnedTest is Test, NonMatchingSelectorsHelper {
         assert(!success);
     }
 
-  function testGetOwner() public {
+  function testReturnsTheOwnerSetAtDeployment() public {
     assertEq(OWNER, owner.owner());
   }
 
-  function testSetOwner(address new_owner) public {
+  function testRevertsWhenANonOwnerSetsTheOwner(address new_owner) public {
     if (new_owner == OWNER) return;
     vm.startPrank(new_owner);
     vm.expectRevert();
@@ -55,7 +55,7 @@ contract OwnedTest is Test, NonMatchingSelectorsHelper {
     assertEq(OWNER, owner.owner());
   }
 
-  function testOwnerCanSetOwner() public {
+  function testLetsTheOwnerSetANewOwner() public {
     address new_owner = address(0x50ca1);
     vm.startPrank(OWNER);
     vm.expectEmit(true, true, true, true);

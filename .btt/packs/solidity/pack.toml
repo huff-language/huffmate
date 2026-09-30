@@ -1,0 +1,57 @@
+# Foundry (Solidity) tests via lexical scanning. Adapted from the example
+# pack in the btt v0.2.0 README, with one change for huffmate: tests are
+# named `testFooBar` (no underscore), so add_prefix is "test".
+#
+# Solidity cannot nest contracts, so keep trees flat: the root line is the
+# test contract (e.g. `OwnedTest`) and every child is an `it …` leaf.
+# `when …`/`given …` branches would scaffold as nested contracts, which do
+# not compile.
+#
+# Only `function test…(` counts as a test; `setUp`, helpers and
+# `invariant_…` functions are ignored.
+
+format = 1
+
+[pack]
+name = "solidity"
+version = "0.1.0"
+description = "Foundry tests via lexical scanning: test contracts as roots, testX functions as leaves"
+
+[compat]
+btt = ">=0.2.0"
+
+[detect]
+targets = ["{stem}.t.sol"]
+
+[grammar]
+source = "lexical"
+
+[extract]
+
+[lexical]
+line_comment = "//"
+block_comment = ["/*", "*/"]
+strings = [{ delim = '"', escape = '\' }, { delim = "'", escape = '\' }]
+nest = [["(", ")"], ["{", "}"]]
+
+[lexical.block]
+open = '''(?:^|[^\w])(?<kw>contract)\s+(?<name>\w+)[^{;]*\{'''
+
+[lexical.test]
+open = '''(?:^|[^\w])(?<kw>function)\s+(?<name>test\w*)\s*\('''
+
+[mapping]
+root = "block"
+
+[mapping.block]
+case = "pascal"
+
+[mapping.test]
+strip_prefix = "it "
+add_prefix = "test"
+case = "pascal"
+
+[scaffold]
+template = "templates/test.jinja"
+output = "{stem}.t.sol"
+indent = "    "
