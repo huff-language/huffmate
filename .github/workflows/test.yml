@@ -62,3 +62,14 @@ jobs:
           with-location: "src"
           with-extension: "*.huff"
           with-format: "table"
+
+  btt:
+    name: Test trees (btt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install btt
+        # --locked builds with the Cargo.lock published in the crate
+        run: cargo install btt-cli --version 0.2.0 --locked
+      - name: Check .tree specs
+        run: btt --version && btt check test

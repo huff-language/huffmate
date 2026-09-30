@@ -25,6 +25,19 @@ To install with [**Hardhat**](https://github.com/nomiclabs/hardhat) or [**Truffl
 npm install @pentagonxyz/huffmate
 ```
 
+### Test trees (btt)
+
+Test suites can be specified as `.tree` files checked by [btt](https://github.com/Maddiaa0/btt). A tree sits next to its test file with the same stem (`test/auth/Owned.tree` ↔ `test/auth/Owned.t.sol`). Its root is the test contract and each `it …` leaf is one `testX` function. Trees are flat because Solidity can't nest contracts. See [`test/auth/Owned.tree`](./test/auth/Owned.tree) for an example.
+
+Install the version CI pins with `cargo install btt-cli --version 0.2.0 --locked`, then:
+
+```sh
+btt scaffold test/auth/Foo.tree   # generate Foo.t.sol from a new tree
+btt check test                    # fail if any tree and its tests disagree
+```
+
+The Solidity pack lives in `.btt/packs/solidity` and the config in `btt.toml`. CI runs `btt check test`. Test files without a tree are reported as warnings for now.
+
 ### Contracts
 
 ```

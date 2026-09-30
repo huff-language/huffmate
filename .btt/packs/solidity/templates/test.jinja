@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.15;
+
+import "forge-std/Test.sol";
+
+{% for ev in events -%}
+{% if ev.kind == "open" -%}
+{{ ev.indent }}contract {{ ev.name }} is Test {
+{% elif ev.kind == "close" -%}
+{{ ev.indent }}}
+
+{% elif ev.kind == "test" -%}
+{{ ev.indent }}function {{ ev.name }}() public {
+{{ ev.indent }}    // TODO: {{ ev.text | line_safe }}
+{{ ev.indent }}    revert("unimplemented");
+{{ ev.indent }}}
+
+{% endif -%}
+{% endfor -%}

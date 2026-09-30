@@ -1,0 +1,17 @@
+# btt — branch tree testing (https://github.com/Maddiaa0/btt)
+
+[project]
+# Packs this project uses, in routing-priority order. Only packs named here
+# are active (with no list, only builtins load). A named pack resolves from
+# .btt/packs/, then user dirs ($XDG_CONFIG_HOME/btt/packs, legacy
+# ~/.btt/packs), then the builtins.
+packs = ["solidity"]
+
+[check]
+# Severity of tests present in the file but absent from the tree: error | warn | ignore
+extra = "warn"
+# Severity of sibling order differing between tree and file: error | warn | ignore
+order = "warn"
+# Severity of test-bearing files with no .tree spec: error | warn | ignore
+# (warn while adopting; set to "error" in CI once every file has a tree)
+uncovered = "warn"

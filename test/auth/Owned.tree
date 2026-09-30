@@ -1,0 +1,5 @@
+OwnedTest
+├── it reverts on a non matching selector
+├── it returns the owner set at deployment
+├── it reverts when a non owner sets the owner
+└── it lets the owner set a new owner
