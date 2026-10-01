@@ -44,7 +44,7 @@
     dup1                        // [num1, num1, num2]
     is_not_zero jumpi           // [num1, num2]
         mul                     // [result]
-        0x01 is_not_overflow jumpi
+        is_not_overflow jump
     is_not_zero:                // [num1, num2]
     dup2                        // [num2, num1, num2]
     dup2                        // [num1, num2, num1, num2]
